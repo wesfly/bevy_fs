@@ -154,30 +154,30 @@ fn input_system(
 
 fn button_input(mut input: ResMut<'_, Input>, keyboard_input: Res<'_, ButtonInput<KeyCode>>) {
     // Z axis (forward)
-    if keyboard_input.just_pressed(KeyCode::KeyW) {
-        input.z = 1.0;
-    } else if keyboard_input.just_pressed(KeyCode::KeyS) {
-        input.z = -1.0;
+    if keyboard_input.pressed(KeyCode::KeyW) {
+        input.y = 1.0;
+    } else if keyboard_input.pressed(KeyCode::KeyS) {
+        input.y = -1.0;
     } else {
-        input.z = 0.0
+        input.y = 0.0
     }
 
     // X axis (left/right)
-    if keyboard_input.just_pressed(KeyCode::KeyA) {
-        input.x = 1.0
-    } else if keyboard_input.just_pressed(KeyCode::KeyD) {
-        input.x = -1.0;
+    if keyboard_input.pressed(KeyCode::KeyA) {
+        input.x = -1.0
+    } else if keyboard_input.pressed(KeyCode::KeyD) {
+        input.x = 1.0;
     } else {
         input.x = 0.0
     }
 
     // Y axis (up/down)
     if keyboard_input.pressed(KeyCode::KeyQ) {
-        input.y = 1.0
+        input.z = 1.0
     } else if keyboard_input.pressed(KeyCode::KeyE) {
-        input.y = -1.0;
+        input.z = -1.0;
     } else {
-        input.y = 0.0
+        input.z = 0.0
     }
 }
 
