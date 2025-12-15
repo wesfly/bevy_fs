@@ -61,7 +61,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     Camera3d::default(),
                     Atmosphere::EARTH,
                     Exposure::SUNLIGHT,
-                    Tonemapping::AcesFitted,
+                    Tonemapping::AgX,
                     Bloom::NATURAL,
                     Transform::from_xyz(0.0, 9.0, -18.0).looking_at(
                         Vec3 {
@@ -192,11 +192,10 @@ fn gamepad_input_system(
         let left_stick_x = gamepad.get(GamepadAxis::LeftStickX).unwrap();
         let left_stick_y = gamepad.get(GamepadAxis::LeftStickY).unwrap();
 
-        // this axis does only work on web, I don't know why
-        let right_stick_y = gamepad.get(GamepadAxis::RightStickX).unwrap();
+        let right_stick_y = 0.0;
 
         // xy and something else
-        return (left_stick_x, left_stick_y, right_stick_y.abs());
+        return (left_stick_x, left_stick_y, right_stick_y);
     }
 
     // return zero if nothing is connected, but this technially shouldn't happen
