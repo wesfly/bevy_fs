@@ -13,10 +13,10 @@ const CONTROL_SNAPPING_THRESHOLD: f32 = 0.075;
 struct RotationOfSubject(Quat);
 
 #[derive(Component)]
-struct Camera;
+struct FollowCamera;
 
 #[derive(Component)]
-struct MoveComponent;
+struct Aircraft;
 
 #[derive(Resource)]
 struct Input {
@@ -54,7 +54,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(SceneRoot(
             asset_server.load(GltfAssetLabel::Scene(0).from_asset("simplPlane.glb")),
         ))
-        .insert(MoveComponent)
+        .insert(Aircraft)
         .with_children(|parent| {
             parent
                 .spawn((
@@ -72,7 +72,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         Vec3::Y,
                     ),
                 ))
-                .insert(Camera);
+                .insert(FollowCamera);
         });
 
     // light
@@ -88,7 +88,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn subject_movement(
-    mut query: Query<&mut Transform, With<MoveComponent>>,
+    mut query: Query<&mut Transform, With<Aircraft>>,
     time: Res<Time>,
     input: Res<Input>,
     mut rotation: ResMut<RotationOfSubject>,
