@@ -1,10 +1,14 @@
 // I made a little flight sim here
 
-use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::{
-    camera::Exposure, core_pipeline::tonemapping::Tonemapping,
-    input::gamepad::GamepadConnectionEvent, light::light_consts::lux, pbr::Atmosphere,
-    post_process::bloom::Bloom, prelude::*,
+    camera::Exposure,
+    core_pipeline::tonemapping::Tonemapping,
+    diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin},
+    input::gamepad::GamepadConnectionEvent,
+    light::light_consts::lux,
+    pbr::Atmosphere,
+    post_process::bloom::Bloom,
+    prelude::*,
 };
 
 const TOGGLE_CONTROL_SNAPPING: bool = true;
