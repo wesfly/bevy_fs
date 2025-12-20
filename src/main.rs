@@ -1,18 +1,40 @@
 // I made a little flight sim here
-
 use bevy::{
     camera::Exposure,
     core_pipeline::tonemapping::Tonemapping,
     diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin},
-    input::gamepad::GamepadConnectionEvent,
+    input::{gamepad::GamepadConnectionEvent, mouse::AccumulatedMouseMotion},
     light::light_consts::lux,
     pbr::Atmosphere,
     post_process::bloom::Bloom,
     prelude::*,
 };
+use std::{f32::consts::FRAC_PI_2, ops::Range};
 
 const TOGGLE_CONTROL_SNAPPING: bool = true;
 const CONTROL_SNAPPING_THRESHOLD: f32 = 0.075;
+
+#[derive(Debug, Resource)]
+struct CameraSettings {
+    pub orbit_distance: f32,
+    pub pitch_speed: f32,
+    // Clamp pitch to this range
+    pub pitch_range: Range<f32>,
+    pub yaw_speed: f32,
+}
+
+impl Default for CameraSettings {
+    fn default() -> Self {
+        // Limiting pitch stops some unexpected rotation past 90° up or down.
+        let pitch_limit = FRAC_PI_2 - 0.01;
+        Self {
+            orbit_distance: 20.0,
+            pitch_speed: 0.003,
+            pitch_range: -pitch_limit..pitch_limit,
+            yaw_speed: 0.004,
+        }
+    }
+}
 
 #[derive(Resource)]
 struct RotationOfSubject(Quat);
@@ -43,9 +65,13 @@ fn main() {
             z: 0.0,
         })
         .insert_resource(IsGamepadConnected(false))
+        .insert_resource(CameraSettings::default())
         .insert_resource(RotationOfSubject(quat(0.0, 0.0, 0.0, 0.0)))
         .add_systems(Startup, setup)
-        .add_systems(Update, (input_system, subject_movement, print_fps))
+        .add_systems(
+            Update,
+            (input_system, subject_movement, print_fps, camera_movement),
+        )
         .run();
 }
 
@@ -68,14 +94,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     Exposure::SUNLIGHT,
                     Tonemapping::AgX,
                     Bloom::NATURAL,
-                    Transform::from_xyz(0.0, 9.0, -18.0).looking_at(
-                        Vec3 {
-                            x: 0.0,
-                            y: 1.0,
-                            z: 0.0,
-                        },
-                        Vec3::Y,
-                    ),
+                    Transform::from_xyz(0.0, 9.0, -18.0).looking_at(Vec3::ZERO, Vec3::Y),
                 ))
                 .insert(FollowCamera);
         });
@@ -90,6 +109,39 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         Transform::from_xyz(4.0, 8.0, 4.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
+}
+
+fn camera_movement(
+    mut camera: Single<&mut Transform, With<Camera>>,
+    camera_settings: Res<CameraSettings>,
+    mouse_buttons: Res<ButtonInput<MouseButton>>,
+    mouse_motion: Res<AccumulatedMouseMotion>,
+) {
+    let delta = mouse_motion.delta;
+    // Mouse motion is one of the few inputs that should not be multiplied by delta time,
+    // as we are already receiving the full movement since the last frame was rendered. Multiplying
+    // by delta time here would make the movement slower that it should be.
+    let delta_pitch = delta.y * camera_settings.pitch_speed;
+    let delta_yaw = delta.x * camera_settings.yaw_speed;
+
+    // Obtain the existing pitch, yaw, and roll values from the transform.
+    let (yaw, pitch, roll) = camera.rotation.to_euler(EulerRot::YXZ);
+
+    // Establish the new yaw and pitch, preventing the pitch value from exceeding our limits.
+    let pitch = (pitch + delta_pitch).clamp(
+        camera_settings.pitch_range.start,
+        camera_settings.pitch_range.end,
+    );
+
+    let yaw = yaw + delta_yaw;
+
+    // Adjust the translation to maintain the correct orientation toward the orbit target.
+    // In our example it's a static target, but this could easily be customized.
+    let target = Vec3::ZERO;
+    if mouse_buttons.pressed(MouseButton::Right) {
+        camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
+        camera.translation = target - camera.forward() * camera_settings.orbit_distance;
+    }
 }
 
 fn print_fps(diagnostics: Res<DiagnosticsStore>) {
