@@ -1,7 +1,6 @@
 // I made a little flight sim here
 
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
-use bevy::ecs::error::info;
 use bevy::{
     camera::Exposure, core_pipeline::tonemapping::Tonemapping,
     input::gamepad::GamepadConnectionEvent, light::light_consts::lux, pbr::Atmosphere,
