@@ -1,5 +1,7 @@
 // I made a little flight sim here
 
+use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
+use bevy::ecs::error::info;
 use bevy::{
     camera::Exposure, core_pipeline::tonemapping::Tonemapping,
     input::gamepad::GamepadConnectionEvent, light::light_consts::lux, pbr::Atmosphere,
@@ -31,6 +33,7 @@ struct IsGamepadConnected(bool);
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugins(FrameTimeDiagnosticsPlugin::default())
         .insert_resource(Input {
             x: 0.0,
             y: 0.0,
@@ -39,8 +42,7 @@ fn main() {
         .insert_resource(IsGamepadConnected(false))
         .insert_resource(RotationOfSubject(quat(0.0, 0.0, 0.0, 0.0)))
         .add_systems(Startup, setup)
-        .add_systems(Update, input_system)
-        .add_systems(Update, subject_movement)
+        .add_systems(Update, (input_system, subject_movement, print_fps))
         .run();
 }
 
@@ -85,6 +87,12 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         Transform::from_xyz(4.0, 8.0, 4.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
+}
+
+fn print_fps(diagnostics: Res<DiagnosticsStore>) {
+    let fps = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
+    let fps = fps.unwrap().value().unwrap_or(0.0);
+    info!("{:?}", fps);
 }
 
 fn subject_movement(
