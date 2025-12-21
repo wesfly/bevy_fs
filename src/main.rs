@@ -25,6 +25,8 @@ struct Keymap {
     rudder_right: KeyCode,
     roll_left: KeyCode,
     roll_right: KeyCode,
+    throttle_up: KeyCode,
+    throttle_down: KeyCode,
 }
 impl Default for Keymap {
     fn default() -> Self {
@@ -36,6 +38,8 @@ impl Default for Keymap {
             rudder_right: KeyCode::KeyD,
             roll_left: KeyCode::KeyQ,
             roll_right: KeyCode::KeyE,
+            throttle_up: KeyCode::PageUp,
+            throttle_down: KeyCode::PageDown,
         }
     }
 }
