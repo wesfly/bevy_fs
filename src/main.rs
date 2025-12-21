@@ -11,8 +11,20 @@ use bevy::{
 };
 use std::{f32::consts::FRAC_PI_2, ops::Range};
 
-const TOGGLE_CONTROL_SNAPPING: bool = true;
-const CONTROL_SNAPPING_THRESHOLD: f32 = 0.075;
+#[derive(Resource)]
+struct GamepadSettings {
+    control_snapping_enabled: bool,
+    control_snapping_treshold: f32,
+}
+
+impl Default for GamepadSettings {
+    fn default() -> Self {
+        Self {
+            control_snapping_enabled: true,
+            control_snapping_treshold: 0.075,
+        }
+    }
+}
 
 #[derive(Debug, Resource)]
 struct CameraSettings {
@@ -70,6 +82,7 @@ fn main() {
             y: 0.0,
             z: 0.0,
         })
+        .insert_resource(GamepadSettings::default())
         .insert_resource(IsGamepadConnected(false))
         .insert_resource(CameraSettings::default())
         .insert_resource(RotationOfSubject(quat(0.0, 0.0, 0.0, 0.0)))
@@ -194,6 +207,7 @@ fn input_system(
     gamepads: Query<(Entity, &Gamepad)>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut connection_events: MessageReader<GamepadConnectionEvent>,
+    gamepad_settings: Res<GamepadSettings>,
 ) {
     for connection_event in connection_events.read() {
         info!("{:?}", connection_event);
@@ -212,21 +226,18 @@ fn input_system(
         input.y = gamepad_input.1;
         input.z = gamepad_input.2;
 
-        // Control values snap to zero when under a certain value
-        if TOGGLE_CONTROL_SNAPPING {
-            if -CONTROL_SNAPPING_THRESHOLD < gamepad_input.0
-                && gamepad_input.0 < CONTROL_SNAPPING_THRESHOLD
-            {
+        let threshold = gamepad_settings.control_snapping_treshold;
+        let threshold_range = -threshold..threshold;
+
+        // Control values snap to zero when in a certain range
+        if gamepad_settings.control_snapping_enabled {
+            if threshold_range.contains(&gamepad_input.0) {
                 input.x = 0.0
             }
-            if -CONTROL_SNAPPING_THRESHOLD < gamepad_input.1
-                && gamepad_input.1 < CONTROL_SNAPPING_THRESHOLD
-            {
+            if threshold_range.contains(&gamepad_input.1) {
                 input.y = 0.0
             }
-            if -CONTROL_SNAPPING_THRESHOLD < gamepad_input.2
-                && gamepad_input.2 < CONTROL_SNAPPING_THRESHOLD
-            {
+            if threshold_range.contains(&gamepad_input.2) {
                 input.z = 0.0
             }
         }
