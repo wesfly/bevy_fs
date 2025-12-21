@@ -281,7 +281,7 @@ fn input_system(
 fn button_input(
     mut input: ResMut<'_, InputAxis>,
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
-    keymap: Res<Keymap>,
+    keymap: Res<'_, Keymap>,
 ) {
     // Z axis (forward)
     if keyboard_input.pressed(keymap.up) {
