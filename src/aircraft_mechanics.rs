@@ -15,7 +15,7 @@ pub fn aircraft_mechanics(
         transform.rotate_local(rotation_z);
 
         let forward = transform.back();
-        transform.translation += forward * delta * 10.; //* input.z; // my right stick only works on web (idk why), thats why I neglect it completely
+        transform.translation += forward * delta * input.w * 10.;
 
         rotation.0 = transform.rotation;
     }
