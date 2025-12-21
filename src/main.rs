@@ -1,4 +1,6 @@
-// I made a little flight sim here
+// I made a little flight simulator here. Check out the README for further information.
+// If you have fixes or want to contribute, just make a pull request (unless it's AI-generated)
+
 use bevy::{
     camera::Exposure,
     core_pipeline::tonemapping::Tonemapping,
@@ -130,11 +132,12 @@ fn setup(
     asset_server: Res<AssetServer>,
     camera_settings: Res<CameraSettings>,
 ) {
-    // circular base
+    // landscape
     commands.spawn(SceneRoot(
         asset_server.load(GltfAssetLabel::Scene(0).from_asset("landscapeFS.glb")),
     ));
-    // cube
+
+    // aircraft
     commands
         .spawn(SceneRoot(
             asset_server.load(GltfAssetLabel::Scene(0).from_asset("simplPlane.glb")),
@@ -154,16 +157,21 @@ fn setup(
                 .insert(FollowCamera);
         });
 
-    // light
     commands.spawn((
         DirectionalLight {
             shadows_enabled: true,
-
             illuminance: lux::RAW_SUNLIGHT,
             ..default()
         },
         Transform::from_xyz(4.0, 8.0, 4.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
+}
+
+fn print_fps(diagnostics: Res<DiagnosticsStore>) {
+    let fps = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
+    let fps = fps.unwrap().value().unwrap_or(0.0);
+    #[cfg(debug_assertions)]
+    info!("{:?}", fps);
 }
 
 fn camera_movement(
@@ -175,16 +183,12 @@ fn camera_movement(
     keymap: Res<Keymap>,
 ) {
     let delta = mouse_motion.delta;
-    // Mouse motion is one of the few inputs that should not be multiplied by delta time,
-    // as we are already receiving the full movement since the last frame was rendered. Multiplying
-    // by delta time here would make the movement slower that it should be.
     let delta_pitch = delta.y * camera_settings.pitch_speed;
     let delta_yaw = delta.x * camera_settings.yaw_speed;
 
     // Obtain the existing pitch, yaw, and roll values from the transform.
     let (yaw, pitch, roll) = camera.rotation.to_euler(EulerRot::YXZ);
 
-    // Establish the new yaw and pitch, preventing the pitch value from exceeding our limits.
     let pitch = (pitch + delta_pitch).clamp(
         camera_settings.pitch_range.start,
         camera_settings.pitch_range.end,
@@ -205,13 +209,6 @@ fn camera_movement(
         camera.translation = camera_settings.follow_default_position;
         camera.look_at(target, Vec3::Y);
     }
-}
-
-fn print_fps(diagnostics: Res<DiagnosticsStore>) {
-    let fps = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
-    let fps = fps.unwrap().value().unwrap_or(0.0);
-    #[cfg(debug_assertions)]
-    info!("{:?}", fps);
 }
 
 fn subject_movement(
@@ -250,9 +247,9 @@ fn input_system(
         }
     }
 
-    // switch to gamepad when connected
+    // Switch to gamepad when connected
     if is_gamepad_connected.0 == false {
-        button_input(input, keyboard_input, keymap);
+        button_input_system(input, keyboard_input, keymap);
     } else if is_gamepad_connected.0 == true {
         let gamepad_input = gamepad_input_system(gamepads, connection_events);
 
@@ -278,12 +275,12 @@ fn input_system(
     }
 }
 
-fn button_input(
+fn button_input_system(
     mut input: ResMut<'_, InputAxis>,
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
     keymap: Res<'_, Keymap>,
 ) {
-    // Z axis (forward)
+    // X axis (pitch up/down)
     if keyboard_input.pressed(keymap.up) {
         input.x = 1.0;
     } else if keyboard_input.pressed(keymap.down) {
@@ -292,7 +289,7 @@ fn button_input(
         input.x = 0.0
     }
 
-    // X axis (left/right)
+    // Z axis (yaw left/right)
     if keyboard_input.pressed(keymap.rudder_left) {
         input.z = -1.0
     } else if keyboard_input.pressed(keymap.rudder_right) {
@@ -301,7 +298,7 @@ fn button_input(
         input.z = 0.0
     }
 
-    // Y axis roll left/right
+    // Y axis (roll left/right)
     if keyboard_input.pressed(keymap.roll_left) {
         input.y = 1.0
     } else if keyboard_input.pressed(keymap.roll_right) {
@@ -323,6 +320,7 @@ fn gamepad_input_system(
         let left_stick_y = gamepad.get(GamepadAxis::LeftStickY).unwrap();
         let right_stick_x = gamepad.get(GamepadAxis::RightStickX).unwrap();
 
+        // Should just use the first gamepad that is connected, having two is rare
         return (left_stick_y, right_stick_x, left_stick_x);
     }
 
