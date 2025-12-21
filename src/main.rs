@@ -57,8 +57,8 @@ struct CameraSettings {
     // Clamp pitch to this range
     pub pitch_range: Range<f32>,
     pub yaw_speed: f32,
-    pub default_position: Vec3,
-    pub default_lookat: Vec3,
+    pub follow_default_position: Vec3,
+    pub follow_default_lookat: Vec3,
 }
 
 impl Default for CameraSettings {
@@ -70,12 +70,12 @@ impl Default for CameraSettings {
             pitch_speed: 0.003,
             pitch_range: -pitch_limit..pitch_limit,
             yaw_speed: 0.004,
-            default_position: Vec3 {
+            follow_default_position: Vec3 {
                 x: 0.0,
                 y: 5.0,
                 z: -18.0,
             },
-            default_lookat: Vec3 {
+            follow_default_lookat: Vec3 {
                 x: 0.0,
                 y: 2.0,
                 z: 0.0,
@@ -148,8 +148,8 @@ fn setup(
                     Exposure::SUNLIGHT,
                     Tonemapping::AgX,
                     Bloom::NATURAL,
-                    Transform::from_translation(camera_settings.default_position)
-                        .looking_at(camera_settings.default_lookat, Vec3::Y),
+                    Transform::from_translation(camera_settings.follow_default_position)
+                        .looking_at(camera_settings.follow_default_lookat, Vec3::Y),
                 ))
                 .insert(FollowCamera);
         });
@@ -194,7 +194,7 @@ fn camera_movement(
 
     // Adjust the translation to maintain the correct orientation toward the orbit target.
     // In our example it's a static target, but this could easily be customized.
-    let target = camera_settings.default_lookat;
+    let target = camera_settings.follow_default_lookat;
     if mouse_buttons.pressed(MouseButton::Right) {
         camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
         camera.translation = target - camera.forward() * camera_settings.orbit_distance;
@@ -202,7 +202,7 @@ fn camera_movement(
 
     // camera reset logic
     if keyboard_input.just_pressed(keymap.reset_camera) {
-        camera.translation = camera_settings.default_position;
+        camera.translation = camera_settings.follow_default_position;
         camera.look_at(target, Vec3::Y);
     }
 }
