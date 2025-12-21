@@ -13,6 +13,8 @@ use bevy::{
 };
 use std::{f32::consts::FRAC_PI_2, ops::Range};
 
+mod aircraft_mechanics;
+
 #[derive(Resource)]
 struct Keymap {
     reset_camera: KeyCode,
@@ -122,7 +124,12 @@ fn main() {
         .add_systems(Startup, setup)
         .add_systems(
             Update,
-            (input_system, subject_movement, print_fps, camera_movement),
+            (
+                input_system,
+                aircraft_mechanics::aircraft_mechanics,
+                print_fps,
+                camera_movement,
+            ),
         )
         .run();
 }
@@ -208,26 +215,6 @@ fn camera_movement(
     if keyboard_input.just_pressed(keymap.reset_camera) {
         camera.translation = camera_settings.follow_default_position;
         camera.look_at(target, Vec3::Y);
-    }
-}
-
-fn subject_movement(
-    mut query: Query<&mut Transform, With<Aircraft>>,
-    time: Res<Time>,
-    input: Res<InputAxis>,
-    mut rotation: ResMut<RotationOfSubject>,
-) {
-    let delta = time.delta_secs();
-    for mut transform in &mut query {
-        let rotation_x = Quat::from_rotation_x(input.x * delta);
-        let rotation_z = Quat::from_rotation_z(input.z * delta);
-        transform.rotate_local(rotation_x);
-        transform.rotate_local(rotation_z);
-
-        let forward = transform.back();
-        transform.translation += forward * delta * 10.; //* input.z; // my right stick only works on web (idk why), thats why I neglect it completely
-
-        rotation.0 = transform.rotation;
     }
 }
 
