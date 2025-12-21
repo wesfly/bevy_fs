@@ -321,9 +321,9 @@ fn gamepad_input_system(
     for (_entity, gamepad) in &gamepads {
         let left_stick_x = gamepad.get(GamepadAxis::LeftStickX).unwrap();
         let left_stick_y = gamepad.get(GamepadAxis::LeftStickY).unwrap();
-        let right_stick_y = gamepad.get(GamepadAxis::RightStickX).unwrap();
+        let right_stick_x = gamepad.get(GamepadAxis::RightStickX).unwrap();
 
-        return (left_stick_y, right_stick_y, left_stick_x);
+        return (left_stick_y, right_stick_x, left_stick_x);
     }
 
     // return zero if nothing is connected, but this technially shouldn't happen
