@@ -12,6 +12,30 @@ use bevy::{
 use std::{f32::consts::FRAC_PI_2, ops::Range};
 
 #[derive(Resource)]
+struct Keymap {
+    reset_camera: KeyCode,
+    up: KeyCode,
+    down: KeyCode,
+    rudder_left: KeyCode,
+    rudder_right: KeyCode,
+    roll_left: KeyCode,
+    roll_right: KeyCode,
+}
+impl Default for Keymap {
+    fn default() -> Self {
+        Self {
+            reset_camera: KeyCode::KeyR,
+            up: KeyCode::KeyW,
+            down: KeyCode::KeyS,
+            rudder_left: KeyCode::KeyA,
+            rudder_right: KeyCode::KeyD,
+            roll_left: KeyCode::KeyQ,
+            roll_right: KeyCode::KeyE,
+        }
+    }
+}
+
+#[derive(Resource)]
 struct GamepadSettings {
     control_snapping_enabled: bool,
     control_snapping_treshold: f32,
@@ -71,10 +95,10 @@ struct Aircraft;
 
 #[derive(Resource)]
 struct InputAxis {
-    x: f32,
-    y: f32,
-    z: f32,
-} // all three spacial axis
+    x: f32, // Pitch
+    y: f32, // Yaw
+    z: f32, // Roll
+}
 
 #[derive(Resource)]
 struct IsGamepadConnected(bool);
@@ -91,6 +115,7 @@ fn main() {
         .insert_resource(GamepadSettings::default())
         .insert_resource(IsGamepadConnected(false))
         .insert_resource(CameraSettings::default())
+        .insert_resource(Keymap::default())
         .insert_resource(RotationOfSubject(quat(0.0, 0.0, 0.0, 0.0)))
         .add_systems(Startup, setup)
         .add_systems(
@@ -146,6 +171,8 @@ fn camera_movement(
     camera_settings: Res<CameraSettings>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     mouse_motion: Res<AccumulatedMouseMotion>,
+    keyboard_input: Res<'_, ButtonInput<KeyCode>>,
+    keymap: Res<Keymap>,
 ) {
     let delta = mouse_motion.delta;
     // Mouse motion is one of the few inputs that should not be multiplied by delta time,
@@ -174,7 +201,7 @@ fn camera_movement(
     }
 
     // camera reset logic
-    if mouse_buttons.just_pressed(MouseButton::Left) {
+    if keyboard_input.just_pressed(keymap.reset_camera) {
         camera.translation = camera_settings.default_position;
         camera.look_at(target, Vec3::Y);
     }
@@ -195,13 +222,13 @@ fn subject_movement(
 ) {
     let delta = time.delta_secs();
     for mut transform in &mut query {
-        let rotation_x = Quat::from_rotation_x(input.y * delta);
-        let rotation_z = Quat::from_rotation_z(input.x * delta);
+        let rotation_x = Quat::from_rotation_x(input.x * delta);
+        let rotation_z = Quat::from_rotation_z(input.z * delta);
         transform.rotate_local(rotation_x);
         transform.rotate_local(rotation_z);
 
         let forward = transform.back();
-        transform.translation += forward * delta * 10.; //* input.z; // why do my rightstick only work on web??
+        transform.translation += forward * delta * 10.; //* input.z; // my right stick only works on web (idk why), thats why I neglect it completely
 
         rotation.0 = transform.rotation;
     }
@@ -214,6 +241,7 @@ fn input_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut connection_events: MessageReader<GamepadConnectionEvent>,
     gamepad_settings: Res<GamepadSettings>,
+    keymap: Res<Keymap>,
 ) {
     for connection_event in connection_events.read() {
         info!("{:?}", connection_event);
@@ -224,7 +252,7 @@ fn input_system(
 
     // switch to gamepad when connected
     if is_gamepad_connected.0 == false {
-        button_input(input, keyboard_input);
+        button_input(input, keyboard_input, keymap);
     } else if is_gamepad_connected.0 == true {
         let gamepad_input = gamepad_input_system(gamepads, connection_events);
 
@@ -250,32 +278,36 @@ fn input_system(
     }
 }
 
-fn button_input(mut input: ResMut<'_, InputAxis>, keyboard_input: Res<'_, ButtonInput<KeyCode>>) {
+fn button_input(
+    mut input: ResMut<'_, InputAxis>,
+    keyboard_input: Res<'_, ButtonInput<KeyCode>>,
+    keymap: Res<Keymap>,
+) {
     // Z axis (forward)
-    if keyboard_input.pressed(KeyCode::KeyW) {
-        input.y = 1.0;
-    } else if keyboard_input.pressed(KeyCode::KeyS) {
-        input.y = -1.0;
-    } else {
-        input.y = 0.0
-    }
-
-    // X axis (left/right)
-    if keyboard_input.pressed(KeyCode::KeyA) {
-        input.x = -1.0
-    } else if keyboard_input.pressed(KeyCode::KeyD) {
+    if keyboard_input.pressed(keymap.up) {
         input.x = 1.0;
+    } else if keyboard_input.pressed(keymap.down) {
+        input.x = -1.0;
     } else {
         input.x = 0.0
     }
 
-    // Y axis (up/down)
-    if keyboard_input.pressed(KeyCode::KeyQ) {
-        input.z = 1.0
-    } else if keyboard_input.pressed(KeyCode::KeyE) {
-        input.z = -1.0;
+    // X axis (left/right)
+    if keyboard_input.pressed(keymap.rudder_left) {
+        input.z = -1.0
+    } else if keyboard_input.pressed(keymap.rudder_right) {
+        input.z = 1.0;
     } else {
         input.z = 0.0
+    }
+
+    // Y axis roll left/right
+    if keyboard_input.pressed(keymap.roll_left) {
+        input.y = 1.0
+    } else if keyboard_input.pressed(keymap.roll_right) {
+        input.y = -1.0;
+    } else {
+        input.y = 0.0
     }
 }
 
@@ -291,8 +323,7 @@ fn gamepad_input_system(
         let left_stick_y = gamepad.get(GamepadAxis::LeftStickY).unwrap();
         let right_stick_y = gamepad.get(GamepadAxis::RightStickX).unwrap();
 
-        // xy and something else
-        return (left_stick_x, left_stick_y, right_stick_y);
+        return (left_stick_y, right_stick_y, left_stick_x);
     }
 
     // return zero if nothing is connected, but this technially shouldn't happen
