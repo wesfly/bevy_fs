@@ -68,14 +68,14 @@ impl Default for CameraSettings {
         // Limiting pitch stops some unexpected rotation past 90° up or down.
         let pitch_limit = FRAC_PI_2 - 0.01;
         Self {
-            orbit_distance: 20.0,
+            orbit_distance: 40.0,
             pitch_speed: 0.003,
             pitch_range: -pitch_limit..pitch_limit,
             yaw_speed: 0.004,
             follow_default_position: Vec3 {
                 x: 0.0,
-                y: 5.0,
-                z: -18.0,
+                y: 10.0,
+                z: -30.0,
             },
             follow_default_lookat: Vec3 {
                 x: 0.0,
@@ -139,22 +139,22 @@ fn setup(
 
     // aircraft
     commands
-        .spawn(SceneRoot(
-            asset_server.load(GltfAssetLabel::Scene(0).from_asset("simplPlane.glb")),
+        .spawn((
+            Transform::from_xyz(0.0, 0.0, 0.0),
+            SceneRoot(asset_server.load("aircraft.glb#Scene0")),
+            Aircraft,
         ))
-        .insert(Aircraft)
         .with_children(|parent| {
-            parent
-                .spawn((
-                    Camera3d::default(),
-                    Atmosphere::EARTH,
-                    Exposure::SUNLIGHT,
-                    Tonemapping::AgX,
-                    Bloom::NATURAL,
-                    Transform::from_translation(camera_settings.follow_default_position)
-                        .looking_at(camera_settings.follow_default_lookat, Vec3::Y),
-                ))
-                .insert(FollowCamera);
+            parent.spawn((
+                Camera3d::default(),
+                Transform::from_translation(camera_settings.follow_default_position)
+                    .looking_at(camera_settings.follow_default_lookat, Vec3::Y),
+                Atmosphere::EARTH,
+                Exposure::SUNLIGHT,
+                Tonemapping::AgX,
+                Bloom::NATURAL,
+                FollowCamera,
+            ));
         });
 
     commands.spawn((
