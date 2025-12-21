@@ -52,7 +52,7 @@ struct FollowCamera;
 struct Aircraft;
 
 #[derive(Resource)]
-struct Input {
+struct InputAxis {
     x: f32,
     y: f32,
     z: f32,
@@ -65,7 +65,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
-        .insert_resource(Input {
+        .insert_resource(InputAxis {
             x: 0.0,
             y: 0.0,
             z: 0.0,
@@ -171,7 +171,7 @@ fn print_fps(diagnostics: Res<DiagnosticsStore>) {
 fn subject_movement(
     mut query: Query<&mut Transform, With<Aircraft>>,
     time: Res<Time>,
-    input: Res<Input>,
+    input: Res<InputAxis>,
     mut rotation: ResMut<RotationOfSubject>,
 ) {
     let delta = time.delta_secs();
@@ -190,7 +190,7 @@ fn subject_movement(
 
 fn input_system(
     mut is_gamepad_connected: ResMut<IsGamepadConnected>,
-    mut input: ResMut<Input>,
+    mut input: ResMut<InputAxis>,
     gamepads: Query<(Entity, &Gamepad)>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut connection_events: MessageReader<GamepadConnectionEvent>,
@@ -233,7 +233,7 @@ fn input_system(
     }
 }
 
-fn button_input(mut input: ResMut<'_, Input>, keyboard_input: Res<'_, ButtonInput<KeyCode>>) {
+fn button_input(mut input: ResMut<'_, InputAxis>, keyboard_input: Res<'_, ButtonInput<KeyCode>>) {
     // Z axis (forward)
     if keyboard_input.pressed(KeyCode::KeyW) {
         input.y = 1.0;
