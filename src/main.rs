@@ -34,6 +34,7 @@ struct CameraSettings {
     pub pitch_range: Range<f32>,
     pub yaw_speed: f32,
     pub default_position: Vec3,
+    pub default_lookat: Vec3,
 }
 
 impl Default for CameraSettings {
@@ -47,8 +48,13 @@ impl Default for CameraSettings {
             yaw_speed: 0.004,
             default_position: Vec3 {
                 x: 0.0,
-                y: 9.0,
+                y: 5.0,
                 z: -18.0,
+            },
+            default_lookat: Vec3 {
+                x: 0.0,
+                y: 2.0,
+                z: 0.0,
             },
         }
     }
@@ -118,7 +124,7 @@ fn setup(
                     Tonemapping::AgX,
                     Bloom::NATURAL,
                     Transform::from_translation(camera_settings.default_position)
-                        .looking_at(Vec3::ZERO, Vec3::Y),
+                        .looking_at(camera_settings.default_lookat, Vec3::Y),
                 ))
                 .insert(FollowCamera);
         });
@@ -161,7 +167,7 @@ fn camera_movement(
 
     // Adjust the translation to maintain the correct orientation toward the orbit target.
     // In our example it's a static target, but this could easily be customized.
-    let target = Vec3::ZERO;
+    let target = camera_settings.default_lookat;
     if mouse_buttons.pressed(MouseButton::Right) {
         camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
         camera.translation = target - camera.forward() * camera_settings.orbit_distance;
