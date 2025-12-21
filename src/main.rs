@@ -195,7 +195,7 @@ fn subject_movement(
         transform.rotate_local(rotation_z);
 
         let forward = transform.back();
-        transform.translation += forward * delta * 10.0;
+        transform.translation += forward * delta * 10.; //* input.z; // why do my rightstick only work on web??
 
         rotation.0 = transform.rotation;
     }
@@ -283,8 +283,7 @@ fn gamepad_input_system(
     for (_entity, gamepad) in &gamepads {
         let left_stick_x = gamepad.get(GamepadAxis::LeftStickX).unwrap();
         let left_stick_y = gamepad.get(GamepadAxis::LeftStickY).unwrap();
-
-        let right_stick_y = 0.0;
+        let right_stick_y = gamepad.get(GamepadAxis::RightStickX).unwrap();
 
         // xy and something else
         return (left_stick_x, left_stick_y, right_stick_y);
