@@ -142,6 +142,17 @@ fn camera_movement(
         camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
         camera.translation = target - camera.forward() * camera_settings.orbit_distance;
     }
+
+    // camera reset logic
+    if mouse_buttons.just_pressed(MouseButton::Left) {
+        camera.translation = Vec3 {
+            x: 0.0,
+            y: 9.0,
+            z: -18.0,
+        };
+        // camera.rotation = Quat::from_euler(EulerRot::YXZ, -1.0, pitch, 0.0);
+        camera.look_at(target, Vec3::Y);
+    }
 }
 
 fn print_fps(diagnostics: Res<DiagnosticsStore>) {
