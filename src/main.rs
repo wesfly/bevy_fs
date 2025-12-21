@@ -21,6 +21,7 @@ struct CameraSettings {
     // Clamp pitch to this range
     pub pitch_range: Range<f32>,
     pub yaw_speed: f32,
+    pub default_position: Vec3,
 }
 
 impl Default for CameraSettings {
@@ -32,6 +33,11 @@ impl Default for CameraSettings {
             pitch_speed: 0.003,
             pitch_range: -pitch_limit..pitch_limit,
             yaw_speed: 0.004,
+            default_position: Vec3 {
+                x: 0.0,
+                y: 9.0,
+                z: -18.0,
+            },
         }
     }
 }
@@ -75,7 +81,11 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    camera_settings: Res<CameraSettings>,
+) {
     // circular base
     commands.spawn(SceneRoot(
         asset_server.load(GltfAssetLabel::Scene(0).from_asset("landscapeFS.glb")),
@@ -94,7 +104,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     Exposure::SUNLIGHT,
                     Tonemapping::AgX,
                     Bloom::NATURAL,
-                    Transform::from_xyz(0.0, 9.0, -18.0).looking_at(Vec3::ZERO, Vec3::Y),
+                    Transform::from_translation(camera_settings.default_position)
+                        .looking_at(Vec3::ZERO, Vec3::Y),
                 ))
                 .insert(FollowCamera);
         });
@@ -145,12 +156,7 @@ fn camera_movement(
 
     // camera reset logic
     if mouse_buttons.just_pressed(MouseButton::Left) {
-        camera.translation = Vec3 {
-            x: 0.0,
-            y: 9.0,
-            z: -18.0,
-        };
-        // camera.rotation = Quat::from_euler(EulerRot::YXZ, -1.0, pitch, 0.0);
+        camera.translation = camera_settings.default_position;
         camera.look_at(target, Vec3::Y);
     }
 }
