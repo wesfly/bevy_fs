@@ -7,6 +7,8 @@ The game has support for both keyboard and gamepad input.
 
 #### If gamepad connected
 
+> Note: Works only when exactly one gamepad is connected
+
 - Left stick to steer
 - `RMB + drag` to orbit
 - `R` to reset camera
