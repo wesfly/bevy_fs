@@ -9,10 +9,8 @@ pub fn aircraft_mechanics(
 ) {
     let delta = time.delta_secs();
 
-    let rotation_x = Quat::from_rotation_x(input.x * delta);
-    let rotation_z = Quat::from_rotation_z(input.z * delta);
-    transform.rotate_local(rotation_x);
-    transform.rotate_local(rotation_z);
+    let rotation_delta = Quat::from_euler(EulerRot::XYZ, input.x * delta, 0., input.z * delta);
+    transform.rotate_local(rotation_delta);
 
     let forward = transform.back();
     transform.translation += forward * delta * input.w * 10.;
