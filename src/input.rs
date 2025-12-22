@@ -3,7 +3,7 @@ use bevy::{input::gamepad::GamepadConnectionEvent, prelude::*};
 pub fn input_system(
     mut is_gamepad_connected: ResMut<IsGamepadConnected>,
     mut input: ResMut<InputAxis>,
-    gamepads: Query<(Entity, &Gamepad)>,
+    gamepad: Single<(Entity, &Gamepad)>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut connection_events: MessageReader<GamepadConnectionEvent>,
     gamepad_settings: Res<GamepadSettings>,
@@ -20,7 +20,7 @@ pub fn input_system(
     if is_gamepad_connected.0 == false {
         button_input_system(input, keyboard_input, keymap);
     } else if is_gamepad_connected.0 == true {
-        let gamepad_input = gamepad_input_system(gamepads, connection_events);
+        let gamepad_input = gamepad_input_system(gamepad, connection_events);
 
         input.x = gamepad_input.0;
         input.y = gamepad_input.1;
@@ -85,28 +85,21 @@ fn button_input_system(
 }
 
 fn gamepad_input_system(
-    gamepads: Query<(Entity, &Gamepad)>,
+    gamepad: Single<(Entity, &Gamepad)>, // I won't handle multiple gamepad for simplicity
     mut connection_events: MessageReader<GamepadConnectionEvent>,
 ) -> (f32, f32, f32, f32) {
     for connection_event in connection_events.read() {
         info!("{:?}", connection_event);
     }
-    for (_entity, gamepad) in &gamepads {
-        let left_stick_x = gamepad.get(GamepadAxis::LeftStickX).unwrap();
-        let left_stick_y = gamepad.get(GamepadAxis::LeftStickY).unwrap();
-        let right_stick_x = gamepad.get(GamepadAxis::RightStickX).unwrap();
+    let left_stick_x = gamepad.1.get(GamepadAxis::LeftStickX).unwrap();
+    let left_stick_y = gamepad.1.get(GamepadAxis::LeftStickY).unwrap();
+    let right_stick_x = gamepad.1.get(GamepadAxis::RightStickX).unwrap();
 
-        let right_stick_y; // The right side of the stick doesn't work, but this can't be zero, so I do it manually
-        if gamepad.get(GamepadAxis::RightStickY).unwrap() == 0. {
-            right_stick_y = 1.;
-        } else {
-            right_stick_y = gamepad.get(GamepadAxis::RightStickY).unwrap();
-        }
-
-        // Should just use the first gamepad that is connected, having two is rare
-        return (left_stick_y, right_stick_x, left_stick_x, right_stick_y);
+    let right_stick_y; // The right side of the stick doesn't work, but this can't be zero, so I do it manually
+    if gamepad.1.get(GamepadAxis::RightStickY).unwrap() == 0. {
+        right_stick_y = 1.;
+    } else {
+        right_stick_y = gamepad.1.get(GamepadAxis::RightStickY).unwrap();
     }
-
-    // return zero if nothing is connected, but this technially shouldn't happen
-    return (0., 0., 0., 1.);
+    return (left_stick_y, right_stick_x, left_stick_x, right_stick_y);
 }
