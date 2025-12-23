@@ -185,7 +185,7 @@ fn print_fps(diagnostics: Res<DiagnosticsStore>) {
     let fps = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
     let fps = fps.unwrap().value().unwrap_or(0.0);
     #[cfg(debug_assertions)]
-    info!("{:?}", fps);
+    info!("{:?}", fps.round() as i32);
 }
 
 fn camera_movement(
