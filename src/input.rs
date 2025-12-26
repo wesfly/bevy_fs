@@ -103,11 +103,18 @@ fn gamepad_input_system(
     let left_stick_y = gamepad.1.get(GamepadAxis::LeftStickY).unwrap();
     let right_stick_x = gamepad.1.get(GamepadAxis::RightStickX).unwrap();
 
-    let right_stick_y; // The right side of the stick doesn't work, but this can't be zero, so I do it manually
+    let mut right_stick_y = 0.; // The right side of the stick doesn't work, but this can't be zero, so I do it manually
     if gamepad.1.get(GamepadAxis::RightStickY).unwrap() == 0. {
-        right_stick_y = 1.;
+        if gamepad.1.get(GamepadButton::DPadLeft).unwrap() > 0.5 {
+            right_stick_y = 1.
+        }
+        if gamepad.1.get(GamepadButton::DPadRight).unwrap() > 0.5 {
+            right_stick_y = -1.
+        }
     } else {
         right_stick_y = gamepad.1.get(GamepadAxis::RightStickY).unwrap();
+        #[cfg(debug_assertions)]
+        warn!("this axis works now??")
     }
 
     return (left_stick_y, right_stick_x, left_stick_x, right_stick_y);
