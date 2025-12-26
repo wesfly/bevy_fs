@@ -12,8 +12,11 @@ The game has support for both keyboard and gamepad input.
 - Left stick to steer
 - `RMB + drag` to orbit
 - `R` to reset camera
+- `PgUp` and `PgDown` to throttle up and down respectively
 
 #### If no gamepad connected
+
+> Doesn't work right now, I'll fix it
 
 - `WASD` to steer
 - `RMB + drag` to orbit
