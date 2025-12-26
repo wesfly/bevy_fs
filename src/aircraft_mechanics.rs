@@ -8,9 +8,8 @@ pub fn aircraft_mechanics(
     input: Res<InputAxis>,
 ) {
     force.force = transform.up() * 500000. * ((input.w + 1.) / 2.);
-    force.torque = Vec3 {
-        x: -input.x,
-        y: input.y,
-        z: -input.z,
-    } * 1000000.
+
+    let local_vec = Vec3::new(-input.x, input.y, -input.z);
+    let world_vec = transform.rotation() * local_vec;
+    force.torque = world_vec * 5_000_000.;
 }
