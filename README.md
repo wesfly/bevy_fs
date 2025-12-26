@@ -3,6 +3,8 @@
 This is a little flight sim made in bevy. Currently it doesn't do much, but I plan to make some more commits.
 The game has support for both keyboard and gamepad input.
 
+![](Screenshot.png)
+
 ### Controls
 
 #### If gamepad connected
@@ -22,5 +24,3 @@ The game has support for both keyboard and gamepad input.
 - `RMB + drag` to orbit
 - `R` to reset camera
 - `PgUp` and `PgDown` to throttle up and down respectively
-
-![](Screenshot.png)
