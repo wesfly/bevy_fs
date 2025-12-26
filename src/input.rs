@@ -22,9 +22,9 @@ pub fn input_system(
     } else if is_gamepad_connected.0 == true {
         let gamepad_input = gamepad_input_system(gamepad, connection_events);
 
-        input.x = gamepad_input.0;
-        input.y = gamepad_input.1;
-        input.z = gamepad_input.2;
+        input.x = gamepad_input.0; // pitch
+        input.y = gamepad_input.1; // roll
+        input.z = gamepad_input.2; // yaw
 
         let threshold = gamepad_settings.control_snapping_treshold;
         let threshold_range = -threshold..threshold;
@@ -37,9 +37,9 @@ pub fn input_system(
             if threshold_range.contains(&gamepad_input.1) {
                 input.y = 0.
             }
-            if threshold_range.contains(&gamepad_input.2) {
-                input.z = 0.
-            }
+            // if threshold_range.contains(&gamepad_input.2) {
+            //     input.z = 0.
+            // }
         }
         if keyboard_input.pressed(keymap.throttle_up) {
             input.w += 0.01;
@@ -101,21 +101,24 @@ fn gamepad_input_system(
     }
     let left_stick_x = gamepad.1.get(GamepadAxis::LeftStickX).unwrap();
     let left_stick_y = gamepad.1.get(GamepadAxis::LeftStickY).unwrap();
-    let right_stick_x = gamepad.1.get(GamepadAxis::RightStickX).unwrap();
+    let right_stick_y = 1.;
 
-    let mut right_stick_y = 0.; // The right side of the stick doesn't work, but this can't be zero, so I do it manually
-    if gamepad.1.get(GamepadAxis::RightStickY).unwrap() == 0. {
+    let mut right_stick_x = 0.; // The right side of the stick doesn't work, but this can't be zero, so I do it manually
+    if gamepad.1.get(GamepadAxis::RightStickX).unwrap() == 0. {
         if gamepad.1.get(GamepadButton::DPadLeft).unwrap() > 0.5 {
-            right_stick_y = 1.
+            right_stick_x = 1.;
+            info!("left")
         }
         if gamepad.1.get(GamepadButton::DPadRight).unwrap() > 0.5 {
-            right_stick_y = -1.
+            right_stick_x = -1.;
+            info!("right")
         }
     } else {
-        right_stick_y = gamepad.1.get(GamepadAxis::RightStickY).unwrap();
+        right_stick_x = gamepad.1.get(GamepadAxis::RightStickX).unwrap();
         #[cfg(debug_assertions)]
         warn!("this axis works now??")
     }
 
-    return (left_stick_y, right_stick_x, left_stick_x, right_stick_y);
+    // pitch, roll, yaw, throttle
+    return (left_stick_y, left_stick_x, right_stick_x, right_stick_y);
 }

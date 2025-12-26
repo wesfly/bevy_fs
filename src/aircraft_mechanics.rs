@@ -9,7 +9,7 @@ pub fn aircraft_mechanics(
 ) {
     force.force = transform.up() * 500000. * ((input.w + 1.) / 2.);
 
-    let local_vec = Vec3::new(-input.x, input.y * 100., -input.z);
+    let local_vec = Vec3::new(-input.x, input.z, -input.y);
     let world_vec = transform.rotation() * local_vec;
     force.torque = world_vec * 5_000_000.;
 }
