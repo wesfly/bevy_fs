@@ -7,7 +7,7 @@ pub fn aircraft_mechanics(
     mut force: Single<&mut ExternalForce, With<Aircraft>>,
     input: Res<InputAxis>,
 ) {
-    force.force = transform.up() * 500000. * (input.w + 1.);
+    force.force = transform.up() * 500000. * ((input.w + 1.) / 2.);
     force.torque = Vec3 {
         x: -input.x,
         y: input.y,
