@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bevy = "0.17.3"
+bevy = { version="0.17.3", features=["bevy_dev_tools"] }
+bevy_rapier3d = "0.32.0"
 
 [profile.dev.package."*"]
 opt-level = 3

@@ -41,6 +41,14 @@ pub fn input_system(
                 input.z = 0.
             }
         }
+        if keyboard_input.pressed(keymap.throttle_up) {
+            input.w += 0.01;
+        }
+        if keyboard_input.pressed(keymap.throttle_down) {
+            input.w += -0.01
+        }
+
+        input.w = input.w.clamp(-1., 1.);
     }
 }
 
@@ -101,5 +109,6 @@ fn gamepad_input_system(
     } else {
         right_stick_y = gamepad.1.get(GamepadAxis::RightStickY).unwrap();
     }
+
     return (left_stick_y, right_stick_x, left_stick_x, right_stick_y);
 }
