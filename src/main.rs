@@ -9,6 +9,7 @@ use bevy::{
     light::light_consts::lux,
     pbr::Atmosphere,
     post_process::bloom::Bloom,
+    post_process::motion_blur::MotionBlur,
     prelude::*,
     scene::SceneInstanceReady,
 };
@@ -199,6 +200,10 @@ fn setup(
                 Exposure::SUNLIGHT,
                 Tonemapping::AgX,
                 Bloom::NATURAL,
+                MotionBlur {
+                    shutter_angle: 1.0,
+                    samples: 2,
+                },
                 FollowCamera,
             ));
         });
