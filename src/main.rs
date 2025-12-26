@@ -75,32 +75,32 @@ impl Default for CameraSettings {
         // Limiting pitch stops some unexpected rotation past 90° up or down.
         let pitch_limit = FRAC_PI_2 - 0.01;
         Self {
-            orbit_distance: 40.0,
+            orbit_distance: 20.0,
             pitch_speed: 0.003,
             pitch_range: -pitch_limit..pitch_limit,
             yaw_speed: 0.004,
             follow_default_position: Vec3 {
                 x: 0.0,
-                y: 10.0,
-                z: -30.0,
+                y: 6.0,
+                z: 20.0,
             },
             follow_default_lookat: Vec3 {
                 x: 0.0,
-                y: 2.0,
+                y: 4.0,
                 z: 0.0,
             },
         }
     }
 }
 
-#[derive(Resource)]
-struct RotationOfSubject(Quat);
-
 #[derive(Component)]
 struct FollowCamera;
 
 #[derive(Component)]
 struct Aircraft;
+
+#[derive(Resource)]
+struct AircraftVelocity(Vec3);
 
 #[derive(Resource)]
 struct InputAxis {
@@ -123,11 +123,15 @@ fn main() {
             z: 0.,
             w: 1.,
         })
+        .insert_resource(AircraftVelocity(Vec3 {
+            x: 0.,
+            y: 0.,
+            z: 0.,
+        }))
         .insert_resource(GamepadSettings::default())
         .insert_resource(IsGamepadConnected(false))
         .insert_resource(CameraSettings::default())
         .insert_resource(Keymap::default())
-        .insert_resource(RotationOfSubject(quat(0.0, 0.0, 0.0, 0.0)))
         .add_systems(Startup, setup)
         .add_systems(
             Update,
