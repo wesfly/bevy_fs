@@ -202,7 +202,7 @@ fn setup(
                 Bloom::NATURAL,
                 MotionBlur {
                     shutter_angle: 1.0,
-                    samples: 2,
+                    samples: 12,
                 },
                 FollowCamera,
             ));
