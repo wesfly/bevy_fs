@@ -10,6 +10,7 @@ use bevy::{
     pbr::Atmosphere,
     post_process::bloom::Bloom,
     prelude::*,
+    scene::SceneInstanceReady,
 };
 use bevy_rapier3d::prelude::*;
 use std::{f32::consts::FRAC_PI_2, ops::Range};
@@ -82,7 +83,7 @@ impl Default for CameraSettings {
             yaw_speed: 0.004,
             follow_default_position: Vec3 {
                 x: 0.0,
-                y: 6.0,
+                y: 4.0,
                 z: 20.0,
             },
             follow_default_lookat: Vec3 {
@@ -110,6 +111,12 @@ struct InputAxis {
 
 #[derive(Resource)]
 struct IsGamepadConnected(bool);
+
+#[derive(Component)]
+struct AnimationToPlay {
+    graph_handle: Handle<AnimationGraph>,
+    index: AnimationNodeIndex,
+}
 
 fn main() {
     App::new()
@@ -144,7 +151,20 @@ fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     camera_settings: Res<CameraSettings>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
 ) {
+    let (graph, index) = AnimationGraph::from_clip(
+        asset_server.load(GltfAssetLabel::Animation(0).from_asset("aircraft.glb")),
+    );
+
+    let graph_handle = graphs.add(graph);
+
+    // Create a component that stores a reference to our animation.
+    let animation_to_play = AnimationToPlay {
+        graph_handle,
+        index,
+    };
+
     // landscape
     commands.spawn(SceneRoot(
         asset_server.load(GltfAssetLabel::Scene(0).from_asset("landscapeFS.glb")),
@@ -157,6 +177,7 @@ fn setup(
     // aircraft
     commands
         .spawn((
+            animation_to_play,
             SceneRoot(asset_server.load("aircraft.glb#Scene0")),
             Aircraft,
             RigidBody::Dynamic,
@@ -168,6 +189,7 @@ fn setup(
                 torque: Vec3::ZERO,
             },
         ))
+        .observe(play_animation_when_ready)
         .with_children(|parent| {
             parent.spawn((
                 Camera3d::default(),
@@ -187,8 +209,41 @@ fn setup(
             illuminance: lux::RAW_SUNLIGHT,
             ..default()
         },
-        Transform::from_xyz(4.0, 8.0, 4.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(2.0, 1.0, 4.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
+}
+
+fn play_animation_when_ready(
+    scene_ready: On<SceneInstanceReady>,
+    mut commands: Commands,
+    children: Query<&Children>,
+    animations_to_play: Query<&AnimationToPlay>,
+    mut players: Query<&mut AnimationPlayer>,
+) {
+    // The entity we spawned in `setup_mesh_and_animation` is the trigger's target.
+    // Start by finding the AnimationToPlay component we added to that entity.
+    if let Ok(animation_to_play) = animations_to_play.get(scene_ready.entity) {
+        // The SceneRoot component will have spawned the scene as a hierarchy
+        // of entities parented to our entity. Since the asset contained a skinned
+        // mesh and animations, it will also have spawned an animation player
+        // component. Search our entity's descendants to find the animation player.
+        for child in children.iter_descendants(scene_ready.entity) {
+            if let Ok(mut player) = players.get_mut(child) {
+                // Tell the animation player to start the animation and keep
+                // repeating it.
+                //
+                // If you want to try stopping and switching animations, see the
+                // `animated_mesh_control.rs` example.
+                player.play(animation_to_play.index).repeat();
+
+                // Add the animation graph. This only needs to be done once to
+                // connect the animation player to the mesh.
+                commands
+                    .entity(child)
+                    .insert(AnimationGraphHandle(animation_to_play.graph_handle.clone()));
+            }
+        }
+    }
 }
 
 fn camera_movement(
