@@ -4,13 +4,14 @@
 use bevy::{
     camera::Exposure,
     core_pipeline::tonemapping::Tonemapping,
-    diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin},
+    dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin},
     input::mouse::AccumulatedMouseMotion,
     light::light_consts::lux,
     pbr::Atmosphere,
     post_process::bloom::Bloom,
     prelude::*,
 };
+use bevy_rapier3d::prelude::*;
 use std::{f32::consts::FRAC_PI_2, ops::Range};
 
 mod aircraft_mechanics;
@@ -100,9 +101,6 @@ struct FollowCamera;
 struct Aircraft;
 
 #[derive(Resource)]
-struct AircraftVelocity(Vec3);
-
-#[derive(Resource)]
 struct InputAxis {
     x: f32, // Pitch
     y: f32, // Yaw
@@ -116,18 +114,16 @@ struct IsGamepadConnected(bool);
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugins(FrameTimeDiagnosticsPlugin::default())
+        .add_plugins(FpsOverlayPlugin {
+            config: FpsOverlayConfig::default(),
+        })
+        .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .insert_resource(InputAxis {
             x: 0.,
             y: 0.,
             z: 0.,
             w: 1.,
         })
-        .insert_resource(AircraftVelocity(Vec3 {
-            x: 0.,
-            y: 0.,
-            z: 0.,
-        }))
         .insert_resource(GamepadSettings::default())
         .insert_resource(IsGamepadConnected(false))
         .insert_resource(CameraSettings::default())
@@ -138,7 +134,6 @@ fn main() {
             (
                 input::input_system,
                 aircraft_mechanics::aircraft_mechanics,
-                print_fps,
                 camera_movement,
             ),
         )
@@ -155,12 +150,23 @@ fn setup(
         asset_server.load(GltfAssetLabel::Scene(0).from_asset("landscapeFS.glb")),
     ));
 
+    commands
+        .spawn(Collider::cuboid(10., 1., 10.))
+        .insert(Transform::from_xyz(0., -20., 0.));
+
     // aircraft
     commands
         .spawn((
-            Transform::from_xyz(0.0, 0.0, 0.0),
             SceneRoot(asset_server.load("aircraft.glb#Scene0")),
             Aircraft,
+            RigidBody::Dynamic,
+            Collider::ball(20.),
+            Restitution::coefficient(0.2),
+            Transform::from_xyz(0., 20., 0.),
+            ExternalForce {
+                force: Vec3::ZERO,
+                torque: Vec3::ZERO,
+            },
         ))
         .with_children(|parent| {
             parent.spawn((
@@ -185,13 +191,6 @@ fn setup(
     ));
 }
 
-fn print_fps(diagnostics: Res<DiagnosticsStore>) {
-    let fps = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
-    let fps = fps.unwrap().value().unwrap_or(0.0);
-    #[cfg(debug_assertions)]
-    info!("{:?}", fps.round() as i32);
-}
-
 fn camera_movement(
     mut camera: Single<&mut Transform, With<Camera>>,
     camera_settings: Res<CameraSettings>,
@@ -214,8 +213,6 @@ fn camera_movement(
 
     let yaw = yaw + delta_yaw;
 
-    // Adjust the translation to maintain the correct orientation toward the orbit target.
-    // In our example it's a static target, but this could easily be customized.
     let target = camera_settings.follow_default_lookat;
     if mouse_buttons.pressed(MouseButton::Right) {
         camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
