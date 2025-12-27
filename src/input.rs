@@ -107,11 +107,9 @@ fn gamepad_input_system(
     if gamepad.1.get(GamepadAxis::RightStickX).unwrap() == 0. {
         if gamepad.1.get(GamepadButton::DPadLeft).unwrap() > 0.5 {
             right_stick_x = 1.;
-            info!("left")
         }
         if gamepad.1.get(GamepadButton::DPadRight).unwrap() > 0.5 {
             right_stick_x = -1.;
-            info!("right")
         }
     } else {
         right_stick_x = gamepad.1.get(GamepadAxis::RightStickX).unwrap();
