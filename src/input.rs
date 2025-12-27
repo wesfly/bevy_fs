@@ -9,15 +9,20 @@ pub fn input_system(
     gamepad_settings: Res<GamepadSettings>,
     keymap: Res<Keymap>,
 ) {
+    info!("calling input_system");
     for connection_event in connection_events.read() {
         info!("{:?}", connection_event);
         if connection_event.connected() == true {
             is_gamepad_connected.0 = true;
+            info!("Gamepad connected.")
         }
     }
 
+    info!("{}", is_gamepad_connected.0);
+
     // Switch to gamepad when connected
     if is_gamepad_connected.0 == false {
+        info!("yeeeh");
         button_input_system(input, keyboard_input, keymap);
     } else if is_gamepad_connected.0 == true {
         let gamepad_input = gamepad_input_system(gamepad, connection_events);
@@ -57,6 +62,7 @@ fn button_input_system(
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
     keymap: Res<'_, Keymap>,
 ) {
+    info!("ts now called");
     // X axis (pitch up/down)
     if keyboard_input.pressed(keymap.up) {
         input.x = 1.;
@@ -90,12 +96,16 @@ fn button_input_system(
     if keyboard_input.pressed(keymap.throttle_down) {
         input.w += -0.01
     }
+
+    info!("Using button_input_system.");
 }
 
 fn gamepad_input_system(
     gamepad: Single<(Entity, &Gamepad)>, // I won't handle multiple gamepad for simplicity
     mut connection_events: MessageReader<GamepadConnectionEvent>,
 ) -> (f32, f32, f32, f32) {
+    info!("Using gamepad.");
+
     for connection_event in connection_events.read() {
         info!("{:?}", connection_event);
     }
