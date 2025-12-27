@@ -9,7 +9,7 @@ use bevy::{
     light::light_consts::lux,
     pbr::Atmosphere,
     post_process::bloom::Bloom,
-    post_process::motion_blur::MotionBlur,
+    // post_process::motion_blur::MotionBlur, // heavy on GPU
     prelude::*,
     scene::SceneInstanceReady,
 };
@@ -200,10 +200,11 @@ fn setup(
                 Exposure::SUNLIGHT,
                 Tonemapping::AgX,
                 Bloom::NATURAL,
-                MotionBlur {
-                    shutter_angle: 1.0,
-                    samples: 12,
-                },
+                // MotionBlur is heavy to compute, only do it if your computer is strong enough
+                // MotionBlur {
+                //     shutter_angle: 1.0,
+                //     samples: 2,
+                // },
                 FollowCamera,
             ));
         });
