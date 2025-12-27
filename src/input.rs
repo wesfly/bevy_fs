@@ -9,12 +9,10 @@ pub fn input_system(
     gamepad_settings: Res<GamepadSettings>,
     keymap: Res<Keymap>,
 ) {
-    info!("calling input_system");
     for connection_event in connection_events.read() {
         info!("{:?}", connection_event);
         if connection_event.connected() == true {
             is_gamepad_connected.0 = true;
-            info!("Gamepad connected.")
         }
     }
 
@@ -104,8 +102,6 @@ fn gamepad_input_system(
     gamepad: Single<(Entity, &Gamepad)>, // I won't handle multiple gamepad for simplicity
     mut connection_events: MessageReader<GamepadConnectionEvent>,
 ) -> (f32, f32, f32, f32) {
-    info!("Using gamepad.");
-
     for connection_event in connection_events.read() {
         info!("{:?}", connection_event);
     }
@@ -123,6 +119,7 @@ fn gamepad_input_system(
         }
     } else {
         right_stick_x = gamepad.1.get(GamepadAxis::RightStickX).unwrap();
+        // On my device, the right stick only works on web (idk why)
         #[cfg(debug_assertions)]
         warn!("this axis works now??")
     }
