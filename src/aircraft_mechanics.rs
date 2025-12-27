@@ -7,9 +7,9 @@ pub fn aircraft_mechanics(
     mut force: Single<&mut ExternalForce, With<Aircraft>>,
     input: Res<InputAxis>,
 ) {
-    force.force = transform.up() * 500000. * ((input.w + 1.) / 2.);
+    force.force = transform.up() * 50_000. * ((input.w + 1.) / 2.);
 
     let local_vec = Vec3::new(-input.x, input.z, -input.y);
     let world_vec = transform.rotation() * local_vec;
-    force.torque = world_vec * 5_000_000.;
+    force.torque = world_vec * 500_000.;
 }
