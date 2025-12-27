@@ -1,5 +1,11 @@
-// I made a little flight simulator here. Check out the README for further information.
-// If you have fixes or want to contribute, just make a pull request (unless it's AI-generated)
+/*
+I made a little flight simulator here. Check out the README for further information.
+If you have fixes or want to contribute, just make a pull request (unless it's AI-generated)
+
+I don't know where these warnings are coming from (they're probably from the aircraft and its hitbox),
+and I also don't know why the button controls aren't working, but it seems to have something to do with the
+whole system not being called.
+*/
 
 use bevy::{
     camera::Exposure,
@@ -182,7 +188,7 @@ fn setup(
             SceneRoot(asset_server.load("aircraft.glb#Scene0")),
             Aircraft,
             RigidBody::Dynamic,
-            Collider::ball(20.),
+            Collider::ball(10.),
             Restitution::coefficient(0.2),
             Transform::from_xyz(0., 20., 0.),
             ExternalForce {
