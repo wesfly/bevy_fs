@@ -11,8 +11,6 @@ To switch between gamepad and keyboard, manipulate the `ENABLE_GAMEPAD` constant
 
 #### If ENABLE_GAMEPAD is true
 
-> Note: Works only when exactly one gamepad is connected
-
 - Left stick to steer
 - `RMB + drag` to orbit camera
 - `R` to reset camera
