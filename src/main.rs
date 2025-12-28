@@ -211,7 +211,6 @@ fn camera_controller(
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
     keymap: Res<Keymap>,
     mut projection: Single<&mut Projection, With<FollowCamera>>,
-    time: Res<Time>,
     mut scroll_events: MessageReader<MouseWheel>,
 ) {
     let delta = mouse_motion.delta;
