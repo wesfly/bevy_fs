@@ -2,9 +2,8 @@
 I made a little flight simulator here. Check out the README for further information.
 If you have fixes or want to contribute, just make a pull request (unless it's AI-generated)
 
-I don't know where these warnings are coming from (they're probably from the aircraft and its hitbox),
-and I also don't know why the button controls aren't working, but it seems to have something to do with the
-whole system not being called.
+I don't exactly know where these warnings are coming from (they're probably from the aircraft and its hitbox), I'm just
+ignoring them.
 */
 
 pub const ENABLE_GAMEPAD: bool = true;

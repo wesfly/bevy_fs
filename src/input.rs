@@ -97,7 +97,6 @@ pub fn input_system(
         input.yaw = gamepad_input.yaw;
         input.throttle += gamepad_input.throttle;
         input.throttle = input.throttle.clamp(0., 1.);
-        info!("{:.2}", input.throttle);
     } else {
         let mut button_input = InputAxis {
             pitch: 0.,
@@ -105,6 +104,7 @@ pub fn input_system(
             yaw: 0.,
             throttle: 0.,
         };
+
         for event in keyboard_events.read() {
             match event.key_code {
                 a if a == keymap.up => button_input.pitch = -1.,
@@ -133,5 +133,5 @@ fn clamp_input_value(value: f32, gamepad_settings: &Res<GamepadSettings>) -> f32
             return 0.;
         }
     }
-    return value;
+    value
 }
