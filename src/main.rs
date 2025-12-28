@@ -134,7 +134,7 @@ fn setup(
 
     commands
         .spawn(Collider::cuboid(10., 1., 10.))
-        .insert(Transform::from_xyz(0., -20., 0.));
+        .insert(Transform::from_xyz(0., 0., 0.));
 
     // aircraft
     commands
@@ -143,7 +143,8 @@ fn setup(
             SceneRoot(asset_server.load("aircraft.glb#Scene0")),
             Aircraft,
             RigidBody::Dynamic,
-            Collider::ball(10.),
+            Collider::cuboid(2., 1.2, 5.),
+            AdditionalMassProperties::Mass(1.),
             Restitution::coefficient(0.2),
             Transform::from_xyz(0., 20., 0.),
             ExternalForce {
