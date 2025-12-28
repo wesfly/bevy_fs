@@ -14,7 +14,7 @@ To switch between gamepad and keyboard, manipulate the `ENABLE_GAMEPAD` constant
 - Left stick to steer
 - `RMB + drag` to orbit camera
 - `R` to reset camera
-- `PgUp` and `PgDown` to throttle up and down respectively
+- `DPadUp` and `DPadDown` to throttle up and down respectively
 
 #### If ENABLE_GAMEPAD is false
 
