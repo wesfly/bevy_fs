@@ -132,8 +132,14 @@ fn setup(
         asset_server.load(GltfAssetLabel::Scene(0).from_asset("landscapeFS.glb")),
     ));
 
+    // Water
     commands
-        .spawn(Collider::cuboid(10., 1., 10.))
+        .spawn(Collider::cuboid(2000., 1., 2000.))
+        .insert(Transform::from_xyz(0., -1., 0.));
+
+    // Aircraft carrier
+    commands
+        .spawn(Collider::cuboid(60., 10., 100.))
         .insert(Transform::from_xyz(0., 0., 0.));
 
     // aircraft
@@ -145,7 +151,7 @@ fn setup(
             RigidBody::Dynamic,
             Collider::cuboid(2., 1.2, 5.),
             AdditionalMassProperties::Mass(1.),
-            Restitution::coefficient(0.2),
+            Restitution::coefficient(0.02),
             Transform::from_xyz(0., 20., 0.),
             ExternalForce {
                 force: Vec3::ZERO,
@@ -181,7 +187,7 @@ fn setup(
             illuminance: lux::RAW_SUNLIGHT,
             ..default()
         },
-        Transform::from_xyz(2.0, 1.0, 4.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(2.0, 1.0, -4.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 }
 
