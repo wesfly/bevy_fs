@@ -12,7 +12,7 @@ use bevy::{
     camera::Exposure,
     core_pipeline::tonemapping::Tonemapping,
     dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin},
-    input::mouse::AccumulatedMouseMotion,
+    input::mouse::{AccumulatedMouseMotion, MouseScrollUnit, MouseWheel},
     light::light_consts::lux,
     pbr::Atmosphere,
     post_process::bloom::Bloom,
@@ -103,7 +103,7 @@ fn main() {
             (
                 input::input_system,
                 aircraft_mechanics::aircraft_mechanics,
-                camera_movement,
+                camera_controller,
             ),
         )
         .run();
@@ -161,6 +161,10 @@ fn setup(
                 Exposure::SUNLIGHT,
                 Tonemapping::AgX,
                 Bloom::NATURAL,
+                Projection::from(PerspectiveProjection {
+                    fov: 50.0_f32.to_radians(),
+                    ..default()
+                }),
                 // MotionBlur is heavy to compute, only do it if your computer is strong enough
                 // MotionBlur {
                 //     shutter_angle: 1.0,
@@ -199,13 +203,16 @@ fn play_animation_when_ready(
     }
 }
 
-fn camera_movement(
+fn camera_controller(
     mut camera: Single<&mut Transform, With<Camera>>,
     camera_settings: Res<CameraSettings>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     mouse_motion: Res<AccumulatedMouseMotion>,
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
     keymap: Res<Keymap>,
+    mut projection: Single<&mut Projection, With<FollowCamera>>,
+    time: Res<Time>,
+    mut scroll_events: MessageReader<MouseWheel>,
 ) {
     let delta = mouse_motion.delta;
     let delta_pitch = delta.y * camera_settings.pitch_speed;
@@ -227,9 +234,21 @@ fn camera_movement(
         camera.translation = target - camera.forward() * camera_settings.orbit_distance;
     }
 
-    // camera reset logic
     if keyboard_input.just_pressed(keymap.reset_camera) {
         camera.translation = camera_settings.follow_default_position;
         camera.look_at(target, Vec3::Y);
     }
+
+    let Projection::Perspective(perspective) = projection.as_mut() else {
+        return;
+    };
+
+    for event in scroll_events.read() {
+        match event.unit {
+            MouseScrollUnit::Line => perspective.fov += event.y * 0.05,
+            MouseScrollUnit::Pixel => {}
+        }
+    }
+
+    perspective.fov = perspective.fov.clamp(0.1, std::f32::consts::FRAC_PI_2);
 }
