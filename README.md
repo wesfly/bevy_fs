@@ -7,20 +7,20 @@ The game has support for both keyboard and gamepad input.
 
 ### Controls
 
-#### If gamepad connected
+To switch between gamepad and keyboard, manipulate the `ENABLE_GAMEPAD` constant in main.rs
+
+#### If ENABLE_GAMEPAD is true
 
 > Note: Works only when exactly one gamepad is connected
 
 - Left stick to steer
-- `RMB + drag` to orbit
+- `RMB + drag` to orbit camera
 - `R` to reset camera
 - `PgUp` and `PgDown` to throttle up and down respectively
 
-#### If no gamepad connected
+#### If ENABLE_GAMEPAD is false
 
-> Doesn't work right now, I'll fix it
-
-- `WASD` to steer
-- `RMB + drag` to orbit
+- `WASDQE` to steer
+- `RMB + drag` to orbit camera
 - `R` to reset camera
 - `PgUp` and `PgDown` to throttle up and down respectively

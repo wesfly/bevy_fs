@@ -7,6 +7,8 @@ and I also don't know why the button controls aren't working, but it seems to ha
 whole system not being called.
 */
 
+pub const ENABLE_GAMEPAD: bool = true;
+
 use bevy::{
     camera::Exposure,
     core_pipeline::tonemapping::Tonemapping,
@@ -24,49 +26,7 @@ use std::{f32::consts::FRAC_PI_2, ops::Range};
 
 mod aircraft_mechanics;
 mod input;
-
-#[derive(Resource)]
-struct Keymap {
-    reset_camera: KeyCode,
-    up: KeyCode,
-    down: KeyCode,
-    rudder_left: KeyCode,
-    rudder_right: KeyCode,
-    roll_left: KeyCode,
-    roll_right: KeyCode,
-    throttle_up: KeyCode,
-    throttle_down: KeyCode,
-}
-impl Default for Keymap {
-    fn default() -> Self {
-        Self {
-            reset_camera: KeyCode::KeyR,
-            up: KeyCode::KeyW,
-            down: KeyCode::KeyS,
-            rudder_left: KeyCode::KeyA,
-            rudder_right: KeyCode::KeyD,
-            roll_left: KeyCode::KeyQ,
-            roll_right: KeyCode::KeyE,
-            throttle_up: KeyCode::PageUp,
-            throttle_down: KeyCode::PageDown,
-        }
-    }
-}
-
-#[derive(Resource)]
-struct GamepadSettings {
-    control_snapping_enabled: bool,
-    control_snapping_treshold: f32,
-}
-
-impl Default for GamepadSettings {
-    fn default() -> Self {
-        Self {
-            control_snapping_enabled: true,
-            control_snapping_treshold: 0.075,
-        }
-    }
-}
+use input::{GamepadSettings, Keymap};
 
 #[derive(Debug, Resource)]
 struct CameraSettings {
@@ -110,14 +70,11 @@ struct Aircraft;
 
 #[derive(Resource)]
 struct InputAxis {
-    x: f32, // Pitch
-    y: f32, // Yaw
-    z: f32, // Roll
-    w: f32, // Throttle
+    pitch: f32,    // Pitch
+    yaw: f32,      // Yaw
+    roll: f32,     // Roll
+    throttle: f32, // Throttle
 }
-
-#[derive(Resource)]
-struct IsGamepadConnected(bool);
 
 #[derive(Component)]
 struct AnimationToPlay {
@@ -133,15 +90,14 @@ fn main() {
         })
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .insert_resource(InputAxis {
-            x: 0.,
-            y: 0.,
-            z: 0.,
-            w: 1.,
+            pitch: 0.,
+            yaw: 0.,
+            roll: 0.,
+            throttle: 1.,
         })
         .insert_resource(GamepadSettings::default())
-        .insert_resource(IsGamepadConnected(false))
         .insert_resource(CameraSettings::default())
-        .insert_resource(Keymap::default())
+        .insert_resource(input::Keymap::default())
         .add_systems(Startup, setup)
         .add_systems(
             Update,
@@ -232,24 +188,10 @@ fn play_animation_when_ready(
     animations_to_play: Query<&AnimationToPlay>,
     mut players: Query<&mut AnimationPlayer>,
 ) {
-    // The entity we spawned in `setup_mesh_and_animation` is the trigger's target.
-    // Start by finding the AnimationToPlay component we added to that entity.
     if let Ok(animation_to_play) = animations_to_play.get(scene_ready.entity) {
-        // The SceneRoot component will have spawned the scene as a hierarchy
-        // of entities parented to our entity. Since the asset contained a skinned
-        // mesh and animations, it will also have spawned an animation player
-        // component. Search our entity's descendants to find the animation player.
         for child in children.iter_descendants(scene_ready.entity) {
             if let Ok(mut player) = players.get_mut(child) {
-                // Tell the animation player to start the animation and keep
-                // repeating it.
-                //
-                // If you want to try stopping and switching animations, see the
-                // `animated_mesh_control.rs` example.
                 player.play(animation_to_play.index).repeat();
-
-                // Add the animation graph. This only needs to be done once to
-                // connect the animation player to the mesh.
                 commands
                     .entity(child)
                     .insert(AnimationGraphHandle(animation_to_play.graph_handle.clone()));
