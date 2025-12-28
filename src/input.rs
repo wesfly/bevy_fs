@@ -1,129 +1,137 @@
-use crate::{GamepadSettings, InputAxis, IsGamepadConnected, Keymap};
-use bevy::{input::gamepad::GamepadConnectionEvent, prelude::*};
+use crate::{ENABLE_GAMEPAD, InputAxis};
+use bevy::{
+    input::{gamepad::GamepadEvent, keyboard::KeyboardInput},
+    prelude::*,
+};
+
+#[derive(Resource)]
+pub struct GamepadSettings {
+    control_snapping_enabled: bool,
+    control_snapping_range: std::ops::Range<f32>,
+}
+
+impl Default for GamepadSettings {
+    fn default() -> Self {
+        Self {
+            control_snapping_enabled: true,
+            control_snapping_range: -0.075..0.075,
+        }
+    }
+}
+
+#[derive(Resource)]
+pub struct Keymap {
+    pub reset_camera: KeyCode,
+    up: KeyCode,
+    down: KeyCode,
+    rudder_left: KeyCode,
+    rudder_right: KeyCode,
+    roll_left: KeyCode,
+    roll_right: KeyCode,
+    throttle_up: KeyCode,
+    throttle_down: KeyCode,
+}
+
+impl Default for Keymap {
+    fn default() -> Self {
+        Self {
+            reset_camera: KeyCode::KeyR,
+            up: KeyCode::KeyW,
+            down: KeyCode::KeyS,
+            rudder_left: KeyCode::KeyQ,
+            rudder_right: KeyCode::KeyE,
+            roll_left: KeyCode::KeyA,
+            roll_right: KeyCode::KeyD,
+            throttle_up: KeyCode::PageUp,
+            throttle_down: KeyCode::PageDown,
+        }
+    }
+}
+// pitch roll yaw throttle
 pub fn input_system(
-    mut is_gamepad_connected: ResMut<IsGamepadConnected>,
-    mut input: ResMut<InputAxis>,
-    gamepad: Single<(Entity, &Gamepad)>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut connection_events: MessageReader<GamepadConnectionEvent>,
+    mut gamepad_events: MessageReader<GamepadEvent>,
     gamepad_settings: Res<GamepadSettings>,
+    mut input: ResMut<InputAxis>,
+    mut keyboard_events: MessageReader<KeyboardInput>,
     keymap: Res<Keymap>,
 ) {
-    for connection_event in connection_events.read() {
-        info!("{:?}", connection_event);
-        if connection_event.connected() == true {
-            is_gamepad_connected.0 = true;
-        }
-    }
+    let mut gamepad_input = InputAxis {
+        pitch: 0.,
+        roll: 0.,
+        yaw: 0.,
+        throttle: 0.,
+    };
 
-    info!("{}", is_gamepad_connected.0);
+    if ENABLE_GAMEPAD {
+        for event in gamepad_events.read() {
+            match event {
+                GamepadEvent::Connection(e) => info!("Gamepad connection: {:?}", e),
+                GamepadEvent::Button(e) => {
+                    if e.button == GamepadButton::DPadLeft {
+                        gamepad_input.yaw = 1.;
+                    } else if e.button == GamepadButton::DPadRight {
+                        gamepad_input.yaw = -1.
+                    } else {
+                        gamepad_input.yaw = 0.
+                    }
 
-    // Switch to gamepad when connected
-    if is_gamepad_connected.0 == false {
-        info!("yeeeh");
-        button_input_system(input, keyboard_input, keymap);
-    } else if is_gamepad_connected.0 == true {
-        let gamepad_input = gamepad_input_system(gamepad, connection_events);
-
-        input.x = gamepad_input.0; // pitch
-        input.y = gamepad_input.1; // roll
-        input.z = gamepad_input.2; // yaw
-
-        let threshold = gamepad_settings.control_snapping_treshold;
-        let threshold_range = -threshold..threshold;
-
-        // Control values snap to zero when in a certain range
-        if gamepad_settings.control_snapping_enabled {
-            if threshold_range.contains(&gamepad_input.0) {
-                input.x = 0.
+                    if e.button == GamepadButton::DPadUp {
+                        gamepad_input.throttle = 0.1;
+                    } else if e.button == GamepadButton::DPadDown {
+                        gamepad_input.throttle = -0.1
+                    }
+                }
+                GamepadEvent::Axis(e) => {
+                    if e.axis == GamepadAxis::LeftStickX {
+                        gamepad_input.roll = clamp_input_value(-e.value, &gamepad_settings)
+                    }
+                    if e.axis == GamepadAxis::LeftStickY {
+                        gamepad_input.pitch = clamp_input_value(-e.value, &gamepad_settings)
+                    }
+                }
             }
-            if threshold_range.contains(&gamepad_input.1) {
-                input.y = 0.
-            }
-            // if threshold_range.contains(&gamepad_input.2) {
-            //     input.z = 0.
-            // }
-        }
-        if keyboard_input.pressed(keymap.throttle_up) {
-            input.w += 0.01;
-        }
-        if keyboard_input.pressed(keymap.throttle_down) {
-            input.w += -0.01
         }
 
-        input.w = input.w.clamp(-1., 1.);
+        input.pitch = gamepad_input.pitch;
+        input.roll = gamepad_input.roll;
+        input.yaw = gamepad_input.yaw;
+        input.throttle += gamepad_input.throttle;
+        input.throttle = input.throttle.clamp(0., 1.);
+        info!("{:.2}", input.throttle);
+    } else {
+        let mut button_input = InputAxis {
+            pitch: 0.,
+            roll: 0.,
+            yaw: 0.,
+            throttle: 0.,
+        };
+        for event in keyboard_events.read() {
+            match event.key_code {
+                a if a == keymap.up => button_input.pitch = -1.,
+                a if a == keymap.down => button_input.pitch = 1.,
+                a if a == keymap.roll_left => button_input.roll = 1.,
+                a if a == keymap.roll_right => button_input.roll = -1.,
+                a if a == keymap.rudder_right => button_input.yaw = -1.,
+                a if a == keymap.rudder_left => button_input.yaw = 1.,
+                a if a == keymap.throttle_up => button_input.throttle = 0.1,
+                a if a == keymap.throttle_down => button_input.throttle = -0.1,
+
+                _ => {}
+            }
+        }
+
+        input.pitch = button_input.pitch;
+        input.roll = button_input.roll;
+        input.yaw = button_input.yaw;
+        input.throttle += button_input.throttle;
     }
 }
 
-fn button_input_system(
-    mut input: ResMut<'_, InputAxis>,
-    keyboard_input: Res<'_, ButtonInput<KeyCode>>,
-    keymap: Res<'_, Keymap>,
-) {
-    info!("ts now called");
-    // X axis (pitch up/down)
-    if keyboard_input.pressed(keymap.up) {
-        input.x = 1.;
-    } else if keyboard_input.pressed(keymap.down) {
-        input.x = -1.;
-    } else {
-        input.x = 0.
-    }
-
-    // Z axis (yaw left/right)
-    if keyboard_input.pressed(keymap.rudder_left) {
-        input.z = -1.
-    } else if keyboard_input.pressed(keymap.rudder_right) {
-        input.z = 1.;
-    } else {
-        input.z = 0.
-    }
-
-    // Y axis (roll left/right)
-    if keyboard_input.pressed(keymap.roll_left) {
-        input.y = 1.
-    } else if keyboard_input.pressed(keymap.roll_right) {
-        input.y = -1.;
-    } else {
-        input.y = 0.
-    }
-
-    if keyboard_input.pressed(keymap.throttle_up) {
-        input.w += 0.01;
-    }
-    if keyboard_input.pressed(keymap.throttle_down) {
-        input.w += -0.01
-    }
-
-    info!("Using button_input_system.");
-}
-
-fn gamepad_input_system(
-    gamepad: Single<(Entity, &Gamepad)>, // I won't handle multiple gamepad for simplicity
-    mut connection_events: MessageReader<GamepadConnectionEvent>,
-) -> (f32, f32, f32, f32) {
-    for connection_event in connection_events.read() {
-        info!("{:?}", connection_event);
-    }
-    let left_stick_x = gamepad.1.get(GamepadAxis::LeftStickX).unwrap();
-    let left_stick_y = gamepad.1.get(GamepadAxis::LeftStickY).unwrap();
-    let right_stick_y = 1.;
-
-    let mut right_stick_x = 0.; // The right side of the stick doesn't work, but this can't be zero, so I do it manually
-    if gamepad.1.get(GamepadAxis::RightStickX).unwrap() == 0. {
-        if gamepad.1.get(GamepadButton::DPadLeft).unwrap() > 0.5 {
-            right_stick_x = 1.;
+fn clamp_input_value(value: f32, gamepad_settings: &Res<GamepadSettings>) -> f32 {
+    if gamepad_settings.control_snapping_enabled {
+        if gamepad_settings.control_snapping_range.contains(&value) {
+            return 0.;
         }
-        if gamepad.1.get(GamepadButton::DPadRight).unwrap() > 0.5 {
-            right_stick_x = -1.;
-        }
-    } else {
-        right_stick_x = gamepad.1.get(GamepadAxis::RightStickX).unwrap();
-        // On my device, the right stick only works on web (idk why)
-        #[cfg(debug_assertions)]
-        warn!("this axis works now??")
     }
-
-    // pitch, roll, yaw, throttle
-    return (left_stick_y, left_stick_x, right_stick_x, right_stick_y);
+    return value;
 }
