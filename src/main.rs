@@ -251,7 +251,7 @@ fn camera_controller(
 
     for event in scroll_events.read() {
         match event.unit {
-            MouseScrollUnit::Line => perspective.fov += event.y * 0.05,
+            MouseScrollUnit::Line => perspective.fov -= event.y * 0.05,
             MouseScrollUnit::Pixel => {}
         }
     }
