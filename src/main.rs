@@ -54,7 +54,7 @@ impl Default for CameraSettings {
             },
             follow_default_lookat: Vec3 {
                 x: 0.0,
-                y: 4.0,
+                y: 0.5,
                 z: 0.0,
             },
         }
