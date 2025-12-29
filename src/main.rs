@@ -134,12 +134,12 @@ fn setup(
 
     // Water
     commands
-        .spawn(Collider::cuboid(2000., 1., 2000.))
+        .spawn(Collider::cuboid(5_000., 1., 5_000.))
         .insert(Transform::from_xyz(0., -1., 0.));
 
     // Aircraft carrier
     commands
-        .spawn(Collider::cuboid(60., 10., 100.))
+        .spawn(Collider::cuboid(30., 10., 100.))
         .insert(Transform::from_xyz(0., 0., 0.));
 
     // aircraft
