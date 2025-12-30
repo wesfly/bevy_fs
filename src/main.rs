@@ -8,6 +8,7 @@ ignoring them.
 
 pub const ENABLE_GAMEPAD: bool = true;
 
+use avian3d::prelude::*;
 use bevy::{
     camera::Exposure,
     core_pipeline::tonemapping::Tonemapping,
@@ -20,7 +21,6 @@ use bevy::{
     prelude::*,
     scene::SceneInstanceReady,
 };
-use bevy_rapier3d::prelude::*;
 use std::{f32::consts::FRAC_PI_2, ops::Range};
 
 mod aircraft_mechanics;
@@ -87,7 +87,7 @@ fn main() {
         .add_plugins(FpsOverlayPlugin {
             config: FpsOverlayConfig::default(),
         })
-        .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugins(PhysicsPlugins::default())
         .insert_resource(InputAxis {
             pitch: 0.,
             yaw: 0.,
@@ -133,14 +133,18 @@ fn setup(
     ));
 
     // Water
-    commands
-        .spawn(Collider::cuboid(5_000., 1., 5_000.))
-        .insert(Transform::from_xyz(0., -1., 0.));
+    commands.spawn((
+        Collider::cuboid(10_000., 1., 10_000.),
+        RigidBody::Static,
+        Transform::from_xyz(0., -1., 0.),
+    ));
 
     // Aircraft carrier
-    commands
-        .spawn(Collider::cuboid(30., 10., 100.))
-        .insert(Transform::from_xyz(0., 0., 0.));
+    commands.spawn((
+        Collider::cuboid(60., 20., 200.),
+        Transform::from_xyz(0., 0., 0.),
+        RigidBody::Static,
+    ));
 
     // aircraft
     commands
@@ -149,9 +153,7 @@ fn setup(
             SceneRoot(asset_server.load("aircraft.glb#Scene0")),
             Aircraft,
             RigidBody::Dynamic,
-            Collider::cuboid(2., 1.2, 5.),
-            AdditionalMassProperties::Mass(1.),
-            Restitution::coefficient(0.02),
+            ColliderConstructorHierarchy::new(ColliderConstructor::ConvexDecompositionFromMesh),
             Transform::from_xyz(0., 20., 0.),
             ExternalForce {
                 force: Vec3::ZERO,
