@@ -128,22 +128,10 @@ fn setup(
     };
 
     // landscape
-    commands.spawn(SceneRoot(
-        asset_server.load(GltfAssetLabel::Scene(0).from_asset("landscapeFS.glb")),
-    ));
-
-    // Water
     commands.spawn((
-        Collider::cuboid(10_000., 1., 10_000.),
+        SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset("landscapeFS.glb"))),
         RigidBody::Static,
-        Transform::from_xyz(0., -1., 0.),
-    ));
-
-    // Aircraft carrier
-    commands.spawn((
-        Collider::cuboid(60., 20., 200.),
-        Transform::from_xyz(0., 0., 0.),
-        RigidBody::Static,
+        ColliderConstructorHierarchy::new(ColliderConstructor::ConvexDecompositionFromMesh),
     ));
 
     // aircraft
