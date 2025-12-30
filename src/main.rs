@@ -17,7 +17,7 @@ use bevy::{
     light::light_consts::lux,
     pbr::Atmosphere,
     post_process::bloom::Bloom,
-    // post_process::motion_blur::MotionBlur, // heavy on GPU
+    post_process::motion_blur::MotionBlur, // heavy on GPU
     prelude::*,
     scene::SceneInstanceReady,
 };
@@ -155,10 +155,6 @@ fn setup(
             RigidBody::Dynamic,
             ColliderConstructorHierarchy::new(ColliderConstructor::ConvexDecompositionFromMesh),
             Transform::from_xyz(0., 20., 0.),
-            ExternalForce {
-                force: Vec3::ZERO,
-                torque: Vec3::ZERO,
-            },
         ))
         .observe(play_animation_when_ready)
         .with_children(|parent| {
@@ -175,10 +171,10 @@ fn setup(
                     ..default()
                 }),
                 // MotionBlur is heavy to compute, only do it if your computer is strong enough
-                // MotionBlur {
-                //     shutter_angle: 1.0,
-                //     samples: 2,
-                // },
+                MotionBlur {
+                    shutter_angle: 1.0,
+                    samples: 6,
+                },
                 FollowCamera,
             ));
         });
