@@ -210,6 +210,7 @@ fn setup(
             RigidBody::Dynamic,
             ColliderConstructorHierarchy::new(ColliderConstructor::ConvexDecompositionFromMesh),
             Transform::from_xyz(0., 20., 0.),
+            Mass(5000.),
         ))
         .observe(play_animation_when_ready)
         .with_children(|parent| {
@@ -240,7 +241,7 @@ fn setup(
             illuminance: lux::RAW_SUNLIGHT,
             ..default()
         },
-        Transform::from_xyz(2.0, 1.0, -4.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(2.0, 5.0, -4.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 }
 
