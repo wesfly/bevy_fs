@@ -6,8 +6,6 @@ I don't exactly know where these InheritedVisibility warnings are coming from (t
 ignoring them.
 */
 
-pub const ENABLE_GAMEPAD: bool = true;
-
 mod aircraft_mechanics;
 mod handle_custom_properties;
 mod input;
@@ -28,7 +26,21 @@ use bevy::{
 };
 use handle_custom_properties::on_scene_spawn;
 use input::{GamepadSettings, Keymap};
-use std::{f32::consts::FRAC_PI_2, ops::Range};
+use serde::{Deserialize, Serialize};
+use std::{f32::consts::FRAC_PI_2, fs, ops::Range};
+
+#[derive(Resource, Serialize, Deserialize)]
+pub struct Settings {
+    gamepad_enabled: bool,
+}
+
+impl Settings {
+    fn fetch() -> Self {
+        let json_data = fs::read_to_string("settings.json").unwrap();
+        let settings: Self = serde_json::from_str(&json_data).unwrap();
+        settings
+    }
+}
 
 #[derive(Debug, Resource)]
 struct CameraSettings {
@@ -97,6 +109,7 @@ fn main() {
         .insert_resource(GamepadSettings::default())
         .insert_resource(CameraSettings::default())
         .insert_resource(input::Keymap::default())
+        .insert_resource(Settings::fetch())
         .add_systems(Startup, setup)
         .add_systems(
             Update,
