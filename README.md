@@ -9,7 +9,7 @@ The game has support for both keyboard and gamepad input.
 
 To switch between gamepad and keyboard, manipulate the `gamepad_enabled` field in settings.json.
 
-#### If ENABLE_GAMEPAD is true
+#### If gamepad_enabled is true
 
 - Left stick to steer
 - `DPadUp` and `DPadDown` to throttle up and down respectively
@@ -17,7 +17,7 @@ To switch between gamepad and keyboard, manipulate the `gamepad_enabled` field i
 - Mouse wheel to zoom camera
 - `R` to reset camera
 
-#### If ENABLE_GAMEPAD is false
+#### If gamepad_enabled is false
 
 - `WASDQE` to steer
 - `PgUp` and `PgDown` to throttle up and down respectively
