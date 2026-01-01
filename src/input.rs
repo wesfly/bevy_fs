@@ -1,4 +1,4 @@
-use crate::{ENABLE_GAMEPAD, InputAxis};
+use crate::{InputAxis, Settings};
 use bevy::{
     input::{gamepad::GamepadEvent, keyboard::KeyboardInput},
     prelude::*,
@@ -54,6 +54,7 @@ pub fn input_system(
     mut input: ResMut<InputAxis>,
     mut keyboard_events: MessageReader<KeyboardInput>,
     keymap: Res<Keymap>,
+    settings: Res<Settings>,
 ) {
     let mut gamepad_input = InputAxis {
         pitch: 0.,
@@ -62,7 +63,7 @@ pub fn input_system(
         throttle: 0.,
     };
 
-    if ENABLE_GAMEPAD {
+    if settings.gamepad_enabled {
         for event in gamepad_events.read() {
             match event {
                 GamepadEvent::Connection(e) => info!("Gamepad connection: {:?}", e),

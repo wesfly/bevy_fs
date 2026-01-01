@@ -7,7 +7,7 @@ The game has support for both keyboard and gamepad input.
 
 ### Controls
 
-To switch between gamepad and keyboard, manipulate the `ENABLE_GAMEPAD` constant in main.rs
+To switch between gamepad and keyboard, manipulate the `gamepad_enabled` field in settings.json.
 
 #### If ENABLE_GAMEPAD is true
 
