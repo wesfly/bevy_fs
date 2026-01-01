@@ -2,7 +2,7 @@
 I made a little flight simulator here. Check out the README for further information.
 If you have fixes or want to contribute, just make a pull request (unless it's AI-generated)
 
-I don't exactly know where these warnings are coming from (they're probably from the aircraft and its hitbox), I'm just
+I don't exactly know where these InheritedVisibility warnings are coming from (they're probably from the aircraft and its hitbox), I'm just
 ignoring them.
 */
 
@@ -117,7 +117,6 @@ fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     camera_settings: Res<CameraSettings>,
-    // meshes: Res<Assets<Mesh>>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
 ) {
     let (graph, index) = AnimationGraph::from_clip(
