@@ -23,9 +23,9 @@ use bevy::{
     input::mouse::{AccumulatedMouseMotion, MouseScrollUnit, MouseWheel},
     light::{CascadeShadowConfigBuilder, light_consts::lux},
     pbr::Atmosphere,
-    post_process::bloom::Bloom,
-    post_process::motion_blur::MotionBlur, // heavy on GPU
+    post_process::{bloom::Bloom, motion_blur::MotionBlur},
     prelude::*,
+    render::view::Hdr,
     scene::SceneInstanceReady,
 };
 use serde::{Deserialize, Serialize};
@@ -231,6 +231,7 @@ fn setup(
                     shutter_angle: 1.0,
                     samples: 6,
                 },
+                Hdr,
                 FollowCamera,
             ));
         });
