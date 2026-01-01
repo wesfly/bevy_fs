@@ -6,6 +6,7 @@ Colliders are automatically hidden.
 Thanks to Christopher Biscardi for making a tutorial about it.
 rigid_body: Static, Dynamic
 collider: TrimeshFromMesh, Cuboid
+(cube_size: Vec3, only if collider is cuboid)
 */
 
 use avian3d::prelude::*;
@@ -45,6 +46,7 @@ pub fn on_scene_spawn(
             error!("couldn't deseralize extras");
             continue;
         };
+        #[cfg(debug_assertions)]
         dbg!(&data);
         match data.collider {
             BCollider::TrimeshFromMesh => {

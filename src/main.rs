@@ -13,10 +13,11 @@ mod handle_custom_properties;
 mod input;
 
 use avian3d::prelude::*;
+#[cfg(debug_assertions)]
+use bevy::dev_tools::fps_overlay::FpsOverlayPlugin;
 use bevy::{
     camera::Exposure,
     core_pipeline::tonemapping::Tonemapping,
-    dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin},
     input::mouse::{AccumulatedMouseMotion, MouseScrollUnit, MouseWheel},
     light::{CascadeShadowConfigBuilder, light_consts::lux},
     pbr::Atmosphere,
@@ -84,11 +85,8 @@ struct AnimationToPlay {
 }
 
 fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugins(FpsOverlayPlugin {
-            config: FpsOverlayConfig::default(),
-        })
+    let mut app = App::new();
+    app.add_plugins(DefaultPlugins)
         .add_plugins(PhysicsPlugins::default())
         .insert_resource(InputAxis {
             pitch: 0.,
@@ -107,8 +105,12 @@ fn main() {
                 aircraft_mechanics::aircraft_mechanics,
                 camera_controller,
             ),
-        )
-        .run();
+        );
+
+    #[cfg(debug_assertions)]
+    app.add_plugins(FpsOverlayPlugin::default());
+
+    app.run();
 }
 
 fn setup(
