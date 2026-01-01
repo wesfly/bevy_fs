@@ -21,7 +21,7 @@ use bevy::{
     dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin},
     gltf::GltfMeshExtras,
     input::mouse::{AccumulatedMouseMotion, MouseScrollUnit, MouseWheel},
-    light::light_consts::lux,
+    light::{CascadeShadowConfigBuilder, light_consts::lux},
     pbr::Atmosphere,
     post_process::bloom::Bloom,
     post_process::motion_blur::MotionBlur, // heavy on GPU
@@ -235,6 +235,12 @@ fn setup(
             ));
         });
 
+    let cascade = CascadeShadowConfigBuilder {
+        maximum_distance: 5000.,
+        ..Default::default()
+    }
+    .build();
+
     commands.spawn((
         DirectionalLight {
             shadows_enabled: true,
@@ -242,6 +248,7 @@ fn setup(
             ..default()
         },
         Transform::from_xyz(2.0, 5.0, -4.0).looking_at(Vec3::ZERO, Vec3::Y),
+        cascade,
     ));
 }
 
