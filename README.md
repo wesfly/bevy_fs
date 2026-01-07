@@ -14,6 +14,7 @@ To switch between gamepad and keyboard, manipulate the `gamepad_enabled` field i
 - Left stick to steer
 - `DPadUp` and `DPadDown` to throttle up and down respectively
 - `RMB + drag` to orbit camera
+- `C` to switch the camera view
 - Mouse wheel to zoom camera
 - `R` to reset camera
 
@@ -22,5 +23,6 @@ To switch between gamepad and keyboard, manipulate the `gamepad_enabled` field i
 - `WASDQE` to steer
 - `PgUp` and `PgDown` to throttle up and down respectively
 - `RMB + drag` to orbit camera
+- `C` to switch the camera view
 - Mouse wheel to zoom camera
 - `R` to reset camera
