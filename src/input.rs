@@ -1,4 +1,4 @@
-use crate::{InputAxis, Settings};
+use crate::{CameraSettings, InputAxis, Settings};
 use bevy::{
     input::{gamepad::GamepadEvent, keyboard::KeyboardInput},
     prelude::*,
@@ -30,6 +30,7 @@ pub struct Keymap {
     roll_right: KeyCode,
     throttle_up: KeyCode,
     throttle_down: KeyCode,
+    change_camera: KeyCode,
 }
 
 impl Default for Keymap {
@@ -44,10 +45,11 @@ impl Default for Keymap {
             roll_right: KeyCode::KeyD,
             throttle_up: KeyCode::PageUp,
             throttle_down: KeyCode::PageDown,
+            change_camera: KeyCode::KeyC,
         }
     }
 }
-// pitch roll yaw throttle
+
 pub fn input_system(
     mut gamepad_events: MessageReader<GamepadEvent>,
     gamepad_settings: Res<GamepadSettings>,
@@ -55,6 +57,8 @@ pub fn input_system(
     mut keyboard_events: MessageReader<KeyboardInput>,
     keymap: Res<Keymap>,
     settings: Res<Settings>,
+    keyboard_input: Res<'_, ButtonInput<KeyCode>>,
+    mut camera_settings: ResMut<CameraSettings>,
 ) {
     let mut gamepad_input = InputAxis {
         pitch: 0.,
@@ -62,6 +66,14 @@ pub fn input_system(
         yaw: 0.,
         throttle: 0.,
     };
+
+    if keyboard_input.just_pressed(keymap.change_camera) {
+        if camera_settings.view == 0 {
+            camera_settings.view = 1
+        } else if camera_settings.view == 1 {
+            camera_settings.view = 0
+        }
+    }
 
     if settings.gamepad_enabled {
         for event in gamepad_events.read() {
