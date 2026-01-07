@@ -51,6 +51,8 @@ struct CameraSettings {
     pub yaw_speed: f32,
     pub follow_default_position: Vec3,
     pub follow_default_lookat: Vec3,
+    pub cockpit_default_position: Vec3,
+    pub view: u8,
 }
 
 impl Default for CameraSettings {
@@ -72,6 +74,12 @@ impl Default for CameraSettings {
                 y: 0.5,
                 z: 0.0,
             },
+            cockpit_default_position: Vec3 {
+                x: 0.4,
+                y: 0.8,
+                z: -3.0,
+            },
+            view: 0,
         }
     }
 }
@@ -232,9 +240,19 @@ fn camera_controller(
     mut projection: Single<&mut Projection, With<FollowCamera>>,
     mut scroll_events: MessageReader<MouseWheel>,
 ) {
+    let cockpit_cam: bool = camera_settings.view == 1;
+
     let delta = mouse_motion.delta;
-    let delta_pitch = delta.y * camera_settings.pitch_speed;
-    let delta_yaw = delta.x * camera_settings.yaw_speed;
+    let delta_pitch;
+    let delta_yaw;
+
+    if cockpit_cam {
+        delta_pitch = -delta.y * camera_settings.pitch_speed;
+        delta_yaw = -delta.x * camera_settings.yaw_speed;
+    } else {
+        delta_pitch = delta.y * camera_settings.pitch_speed;
+        delta_yaw = delta.x * camera_settings.yaw_speed;
+    }
 
     // Obtain the existing pitch, yaw, and roll values from the transform.
     let (yaw, pitch, roll) = camera.rotation.to_euler(EulerRot::YXZ);
@@ -246,15 +264,22 @@ fn camera_controller(
 
     let yaw = yaw + delta_yaw;
 
-    let target = camera_settings.follow_default_lookat;
-    if mouse_buttons.pressed(MouseButton::Right) {
-        camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
+    if cockpit_cam {
+        if mouse_buttons.pressed(MouseButton::Right) {
+            camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
+        }
+        camera.translation = camera_settings.cockpit_default_position;
+    } else {
+        let target = camera_settings.follow_default_lookat;
+        if mouse_buttons.pressed(MouseButton::Right) {
+            camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
+        }
         camera.translation = target - camera.forward() * camera_settings.orbit_distance;
-    }
 
-    if keyboard_input.just_pressed(keymap.reset_camera) {
-        camera.translation = camera_settings.follow_default_position;
-        camera.look_at(target, Vec3::Y);
+        if keyboard_input.just_pressed(keymap.reset_camera) {
+            camera.translation = camera_settings.follow_default_position;
+            camera.look_at(target, Vec3::Y);
+        }
     }
 
     let Projection::Perspective(perspective) = projection.as_mut() else {
