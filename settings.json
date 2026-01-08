@@ -1,3 +1,4 @@
 {
-    "gamepad_enabled": true
+    "gamepad_enabled": true,
+    "motion_blur_enabled": true
 }

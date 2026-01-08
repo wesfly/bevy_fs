@@ -33,6 +33,7 @@ use std::fs;
 #[derive(Resource, Serialize, Deserialize)]
 pub struct Settings {
     gamepad_enabled: bool,
+    motion_blur_enabled: bool,
 }
 
 impl Settings {
@@ -98,6 +99,7 @@ fn setup(
     asset_server: Res<AssetServer>,
     camera_settings: Res<CameraSettings>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
+    settings: Res<Settings>,
 ) {
     let (graph, index) = AnimationGraph::from_clip(
         asset_server.load(GltfAssetLabel::Animation(0).from_asset("aircraft.glb")),
@@ -143,11 +145,7 @@ fn setup(
                     fov: 50.0_f32.to_radians(),
                     ..default()
                 }),
-                // MotionBlur is heavy to compute, only do it if your computer is strong enough
-                MotionBlur {
-                    shutter_angle: 1.0,
-                    samples: 6,
-                },
+                motion_blur(settings).unwrap(),
                 Hdr,
                 FollowCamera,
             ));
@@ -165,7 +163,7 @@ fn setup(
             illuminance: lux::RAW_SUNLIGHT,
             ..default()
         },
-        Transform::from_xyz(2.0, 5.0, -4.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(2.0, 1.0, -4.0).looking_at(Vec3::ZERO, Vec3::Y),
         cascade,
     ));
 }
@@ -186,5 +184,16 @@ fn play_animation_when_ready(
                     .insert(AnimationGraphHandle(animation_to_play.graph_handle.clone()));
             }
         }
+    }
+}
+
+fn motion_blur(settings: Res<Settings>) -> Option<MotionBlur> {
+    if settings.motion_blur_enabled {
+        Some(MotionBlur {
+            shutter_angle: 1.0,
+            samples: 6,
+        })
+    } else {
+        None
     }
 }
