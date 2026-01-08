@@ -7,7 +7,7 @@ edition = "2024"
 avian3d = "0.4.1"
 bevy = { version="0.17.3", features=["bevy_dev_tools"] }
 serde = "1.0.228"
-serde_json = "1.0.148"
+serde_json = "1.0.149"
 
 [profile.dev.package."*"]
 opt-level = 3
