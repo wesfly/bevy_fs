@@ -24,11 +24,11 @@ use bevy::{
     render::view::Hdr,
     scene::SceneInstanceReady,
 };
-use camera::camera_controller;
+use camera::{CameraSettings, camera_controller};
 use handle_custom_properties::on_scene_spawn;
 use input::GamepadSettings;
 use serde::{Deserialize, Serialize};
-use std::{f32::consts::FRAC_PI_2, fs, ops::Range};
+use std::fs;
 
 #[derive(Resource, Serialize, Deserialize)]
 pub struct Settings {
@@ -40,48 +40,6 @@ impl Settings {
         let json_data = fs::read_to_string("settings.json").unwrap();
         let settings: Self = serde_json::from_str(&json_data).unwrap();
         settings
-    }
-}
-
-#[derive(Debug, Resource)]
-struct CameraSettings {
-    pub orbit_distance: f32,
-    pub pitch_speed: f32,
-    // Clamp pitch to this range
-    pub pitch_range: Range<f32>,
-    pub yaw_speed: f32,
-    pub follow_default_position: Vec3,
-    pub follow_default_lookat: Vec3,
-    pub cockpit_default_position: Vec3,
-    pub view: u8,
-}
-
-impl Default for CameraSettings {
-    fn default() -> Self {
-        // Limiting pitch stops some unexpected rotation past 90° up or down.
-        let pitch_limit = FRAC_PI_2 - 0.01;
-        Self {
-            orbit_distance: 20.0,
-            pitch_speed: 0.003,
-            pitch_range: -pitch_limit..pitch_limit,
-            yaw_speed: 0.004,
-            follow_default_position: Vec3 {
-                x: 0.0,
-                y: 4.0,
-                z: 20.0,
-            },
-            follow_default_lookat: Vec3 {
-                x: 0.0,
-                y: 0.5,
-                z: 0.0,
-            },
-            cockpit_default_position: Vec3 {
-                x: 0.4,
-                y: 0.8,
-                z: -3.0,
-            },
-            view: 0,
-        }
     }
 }
 
