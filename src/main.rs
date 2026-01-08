@@ -34,6 +34,7 @@ use std::fs;
 pub struct Settings {
     gamepad_enabled: bool,
     motion_blur_enabled: bool,
+    shadow_distance: f32,
 }
 
 impl Settings {
@@ -104,7 +105,6 @@ fn setup(
     let (graph, index) = AnimationGraph::from_clip(
         asset_server.load(GltfAssetLabel::Animation(0).from_asset("aircraft.glb")),
     );
-
     let graph_handle = graphs.add(graph);
 
     // Create a component that stores a reference to our animation.
@@ -145,14 +145,14 @@ fn setup(
                     fov: 50.0_f32.to_radians(),
                     ..default()
                 }),
-                motion_blur(settings).unwrap(),
+                motion_blur(&settings).unwrap(),
                 Hdr,
                 FollowCamera,
             ));
         });
 
     let cascade = CascadeShadowConfigBuilder {
-        maximum_distance: 5000.,
+        maximum_distance: shadow_distance(&settings),
         ..Default::default()
     }
     .build();
@@ -187,7 +187,7 @@ fn play_animation_when_ready(
     }
 }
 
-fn motion_blur(settings: Res<Settings>) -> Option<MotionBlur> {
+fn motion_blur(settings: &Res<Settings>) -> Option<MotionBlur> {
     if settings.motion_blur_enabled {
         Some(MotionBlur {
             shutter_angle: 1.0,
@@ -196,4 +196,8 @@ fn motion_blur(settings: Res<Settings>) -> Option<MotionBlur> {
     } else {
         None
     }
+}
+
+fn shadow_distance(settings: &Res<Settings>) -> f32 {
+    settings.shadow_distance
 }
