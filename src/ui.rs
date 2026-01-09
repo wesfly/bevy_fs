@@ -22,8 +22,9 @@ pub fn update_ui(
     mut altitude: Single<&mut Text, With<AltitudeText>>,
     transform: Single<&Transform, With<Aircraft>>,
 ) {
-    let mut alt_string = String::from("Altitude: ");
-    alt_string += &transform.translation.y.round().to_string();
-    alt_string += "m";
+    let alt_string = format!(
+        "Altitude: {}m",
+        &transform.translation.y.round().to_string()
+    );
     altitude.0 = alt_string;
 }
