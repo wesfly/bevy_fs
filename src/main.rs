@@ -10,10 +10,17 @@ mod aircraft_mechanics;
 mod camera;
 mod handle_custom_properties;
 mod input;
+mod ui;
+
+use crate::{
+    aircraft_mechanics::aircraft_mechanics,
+    camera::{CameraSettings, camera_controller},
+    handle_custom_properties::on_scene_spawn,
+    input::GamepadSettings,
+    ui::{setup_ui, update_ui},
+};
 
 use avian3d::prelude::*;
-#[cfg(debug_assertions)]
-use bevy::dev_tools::fps_overlay::FpsOverlayPlugin;
 use bevy::{
     camera::Exposure,
     core_pipeline::tonemapping::Tonemapping,
@@ -24,11 +31,11 @@ use bevy::{
     render::view::Hdr,
     scene::SceneInstanceReady,
 };
-use camera::{CameraSettings, camera_controller};
-use handle_custom_properties::on_scene_spawn;
-use input::GamepadSettings;
 use serde::{Deserialize, Serialize};
 use std::fs;
+
+#[cfg(debug_assertions)]
+use bevy::dev_tools::fps_overlay::FpsOverlayPlugin;
 
 #[derive(Resource, Serialize, Deserialize)]
 pub struct Settings {
@@ -79,13 +86,14 @@ fn main() {
         .insert_resource(CameraSettings::default())
         .insert_resource(input::Keymap::default())
         .insert_resource(Settings::fetch())
-        .add_systems(Startup, setup)
+        .add_systems(Startup, (setup, setup_ui))
         .add_systems(
             Update,
             (
                 input::input_system,
-                aircraft_mechanics::aircraft_mechanics,
+                aircraft_mechanics,
                 camera_controller,
+                update_ui,
             ),
         );
 
