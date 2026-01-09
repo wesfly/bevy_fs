@@ -123,7 +123,7 @@ fn setup(
     // aircraft
     let aircraft = commands
         .spawn((
-            SceneRoot(asset_server.load("collider.glb#Scene0")),
+            SceneRoot(asset_server.load("aircraft.glb#Scene1")),
             Aircraft,
             RigidBody::Dynamic,
             ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
