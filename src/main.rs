@@ -124,7 +124,7 @@ fn setup(
     // landscape
     commands
         .spawn(SceneRoot(
-            asset_server.load(GltfAssetLabel::Scene(0).from_asset("landscapeFS.glb")),
+            asset_server.load(GltfAssetLabel::Scene(0).from_asset("landscape.glb")),
         ))
         .observe(on_scene_spawn);
 
