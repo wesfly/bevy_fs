@@ -18,7 +18,7 @@ use bevy::{
     camera::Exposure,
     core_pipeline::tonemapping::Tonemapping,
     light::{CascadeShadowConfigBuilder, light_consts::lux},
-    pbr::Atmosphere,
+    pbr::{Atmosphere, AtmosphereMode, AtmosphereSettings},
     post_process::{bloom::Bloom, motion_blur::MotionBlur},
     prelude::*,
     render::view::Hdr,
@@ -115,41 +115,54 @@ fn setup(
 
     // landscape
     commands
-        .spawn((SceneRoot(
+        .spawn(SceneRoot(
             asset_server.load(GltfAssetLabel::Scene(0).from_asset("landscapeFS.glb")),
-        ),))
+        ))
         .observe(on_scene_spawn);
 
     // aircraft
-    commands
+    let aircraft = commands
         .spawn((
-            animation_to_play,
-            SceneRoot(asset_server.load("aircraft.glb#Scene0")),
+            SceneRoot(asset_server.load("collider.glb#Scene0")),
             Aircraft,
             RigidBody::Dynamic,
-            ColliderConstructorHierarchy::new(ColliderConstructor::ConvexDecompositionFromMesh),
+            ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
             Transform::from_xyz(0., 20., 0.),
             Mass(5000.),
+            Visibility::Hidden,
         ))
-        .observe(play_animation_when_ready)
-        .with_children(|parent| {
-            parent.spawn((
-                Camera3d::default(),
-                Transform::from_translation(camera_settings.follow_default_position)
-                    .looking_at(camera_settings.follow_default_lookat, Vec3::Y),
-                Atmosphere::EARTH,
-                Exposure::SUNLIGHT,
-                Tonemapping::AgX,
-                Bloom::NATURAL,
-                Projection::from(PerspectiveProjection {
-                    fov: 50.0_f32.to_radians(),
-                    ..default()
-                }),
-                motion_blur(&settings).unwrap(),
-                Hdr,
-                FollowCamera,
-            ));
-        });
+        .id();
+
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_translation(camera_settings.follow_default_position)
+            .looking_at(camera_settings.follow_default_lookat, Vec3::Y),
+        Atmosphere::EARTH,
+        AtmosphereSettings {
+            rendering_method: AtmosphereMode::Raymarched,
+            ..Default::default()
+        },
+        Exposure::SUNLIGHT,
+        Tonemapping::AgX,
+        Bloom::NATURAL,
+        Projection::from(PerspectiveProjection {
+            fov: 50.0_f32.to_radians(),
+            ..default()
+        }),
+        motion_blur(&settings).unwrap(),
+        Hdr,
+        FollowCamera,
+        ChildOf(aircraft),
+    ));
+
+    commands
+        .spawn((
+            SceneRoot(asset_server.load("aircraft.glb#Scene0")),
+            Visibility::Visible,
+            ChildOf(aircraft),
+            animation_to_play,
+        ))
+        .observe(play_animation_when_ready);
 
     let cascade = CascadeShadowConfigBuilder {
         maximum_distance: shadow_distance(&settings),
