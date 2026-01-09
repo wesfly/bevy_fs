@@ -38,8 +38,8 @@ impl Default for CameraSettings {
                 z: 0.0,
             },
             cockpit_default_position: Vec3 {
-                x: 0.4,
-                y: 0.8,
+                x: 0.35,
+                y: 1.,
                 z: -3.0,
             },
             view: 0,
