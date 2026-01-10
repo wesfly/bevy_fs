@@ -71,9 +71,9 @@ impl Settings {
 // A custom [`ExtendedMaterial`] that creates animated water ripples.
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 struct Water {
-    /// The normal map image.
-    ///
-    /// Note that, like all normal maps, this must not be loaded as sRGB.
+    // The normal map image.
+    //
+    // Note that, like all normal maps, this must not be loaded as sRGB.
     #[texture(100)]
     #[sampler(101)]
     normals: Handle<Image>,
@@ -92,12 +92,12 @@ impl MaterialExtension for Water {
 // Parameters to the water shader.
 #[derive(ShaderType, Debug, Clone)]
 struct WaterSettings {
-    /// How much to displace each octave each frame, in the u and v directions.
-    /// Two octaves are packed into each `vec4`.
+    // How much to displace each octave each frame, in the u and v directions.
+    // Two octaves are packed into each `vec4`.
     octave_vectors: [Vec4; 2],
-    /// How wide the waves are in each octave.
+    // How wide the waves are in each octave.
     octave_scales: Vec4,
-    /// How high the waves are in each octave.
+    // How high the waves are in each octave.
     octave_strengths: Vec4,
 }
 
@@ -200,7 +200,7 @@ fn setup(
         ))
         .id();
 
-    commands.spawn((
+    let mut camera = commands.spawn((
         Camera3d::default(),
         Transform::from_translation(camera_settings.follow_default_position)
             .looking_at(camera_settings.follow_default_lookat, Vec3::Y),
@@ -216,7 +216,6 @@ fn setup(
             fov: 50.0_f32.to_radians(),
             ..default()
         }),
-        motion_blur(&settings).unwrap_or_default(),
         Hdr,
         FollowCamera,
         ChildOf(aircraft),
@@ -225,6 +224,10 @@ fn setup(
         Msaa::Off,
         Fxaa::default(),
     ));
+
+    if let Some(mb) = motion_blur(&settings) {
+        camera.insert(mb);
+    }
 
     // ssr water plane
     commands.spawn((
