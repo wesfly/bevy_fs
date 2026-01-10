@@ -1,5 +1,6 @@
 {
   "gamepad_enabled": true,
   "motion_blur_enabled": true,
-  "shadow_distance": 5000.0
+  "shadow_distance": 5000.0,
+  "ssr": true
 }
