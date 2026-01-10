@@ -7,7 +7,7 @@ pub fn aircraft_mechanics(
     mut query: Query<Forces, With<Aircraft>>,
     input: Res<InputAxis>,
 ) {
-    let force = transform.up() * 30000. * (input.throttle);
+    let force = transform.up() * 35000. * (input.throttle);
     let torque = Vec3::new(input.pitch, input.yaw * 2.5, input.roll);
 
     for mut forces in &mut query {
