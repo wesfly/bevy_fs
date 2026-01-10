@@ -216,7 +216,7 @@ fn setup(
             fov: 50.0_f32.to_radians(),
             ..default()
         }),
-        motion_blur(&settings).unwrap(),
+        motion_blur(&settings).unwrap_or_default(),
         Hdr,
         FollowCamera,
         ChildOf(aircraft),
