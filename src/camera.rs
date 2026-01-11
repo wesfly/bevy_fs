@@ -1,4 +1,4 @@
-use crate::{FollowCamera, input::Keymap};
+use crate::{Aircraft, Camera, input::Keymap};
 use bevy::{
     input::mouse::{AccumulatedMouseMotion, MouseScrollUnit, MouseWheel},
     prelude::*,
@@ -48,14 +48,15 @@ impl Default for CameraSettings {
 }
 
 pub fn camera_controller(
-    mut camera: Single<&mut Transform, With<Camera>>,
+    mut camera: Single<&mut Transform, (With<Camera>, Without<Aircraft>)>,
     camera_settings: Res<CameraSettings>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     mouse_motion: Res<AccumulatedMouseMotion>,
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
     keymap: Res<Keymap>,
-    mut projection: Single<&mut Projection, With<FollowCamera>>,
+    mut projection: Single<&mut Projection, With<Camera>>,
     mut scroll_events: MessageReader<MouseWheel>,
+    // aircraft: Single<&Transform, (With<Aircraft>, Without<Camera>)>,
 ) {
     let cockpit_cam: bool = camera_settings.view == 1;
 
