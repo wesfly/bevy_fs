@@ -161,10 +161,8 @@ fn setup(
         Transform::from_translation(camera_settings.follow_default_position)
             .looking_at(camera_settings.follow_default_lookat, Vec3::Y),
         Atmosphere::EARTH,
-        AtmosphereSettings {
-            rendering_method: AtmosphereMode::Raymarched,
-            ..Default::default()
-        },
+        AtmosphereEnvironmentMapLight::default(),
+        AtmosphereSettings::default(),
         Exposure::SUNLIGHT,
         Tonemapping::AgX,
         Bloom::NATURAL,
