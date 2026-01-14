@@ -1,4 +1,4 @@
-use crate::{Aircraft, Camera, input::Keymap};
+use crate::{Aircraft, input::Keymap};
 use bevy::{
     input::mouse::{AccumulatedMouseMotion, MouseScrollUnit, MouseWheel},
     prelude::*,
@@ -13,6 +13,7 @@ pub struct CameraSettings {
     pub pitch_range: Range<f32>,
     pub yaw_speed: f32,
     pub follow_default_position: Vec3,
+    // pub follow_rotation: Dir3,
     pub follow_default_lookat: Vec3,
     pub cockpit_default_position: Vec3,
     pub view: u8,
@@ -43,6 +44,7 @@ impl Default for CameraSettings {
                 z: -3.0,
             },
             view: 0,
+            // follow_rotation: Dir3::from_xyz(0.0, 0.0, 1.0).unwrap(),
         }
     }
 }

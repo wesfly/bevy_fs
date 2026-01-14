@@ -27,8 +27,8 @@ use avian3d::prelude::*;
 use bevy::{
     camera::Exposure,
     core_pipeline::tonemapping::Tonemapping,
-    light::{CascadeShadowConfigBuilder, light_consts::lux},
-    pbr::{Atmosphere, AtmosphereMode, AtmosphereSettings, ExtendedMaterial},
+    light::{AtmosphereEnvironmentMapLight, CascadeShadowConfigBuilder, light_consts::lux},
+    pbr::{Atmosphere, AtmosphereSettings, ExtendedMaterial}, // pbr::ScatteringMedium,
     post_process::{bloom::Bloom, motion_blur::MotionBlur},
     prelude::*,
     render::view::Hdr,
@@ -57,7 +57,7 @@ impl Settings {
 }
 
 #[derive(Component)]
-struct Camera;
+struct CameraMarker;
 
 #[derive(Component)]
 struct Aircraft;
@@ -120,6 +120,7 @@ fn setup(
     settings: Res<Settings>,
     meshes: ResMut<Assets<Mesh>>,
     water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, ssr::Water>>>>,
+    // mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
 ) {
     let (graph, index) = AnimationGraph::from_clip(
         asset_server.load(GltfAssetLabel::Animation(0).from_asset("aircraft.glb")),
@@ -160,6 +161,7 @@ fn setup(
         Camera3d::default(),
         Transform::from_translation(camera_settings.follow_default_position)
             .looking_at(camera_settings.follow_default_lookat, Vec3::Y),
+        // Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
         Atmosphere::EARTH,
         AtmosphereEnvironmentMapLight::default(),
         AtmosphereSettings::default(),
@@ -171,7 +173,7 @@ fn setup(
             ..default()
         }),
         Hdr,
-        Camera,
+        CameraMarker,
         ChildOf(aircraft),
     ));
 
