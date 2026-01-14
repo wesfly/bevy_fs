@@ -28,7 +28,7 @@ use bevy::{
     camera::Exposure,
     core_pipeline::tonemapping::Tonemapping,
     light::{AtmosphereEnvironmentMapLight, CascadeShadowConfigBuilder, light_consts::lux},
-    pbr::{Atmosphere, AtmosphereSettings, ExtendedMaterial}, // pbr::ScatteringMedium,
+    pbr::{Atmosphere, AtmosphereSettings, ExtendedMaterial, ScreenSpaceAmbientOcclusion}, // pbr::ScatteringMedium,
     post_process::{bloom::Bloom, motion_blur::MotionBlur},
     prelude::*,
     render::view::Hdr,
@@ -144,7 +144,7 @@ fn setup(
         ))
         .observe(on_scene_spawn);
 
-    // aircraft
+    // Aircraft collider
     let aircraft = commands
         .spawn((
             SceneRoot(asset_server.load("aircraft.glb#Scene1")),
@@ -174,6 +174,7 @@ fn setup(
         }),
         Hdr,
         CameraMarker,
+        ScreenSpaceAmbientOcclusion::default(),
         ChildOf(aircraft),
     ));
 
@@ -181,10 +182,11 @@ fn setup(
         camera.insert(ssr);
     }
 
-    if let Some(mb) = motion_blur(&settings) {
-        camera.insert(mb);
+    if let Some(a) = motion_blur(&settings) {
+        camera.insert(a);
     }
 
+    // The real aircraft model
     commands
         .spawn((
             SceneRoot(asset_server.load("aircraft.glb#Scene0")),
@@ -195,7 +197,7 @@ fn setup(
         .observe(play_animation_when_ready);
 
     let cascade = CascadeShadowConfigBuilder {
-        maximum_distance: shadow_distance(&settings),
+        maximum_distance: settings.shadow_distance,
         ..Default::default()
     }
     .build();
@@ -239,8 +241,4 @@ fn motion_blur(settings: &Res<Settings>) -> Option<MotionBlur> {
     } else {
         None
     }
-}
-
-fn shadow_distance(settings: &Res<Settings>) -> f32 {
-    settings.shadow_distance
 }
