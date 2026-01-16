@@ -50,7 +50,8 @@ pub struct Settings {
 
 impl Settings {
     fn fetch() -> Self {
-        let json_data = fs::read_to_string("settings.json").unwrap();
+        let json_data = fs::read_to_string("settings.json")
+            .expect("Try running 'cargo run (--release)' from the project root folder.");
         let settings: Self = serde_json::from_str(&json_data).unwrap();
         settings
     }
