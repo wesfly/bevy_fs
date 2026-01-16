@@ -5,6 +5,15 @@ The game has support for both keyboard and gamepad input, but I recommend using 
 
 ![](Screenshot.png)
 
+### Installation
+
+```sh
+git clone https://codeberg.org/wesfly/bevy-fs.git
+git lfs pull # Pull the bigger files
+```
+
+Use `cargo run (--release)` to run the program.
+
 ### Controls
 
 To switch between gamepad and keyboard, manipulate the `gamepad_enabled` field in settings.json.
