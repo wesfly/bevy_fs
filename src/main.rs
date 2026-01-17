@@ -28,7 +28,10 @@ use bevy::{
     camera::Exposure,
     core_pipeline::tonemapping::Tonemapping,
     light::{AtmosphereEnvironmentMapLight, CascadeShadowConfigBuilder, light_consts::lux},
-    pbr::{Atmosphere, AtmosphereSettings, ExtendedMaterial, ScreenSpaceAmbientOcclusion}, // pbr::ScatteringMedium,
+    pbr::{
+        Atmosphere, AtmosphereSettings, ExtendedMaterial, ScatteringMedium,
+        ScreenSpaceAmbientOcclusion,
+    },
     post_process::{bloom::Bloom, motion_blur::MotionBlur},
     prelude::*,
     render::view::Hdr,
@@ -121,7 +124,7 @@ fn setup(
     settings: Res<Settings>,
     meshes: ResMut<Assets<Mesh>>,
     water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, ssr::Water>>>>,
-    // mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
+    mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
 ) {
     let (graph, index) = AnimationGraph::from_clip(
         asset_server.load(GltfAssetLabel::Animation(0).from_asset("aircraft.glb")),
@@ -162,8 +165,8 @@ fn setup(
         Camera3d::default(),
         Transform::from_translation(camera_settings.follow_default_position)
             .looking_at(camera_settings.follow_default_lookat, Vec3::Y),
-        // Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
-        Atmosphere::EARTH,
+        Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
+        // Atmosphere::EARTH,
         AtmosphereEnvironmentMapLight::default(),
         AtmosphereSettings::default(),
         Exposure::SUNLIGHT,
