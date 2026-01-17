@@ -16,7 +16,7 @@ mod ui;
 use crate::{
     aircraft_mechanics::aircraft_mechanics,
     camera::{CameraSettings, camera_controller},
-    handle_custom_properties::on_scene_spawn,
+    handle_custom_properties::{add_pickable_buttons, collider_from_gltf},
     input::GamepadSettings,
     ssr::insert_ssr_resources,
     ui::{setup_ui, update_ui},
@@ -84,6 +84,7 @@ fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins)
         .add_plugins(PhysicsPlugins::default())
+        .add_plugins(MeshPickingPlugin)
         .insert_resource(InputAxis {
             pitch: 0.,
             yaw: 0.,
@@ -146,7 +147,7 @@ fn setup(
         .spawn(SceneRoot(
             asset_server.load(GltfAssetLabel::Scene(0).from_asset("landscape.glb")),
         ))
-        .observe(on_scene_spawn);
+        .observe(collider_from_gltf);
 
     // Aircraft collider
     let aircraft = commands
@@ -197,6 +198,7 @@ fn setup(
             ChildOf(aircraft),
             animation_to_play,
         ))
+        .observe(add_pickable_buttons)
         .observe(play_animation_when_ready);
 
     let cascade = CascadeShadowConfigBuilder {
@@ -211,7 +213,7 @@ fn setup(
             illuminance: lux::RAW_SUNLIGHT,
             ..default()
         },
-        Transform::from_xyz(2.0, 1.0, -4.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(2.0, 10.0, -4.0).looking_at(Vec3::ZERO, Vec3::Y),
         cascade,
     ));
 }
