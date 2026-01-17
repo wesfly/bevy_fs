@@ -16,7 +16,7 @@ pub fn aircraft_mechanics(
         torque_factor = 3000.
     }
 
-    let force = transform.up() * 45000. * (input.throttle);
+    let force = transform.up() * 65000. * (input.throttle);
     let torque = Vec3::new(input.pitch, input.yaw * 2.5, input.roll);
 
     for mut forces in &mut query {
