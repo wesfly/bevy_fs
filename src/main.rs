@@ -166,7 +166,6 @@ fn setup(
         Transform::from_translation(camera_settings.follow_default_position)
             .looking_at(camera_settings.follow_default_lookat, Vec3::Y),
         Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
-        // Atmosphere::EARTH,
         AtmosphereEnvironmentMapLight::default(),
         AtmosphereSettings::default(),
         Exposure::SUNLIGHT,
