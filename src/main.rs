@@ -16,7 +16,7 @@ mod ui;
 use crate::{
     aircraft_mechanics::aircraft_mechanics,
     camera::{CameraSettings, camera_controller},
-    handle_custom_properties::{add_pickable_buttons, collider_from_gltf},
+    handle_custom_properties::add_pickable_buttons,
     input::GamepadSettings,
     ssr::insert_ssr_resources,
     ui::{setup_ui, update_ui},
@@ -143,11 +143,19 @@ fn setup(
     }
 
     // landscape
+    commands.spawn(SceneRoot(
+        asset_server.load(GltfAssetLabel::Scene(0).from_asset("landscape.glb")),
+    ));
+
     commands
         .spawn(SceneRoot(
-            asset_server.load(GltfAssetLabel::Scene(0).from_asset("landscape.glb")),
+            asset_server.load(GltfAssetLabel::Scene(1).from_asset("landscape.glb")),
         ))
-        .observe(collider_from_gltf);
+        .insert((
+            RigidBody::Static,
+            Visibility::Hidden,
+            ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
+        ));
 
     // Aircraft collider
     let aircraft = commands
