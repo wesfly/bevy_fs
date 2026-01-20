@@ -18,7 +18,7 @@ use crate::{
     camera::{CameraSettings, camera_controller},
     handle_custom_properties::add_pickable_buttons,
     input::GamepadSettings,
-    ssr::insert_ssr_resources,
+    ssr::{insert_ssr_resources, ssr_config},
     ui::{setup_ui, update_ui},
 };
 
@@ -190,7 +190,7 @@ fn setup(
         ChildOf(aircraft),
     ));
 
-    if let Some(ssr) = ssr::ssr_config(&settings) {
+    if let Some(ssr) = ssr_config(&settings) {
         camera.insert(ssr);
     }
 
@@ -248,8 +248,8 @@ fn play_animation_when_ready(
 fn motion_blur(settings: &Res<Settings>) -> Option<MotionBlur> {
     if settings.motion_blur_enabled {
         Some(MotionBlur {
-            shutter_angle: 1.0,
-            samples: 6,
+            shutter_angle: 0.5,
+            samples: 2,
         })
     } else {
         None
