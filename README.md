@@ -1,24 +1,34 @@
 # bevy-fs
 
-This is a little flight sim made in bevy. Currently it doesn't do much, but I plan to make some more commits.
-The game has support for both keyboard and gamepad input, but I recommend using a gamepad or joystick.
+This is a little flight sim made in Bevy.
 
 ![](Screenshot.png)
 
-### Installation
+## Features
+
+- Support for both keyboard and gamepad, but gamepad is recommended
+- An altitude display
+- 3D cockpit with clickable buttons
+- Laggy collisions that make low FPS (I hope this will fix itself in the next `avian_3d` version, there is a weird bug since Bevy 0.18.0)
+- Water with screen space reflections
+- FPS counter in when in `Debug`
+- A settings file (settings.json)
+
+## Installation
 
 ```sh
 git clone https://codeberg.org/wesfly/bevy-fs.git
-git lfs pull # Pull the bigger files
+git lfs pull # Pull the big files
 ```
 
-Use `cargo run (--release)` to run the program.
+If you have Rust installed, use `cargo run (--release)` to run the program.
+If not, you can install it here: https://rust-lang.org/tools/install/
 
-### Controls
+## Controls
 
 To switch between gamepad and keyboard, manipulate the `gamepad_enabled` field in settings.json.
 
-#### If gamepad_enabled is true
+### If gamepad_enabled is true
 
 - Left stick to steer
 - `DPadUp` and `DPadDown` to throttle up and down respectively
@@ -27,7 +37,7 @@ To switch between gamepad and keyboard, manipulate the `gamepad_enabled` field i
 - Mouse wheel to zoom camera
 - `R` to reset camera
 
-#### If gamepad_enabled is false
+### If gamepad_enabled is false
 
 - `WASDQE` to steer
 - `PgUp` and `PgDown` to throttle up and down respectively
