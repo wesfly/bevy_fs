@@ -1,12 +1,11 @@
 /*
 This file handles importing gltfs from Blender with custom properties.
 
-How to make colliders with custom properties (don't forget to export with CP enabled)
+How to make buttons with custom properties (don't forget to export with custom properties enabled)
 Colliders are automatically hidden.
 Thanks to Christopher Biscardi for making a tutorial about it.
-rigid_body: Static, Dynamic
-collider: TrimeshFromMesh, Cuboid
-(cube_size: Vec3, only if collider is cuboid)
+button: ButtonTypes
+function: ButtonID
 */
 
 use bevy::{gltf::GltfMeshExtras, prelude::*, scene::SceneInstanceReady};
@@ -19,9 +18,17 @@ pub enum ButtonTypes {
     Lever,
 }
 
+#[derive(Component, Debug, Serialize, Deserialize)]
+pub enum ButtonID {
+    Button1,
+    Button2,
+    None,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Button {
     button: ButtonTypes,
+    function: Option<ButtonID>,
 }
 
 pub fn add_pickable_buttons(
@@ -42,10 +49,17 @@ pub fn add_pickable_buttons(
         dbg!(&data);
         match data.button {
             ButtonTypes::Button => {
+                let function;
+                match data.function {
+                    Some(ButtonID::Button1) => function = ButtonID::Button1,
+                    Some(ButtonID::Button2) => function = ButtonID::Button2,
+                    _ => function = ButtonID::None,
+                }
+                let bundle = (Pickable::default(), function);
                 commands
                     .entity(entity)
-                    .insert(Pickable::default())
-                    .observe(button_event_listener);
+                    .insert(bundle)
+                    .observe(button_listener);
             }
             _ => {
                 warn!("not handled yet")
@@ -54,10 +68,27 @@ pub fn add_pickable_buttons(
     }
 }
 
-pub fn button_event_listener(hover: On<Pointer<Press>>) {
-    info!(
-        "pressed {:?}, {:?}",
-        hover.button,
-        hover.hit.position.unwrap().to_array()
-    );
+#[derive(Event)]
+struct ButtonPressEvent {
+    button: ButtonID,
+}
+
+pub fn button_listener(
+    press: On<Pointer<Press>>,
+    function_comps: Query<&ButtonID>,
+    mut commands: Commands,
+) {
+    let button_type = function_comps.get(press.entity.entity());
+    info!("pressed {:?}", button_type.unwrap());
+
+    // TODO hecky code lol
+    let event_button_type: ButtonID;
+    match button_type.unwrap() {
+        ButtonID::Button1 => event_button_type = ButtonID::Button1,
+        ButtonID::Button2 => event_button_type = ButtonID::Button2,
+        _ => event_button_type = ButtonID::None,
+    }
+    commands.trigger(ButtonPressEvent {
+        button: event_button_type,
+    });
 }
