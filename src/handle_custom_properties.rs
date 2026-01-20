@@ -59,36 +59,11 @@ pub fn add_pickable_buttons(
                 commands
                     .entity(entity)
                     .insert(bundle)
-                    .observe(button_listener);
+                    .observe(crate::buttons::button_listener);
             }
             _ => {
                 warn!("not handled yet")
             }
         }
     }
-}
-
-#[derive(Event)]
-struct ButtonPressEvent {
-    button: ButtonID,
-}
-
-pub fn button_listener(
-    press: On<Pointer<Press>>,
-    function_comps: Query<&ButtonID>,
-    mut commands: Commands,
-) {
-    let button_type = function_comps.get(press.entity.entity());
-    info!("pressed {:?}", button_type.unwrap());
-
-    // TODO hecky code lol
-    let event_button_type: ButtonID;
-    match button_type.unwrap() {
-        ButtonID::Button1 => event_button_type = ButtonID::Button1,
-        ButtonID::Button2 => event_button_type = ButtonID::Button2,
-        _ => event_button_type = ButtonID::None,
-    }
-    commands.trigger(ButtonPressEvent {
-        button: event_button_type,
-    });
 }

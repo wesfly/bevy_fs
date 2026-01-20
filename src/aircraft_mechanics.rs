@@ -1,4 +1,4 @@
-use crate::{Aircraft, InputAxis, Settings};
+use crate::{Aircraft, AircraftState, InputAxis, Settings};
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
@@ -7,6 +7,7 @@ pub fn aircraft_mechanics(
     mut query: Query<Forces, With<Aircraft>>,
     input: Res<InputAxis>,
     settings: Res<Settings>,
+    state: Res<AircraftState>,
 ) {
     // When controlling with buttons, the inertia is too high. This adjusts for that.
     let torque_factor;
@@ -16,7 +17,15 @@ pub fn aircraft_mechanics(
         torque_factor = 3000.
     }
 
-    let force = transform.up() * 65000. * (input.throttle);
+    let thrust_factor;
+
+    if state.engine_on {
+        thrust_factor = 105000.
+    } else {
+        thrust_factor = 0.
+    }
+
+    let force = transform.up() * thrust_factor * (input.throttle);
     let torque = Vec3::new(input.pitch, input.yaw * 2.5, input.roll);
 
     for mut forces in &mut query {

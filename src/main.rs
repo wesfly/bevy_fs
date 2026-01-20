@@ -7,6 +7,7 @@ ignoring them.
 */
 
 mod aircraft_mechanics;
+mod buttons;
 mod camera;
 mod handle_custom_properties;
 mod input;
@@ -42,6 +43,11 @@ use std::fs;
 
 #[cfg(debug_assertions)]
 use bevy::dev_tools::fps_overlay::FpsOverlayPlugin;
+
+#[derive(Resource)]
+pub struct AircraftState {
+    engine_on: bool,
+}
 
 #[derive(Resource, Serialize, Deserialize)]
 pub struct Settings {
@@ -95,6 +101,7 @@ fn main() {
         .insert_resource(CameraSettings::default())
         .insert_resource(input::Keymap::default())
         .insert_resource(Settings::fetch())
+        .insert_resource(AircraftState { engine_on: false })
         .add_systems(Startup, (setup, setup_ui))
         .add_systems(
             Update,
