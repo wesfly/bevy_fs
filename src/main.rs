@@ -19,7 +19,6 @@ use crate::{
     aircraft_mechanics::aircraft_mechanics,
     camera::{CameraSettings, camera_controller},
     handle_custom_properties::{buttons_from_gltf, lights_from_gltf},
-    input::GamepadSettings,
     ssr::{insert_ssr_resources, ssr_config},
     ui::UI,
 };
@@ -94,7 +93,6 @@ fn main() {
             roll: 0.,
             throttle: 1.,
         })
-        .insert_resource(GamepadSettings::default())
         .insert_resource(CameraSettings::default())
         .insert_resource(input::Keymap::default())
         .insert_resource(Settings::fetch())

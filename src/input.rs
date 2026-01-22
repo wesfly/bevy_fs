@@ -5,21 +5,6 @@ use bevy::{
 };
 
 #[derive(Resource)]
-pub struct GamepadSettings {
-    control_snapping_enabled: bool,
-    control_snapping_range: std::ops::Range<f32>,
-}
-
-impl Default for GamepadSettings {
-    fn default() -> Self {
-        Self {
-            control_snapping_enabled: true,
-            control_snapping_range: -0.075..0.075,
-        }
-    }
-}
-
-#[derive(Resource)]
 pub struct Keymap {
     pub reset_camera: KeyCode,
     up: KeyCode,
@@ -52,7 +37,6 @@ impl Default for Keymap {
 
 pub fn input_system(
     mut gamepad_events: MessageReader<GamepadEvent>,
-    gamepad_settings: Res<GamepadSettings>,
     mut input: ResMut<InputAxis>,
     mut keyboard_events: MessageReader<KeyboardInput>,
     keymap: Res<Keymap>,
@@ -96,10 +80,10 @@ pub fn input_system(
                 }
                 GamepadEvent::Axis(e) => {
                     if e.axis == GamepadAxis::LeftStickX {
-                        gamepad_input.roll = clamp_input_value(-e.value, &gamepad_settings)
+                        gamepad_input.roll = -e.value
                     }
                     if e.axis == GamepadAxis::LeftStickY {
-                        gamepad_input.pitch = clamp_input_value(-e.value, &gamepad_settings)
+                        gamepad_input.pitch = -e.value
                     }
                 }
             }
@@ -138,13 +122,4 @@ pub fn input_system(
         input.yaw = button_input.yaw;
         input.throttle += button_input.throttle;
     }
-}
-
-fn clamp_input_value(value: f32, gamepad_settings: &Res<GamepadSettings>) -> f32 {
-    if gamepad_settings.control_snapping_enabled {
-        if gamepad_settings.control_snapping_range.contains(&value) {
-            return 0.;
-        }
-    }
-    value
 }
