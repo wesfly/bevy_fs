@@ -47,8 +47,6 @@ pub fn buttons_from_gltf(
             error!("Couldn't deserialize Button from GLTF extras on {}", entity);
             continue;
         };
-        #[cfg(debug_assertions)]
-        dbg!(&data);
         match data.button {
             ButtonTypes::Button => {
                 let function;
@@ -96,11 +94,8 @@ pub fn lights_from_gltf(
             error!("Couldn't deserialize Light from GLTF extras on {}", entity);
             continue;
         };
-        #[cfg(debug_assertions)]
-        dbg!(&data);
         match data.light {
             Lights::ACol => {
-                info!("acol");
                 let material_emissive = materials.add(StandardMaterial {
                     emissive: LinearRgba::rgb(0.0, 0.0, 0.0),
                     ..default()
