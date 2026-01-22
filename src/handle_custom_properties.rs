@@ -42,7 +42,8 @@ pub fn add_pickable_buttons(
             continue;
         };
         let Ok(data) = serde_json::from_str::<Button>(&gltf_mesh_extras.value) else {
-            error!("couldn't deseralize extras (add_pickable_buttons)");
+            #[cfg(debug_assertions)]
+            error!("Couldn't deserialize Button from GLTF extras on {}", entity);
             continue;
         };
         #[cfg(debug_assertions)]
