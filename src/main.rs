@@ -56,6 +56,7 @@ pub struct Settings {
     motion_blur_enabled: bool,
     shadow_distance: f32,
     ssr: bool,
+    sun_position: Vec3,
 }
 
 impl Settings {
@@ -224,13 +225,14 @@ fn setup(
     }
     .build();
 
+    let sun_position = settings.sun_position;
     commands.spawn((
         DirectionalLight {
             shadows_enabled: true,
             illuminance: lux::RAW_SUNLIGHT,
             ..default()
         },
-        Transform::from_xyz(2.0, 0.0, -4.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_translation(sun_position).looking_at(Vec3::ZERO, Vec3::Y),
         cascade,
     ));
 }
