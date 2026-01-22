@@ -11,7 +11,7 @@ pub fn aircraft_mechanics(
 ) {
     // When controlling with buttons, the inertia is too high. This adjusts for that.
     let torque_factor;
-    if settings.gamepad_enabled {
+    if settings.gamepad.enabled {
         torque_factor = 1200.
     } else {
         torque_factor = 3000.

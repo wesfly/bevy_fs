@@ -59,7 +59,7 @@ pub fn input_system(
         }
     }
 
-    if settings.gamepad_enabled {
+    if settings.gamepad.enabled {
         for event in gamepad_events.read() {
             match event {
                 GamepadEvent::Connection(e) => info!("Gamepad connection: {:?}", e),

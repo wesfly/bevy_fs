@@ -45,9 +45,14 @@ use std::{fs, time::Duration};
 #[cfg(debug_assertions)]
 use bevy::dev_tools::fps_overlay::FpsOverlayPlugin;
 
+#[derive(Serialize, Deserialize)]
+struct Gamepad {
+    enabled: bool,
+}
+
 #[derive(Resource, Serialize, Deserialize)]
 pub struct Settings {
-    gamepad_enabled: bool,
+    gamepad: Gamepad,
     motion_blur_enabled: bool,
     shadow_distance: f32,
     ssr: bool,
