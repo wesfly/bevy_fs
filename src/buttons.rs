@@ -6,11 +6,17 @@ pub fn button_listener(
     function_comps: Query<&ButtonID>,
     mut state: ResMut<AircraftState>,
 ) {
-    let button_type = function_comps.get(press.entity.entity());
-    match button_type.unwrap() {
-        ButtonID::Button1 => state.engine_on = false,
-        ButtonID::Button2 => state.engine_on = true,
+    // TODO add button animation
+    let button_id = function_comps.get(press.entity.entity()).unwrap();
+    match button_id {
+        ButtonID::Button1 => state.engine_on = !state.engine_on,
+        ButtonID::Button2 => {
+            // TODO implement lights
+            info!("Lights aren't implemented yet.")
+        }
 
-        _ => {}
+        _ => {
+            info!("This button isn't implemented yet. Do it yourself or wait.")
+        }
     }
 }
