@@ -11,6 +11,7 @@ function: ButtonID
 use bevy::{gltf::GltfMeshExtras, prelude::*, scene::SceneInstanceReady};
 use serde::{Deserialize, Serialize};
 
+// TODO a switch is more complex than a button, it needs some more fields
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ButtonTypes {
     Switch,
@@ -31,7 +32,7 @@ pub struct Button {
     function: Option<ButtonID>,
 }
 
-pub fn add_pickable_buttons(
+pub fn buttons_from_gltf(
     trigger: On<SceneInstanceReady>,
     mut commands: Commands,
     children: Query<&Children>,
@@ -60,7 +61,53 @@ pub fn add_pickable_buttons(
                 commands
                     .entity(entity)
                     .insert(bundle)
-                    .observe(crate::buttons::button_listener);
+                    .observe(crate::aircraft::button_listener);
+            }
+            _ => {
+                warn!("not handled yet")
+            }
+        }
+    }
+}
+#[derive(Deserialize, Debug, Component)]
+pub enum Lights {
+    ACol,
+    Strobe,
+}
+#[derive(Debug, Deserialize)]
+pub struct Light {
+    light: Lights,
+}
+
+// TODO new observer for lights and glass
+pub fn lights_from_gltf(
+    trigger: On<SceneInstanceReady>,
+    mut commands: Commands,
+    children: Query<&Children>,
+    extras: Query<&GltfMeshExtras>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    for entity in children.iter_descendants(trigger.entity.entity()) {
+        let Ok(gltf_mesh_extras) = extras.get(entity) else {
+            continue;
+        };
+        let Ok(data) = serde_json::from_str::<Light>(&gltf_mesh_extras.value) else {
+            #[cfg(debug_assertions)]
+            error!("Couldn't deserialize Light from GLTF extras on {}", entity);
+            continue;
+        };
+        #[cfg(debug_assertions)]
+        dbg!(&data);
+        match data.light {
+            Lights::ACol => {
+                info!("acol");
+                let material_emissive = materials.add(StandardMaterial {
+                    emissive: LinearRgba::rgb(0.0, 0.0, 0.0),
+                    ..default()
+                });
+                commands
+                    .entity(entity)
+                    .insert((MeshMaterial3d(material_emissive), Lights::ACol));
             }
             _ => {
                 warn!("not handled yet")

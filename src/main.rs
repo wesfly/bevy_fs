@@ -6,8 +6,8 @@ I don't exactly know where these InheritedVisibility warnings are coming from (t
 ignoring them.
 */
 
+mod aircraft;
 mod aircraft_mechanics;
-mod buttons;
 mod camera;
 mod handle_custom_properties;
 mod input;
@@ -15,9 +15,10 @@ mod ssr;
 mod ui;
 
 use crate::{
+    aircraft::{AircraftState, update_anti_col},
     aircraft_mechanics::aircraft_mechanics,
     camera::{CameraSettings, camera_controller},
-    handle_custom_properties::add_pickable_buttons,
+    handle_custom_properties::{buttons_from_gltf, lights_from_gltf},
     input::GamepadSettings,
     ssr::{insert_ssr_resources, ssr_config},
     ui::{setup_ui, update_ui},
@@ -37,17 +38,13 @@ use bevy::{
     prelude::*,
     render::view::Hdr,
     scene::SceneInstanceReady,
+    time::common_conditions::on_timer,
 };
 use serde::{Deserialize, Serialize};
-use std::fs;
+use std::{fs, time::Duration};
 
 #[cfg(debug_assertions)]
 use bevy::dev_tools::fps_overlay::FpsOverlayPlugin;
-
-#[derive(Resource)]
-pub struct AircraftState {
-    engine_on: bool,
-}
 
 #[derive(Resource, Serialize, Deserialize)]
 pub struct Settings {
@@ -101,7 +98,7 @@ fn main() {
         .insert_resource(CameraSettings::default())
         .insert_resource(input::Keymap::default())
         .insert_resource(Settings::fetch())
-        .insert_resource(AircraftState { engine_on: false })
+        .insert_resource(AircraftState::default())
         .add_systems(Startup, (setup, setup_ui))
         .add_systems(
             Update,
@@ -110,6 +107,7 @@ fn main() {
                 aircraft_mechanics,
                 camera_controller,
                 update_ui,
+                update_anti_col.run_if(on_timer(Duration::from_secs(1))),
             ),
         );
 
@@ -149,7 +147,7 @@ fn setup(
         ssr::spawn_water(&mut commands, &asset_server, meshes, abc);
     }
 
-    // landscape
+    // TODO remove landscape
     commands.spawn(SceneRoot(
         asset_server.load(GltfAssetLabel::Scene(0).from_asset("landscape.glb")),
     ));
@@ -213,7 +211,8 @@ fn setup(
             ChildOf(aircraft),
             animation_to_play,
         ))
-        .observe(add_pickable_buttons)
+        .observe(buttons_from_gltf)
+        .observe(lights_from_gltf)
         .observe(play_animation_when_ready);
 
     let cascade = CascadeShadowConfigBuilder {
@@ -228,7 +227,7 @@ fn setup(
             illuminance: lux::RAW_SUNLIGHT,
             ..default()
         },
-        Transform::from_xyz(2.0, 10.0, -4.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(2.0, 0.0, -4.0).looking_at(Vec3::ZERO, Vec3::Y),
         cascade,
     ));
 }
