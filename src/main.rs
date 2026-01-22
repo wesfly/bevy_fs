@@ -21,7 +21,7 @@ use crate::{
     handle_custom_properties::{buttons_from_gltf, lights_from_gltf},
     input::GamepadSettings,
     ssr::{insert_ssr_resources, ssr_config},
-    ui::{setup_ui, update_ui},
+    ui::UI,
 };
 
 use avian3d::prelude::*;
@@ -99,14 +99,14 @@ fn main() {
         .insert_resource(input::Keymap::default())
         .insert_resource(Settings::fetch())
         .insert_resource(AircraftState::default())
-        .add_systems(Startup, (setup, setup_ui))
+        .add_plugins(UI)
+        .add_systems(Startup, setup)
         .add_systems(
             Update,
             (
                 input::input_system,
                 aircraft_mechanics,
                 camera_controller,
-                update_ui,
                 update_anti_col.run_if(on_timer(Duration::from_secs(1))),
             ),
         );
