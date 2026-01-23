@@ -132,7 +132,7 @@ fn setup(
     camera_settings: Res<CameraSettings>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
     settings: Res<Settings>,
-    meshes: ResMut<Assets<Mesh>>,
+    mut meshes: ResMut<Assets<Mesh>>,
     water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, ssr::Water>>>>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
 ) {
@@ -148,7 +148,7 @@ fn setup(
     };
 
     if let Some(abc) = water_materials {
-        ssr::spawn_water(&mut commands, &asset_server, meshes, abc);
+        ssr::spawn_water(&mut commands, &asset_server, &mut meshes, abc);
     }
 
     // TODO remove landscape

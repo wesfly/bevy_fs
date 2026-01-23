@@ -63,9 +63,8 @@ pub fn ssr_config(settings: &Settings) -> Option<(ScreenSpaceReflections, Msaa, 
 
 pub fn spawn_water(
     commands: &mut Commands,
-    // ssr
     asset_server: &Res<AssetServer>,
-    mut meshes: ResMut<Assets<Mesh>>,
+    meshes: &mut ResMut<Assets<Mesh>>,
     mut water_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, Water>>>,
 ) {
     // ssr water plane
