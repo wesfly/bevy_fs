@@ -25,9 +25,8 @@ pub fn button_listener(
     match button_id {
         ButtonID::Button1 => state.engine_on = !state.engine_on,
         ButtonID::Button2 => state.anti_col_lights_on = !state.anti_col_lights_on,
-
         _ => {
-            info!("This button isn't implemented yet. Do it yourself or wait.")
+            info!("This button isn't implemented yet. Do it yourself or wait. =)")
         }
     }
 }
@@ -40,7 +39,7 @@ pub fn update_anti_col(
     mut materials: ResMut<Assets<StandardMaterial>>,
     state: Res<AircraftState>,
 ) {
-    #[allow(irrefutable_let_patterns)]
+    #[allow(irrefutable_let_patterns)] // Acting like I know what I'm doing
     for material_handle in material_handles.iter() {
         if let Some(material) = materials.get_mut(material_handle)
             && let LinearRgba {
