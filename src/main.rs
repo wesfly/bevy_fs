@@ -102,6 +102,7 @@ fn main() {
         .insert_resource(CameraSettings::default())
         .insert_resource(input::Keymap::default())
         .insert_resource(Settings::fetch())
+        .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AircraftState::default())
         .add_plugins(UI)
         .add_systems(Startup, setup)
