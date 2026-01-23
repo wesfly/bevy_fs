@@ -67,17 +67,19 @@ pub fn buttons_from_gltf(
         }
     }
 }
+
 #[derive(Deserialize, Debug, Component)]
 pub enum Lights {
-    ACol,
+    AntiCol,
     Strobe,
 }
+
 #[derive(Debug, Deserialize)]
 pub struct Light {
     light: Lights,
 }
 
-// TODO new observer for lights and glass
+// TODO new observer for glass
 pub fn lights_from_gltf(
     trigger: On<SceneInstanceReady>,
     mut commands: Commands,
@@ -95,14 +97,14 @@ pub fn lights_from_gltf(
             continue;
         };
         match data.light {
-            Lights::ACol => {
+            Lights::AntiCol => {
                 let material_emissive = materials.add(StandardMaterial {
                     emissive: LinearRgba::rgb(0.0, 0.0, 0.0),
                     ..default()
                 });
                 commands
                     .entity(entity)
-                    .insert((MeshMaterial3d(material_emissive), Lights::ACol));
+                    .insert((MeshMaterial3d(material_emissive), Lights::AntiCol));
             }
             _ => {
                 warn!("not handled yet")
