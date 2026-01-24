@@ -1,4 +1,4 @@
-use crate::handle_custom_properties::ButtonID;
+use crate::data_from_gltf::ButtonID;
 use bevy::prelude::*;
 #[derive(Resource)]
 pub struct AircraftState {
@@ -32,10 +32,7 @@ pub fn button_listener(
 }
 
 pub fn update_anti_col(
-    material_handles: Query<
-        &MeshMaterial3d<StandardMaterial>,
-        With<crate::handle_custom_properties::Lights>,
-    >,
+    material_handles: Query<&MeshMaterial3d<StandardMaterial>, With<crate::data_from_gltf::Lights>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     state: Res<AircraftState>,
 ) {

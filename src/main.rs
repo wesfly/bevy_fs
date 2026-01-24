@@ -9,7 +9,7 @@ ignoring them.
 mod aircraft;
 mod aircraft_mechanics;
 mod camera;
-mod handle_custom_properties;
+mod data_from_gltf;
 mod input;
 mod sse;
 mod terrain;
@@ -19,7 +19,7 @@ use crate::{
     aircraft::{AircraftState, update_anti_col},
     aircraft_mechanics::aircraft_mechanics,
     camera::{CameraSettings, camera_controller},
-    handle_custom_properties::{buttons_from_gltf, lights_from_gltf},
+    data_from_gltf::{buttons_from_gltf, lights_from_gltf},
     sse::{insert_sse_resources, sse_config},
     ui::UI,
 };

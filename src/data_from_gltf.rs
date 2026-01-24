@@ -48,7 +48,7 @@ pub fn buttons_from_gltf(
         #[cfg(debug_assertions)]
         dbg!(&data);
         match data.button {
-            ButtonTypes::Button => {
+            ButtonTypes::Button | ButtonTypes::Switch => {
                 let function;
                 match data.function {
                     Some(ButtonID::AntiCol) => function = ButtonID::AntiCol,
