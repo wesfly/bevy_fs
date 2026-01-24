@@ -12,6 +12,7 @@ mod camera;
 mod handle_custom_properties;
 mod input;
 mod ssr;
+mod terrain;
 mod ui;
 
 use crate::{
@@ -136,6 +137,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, ssr::Water>>>>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
+    materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let (graph, index) = AnimationGraph::from_clip(
         asset_server.load(GltfAssetLabel::Animation(0).from_asset("aircraft.glb")),
@@ -152,20 +154,7 @@ fn setup(
         ssr::spawn_water(&mut commands, &asset_server, &mut meshes, abc);
     }
 
-    // TODO remove landscape
-    commands.spawn(SceneRoot(
-        asset_server.load(GltfAssetLabel::Scene(0).from_asset("landscape.glb")),
-    ));
-
-    commands
-        .spawn(SceneRoot(
-            asset_server.load(GltfAssetLabel::Scene(1).from_asset("landscape.glb")),
-        ))
-        .insert((
-            RigidBody::Static,
-            Visibility::Hidden,
-            ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
-        ));
+    terrain::spawn_terrain(&mut commands, meshes, materials);
 
     // Aircraft collider
     let aircraft = commands
