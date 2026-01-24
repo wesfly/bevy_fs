@@ -23,8 +23,8 @@ pub fn button_listener(
     // TODO add button animation
     let button_id = function_comps.get(press.entity.entity()).unwrap();
     match button_id {
-        ButtonID::Button1 => state.engine_on = !state.engine_on,
-        ButtonID::Button2 => state.anti_col_lights_on = !state.anti_col_lights_on,
+        ButtonID::Engine => state.engine_on = !state.engine_on,
+        ButtonID::AntiCol => state.anti_col_lights_on = !state.anti_col_lights_on,
         _ => {
             info!("This button isn't implemented yet. Do it yourself or wait. =)")
         }

@@ -21,8 +21,8 @@ pub enum ButtonTypes {
 
 #[derive(Component, Debug, Serialize, Deserialize)]
 pub enum ButtonID {
-    Button1,
-    Button2,
+    AntiCol,
+    Engine,
     None,
 }
 
@@ -45,12 +45,14 @@ pub fn buttons_from_gltf(
         let Ok(data) = serde_json::from_str::<Button>(&gltf_mesh_extras.value) else {
             continue;
         };
+        #[cfg(debug_assertions)]
+        dbg!(&data);
         match data.button {
             ButtonTypes::Button => {
                 let function;
                 match data.function {
-                    Some(ButtonID::Button1) => function = ButtonID::Button1,
-                    Some(ButtonID::Button2) => function = ButtonID::Button2,
+                    Some(ButtonID::AntiCol) => function = ButtonID::AntiCol,
+                    Some(ButtonID::Engine) => function = ButtonID::Engine,
                     _ => function = ButtonID::None,
                 }
                 let bundle = (Pickable::default(), function);
