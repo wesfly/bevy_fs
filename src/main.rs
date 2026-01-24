@@ -11,7 +11,7 @@ mod aircraft_mechanics;
 mod camera;
 mod handle_custom_properties;
 mod input;
-mod ssr;
+mod sse;
 mod terrain;
 mod ui;
 
@@ -20,7 +20,7 @@ use crate::{
     aircraft_mechanics::aircraft_mechanics,
     camera::{CameraSettings, camera_controller},
     handle_custom_properties::{buttons_from_gltf, lights_from_gltf},
-    ssr::{insert_ssr_resources, ssr_config},
+    sse::{insert_sse_resources, sse_config},
     ui::UI,
 };
 
@@ -30,10 +30,7 @@ use bevy::{
     camera::Exposure,
     core_pipeline::tonemapping::Tonemapping,
     light::{AtmosphereEnvironmentMapLight, CascadeShadowConfigBuilder, light_consts::lux},
-    pbr::{
-        Atmosphere, AtmosphereSettings, ExtendedMaterial, ScatteringMedium,
-        ScreenSpaceAmbientOcclusion,
-    },
+    pbr::{Atmosphere, AtmosphereSettings, ExtendedMaterial, ScatteringMedium},
     post_process::{bloom::Bloom, motion_blur::MotionBlur},
     prelude::*,
     render::view::Hdr,
@@ -56,7 +53,7 @@ pub struct Settings {
     gamepad: Gamepad,
     motion_blur_enabled: bool,
     shadow_distance: f32,
-    ssr: bool,
+    sse: bool,
     sun_position: Vec3,
 }
 
@@ -118,8 +115,8 @@ fn main() {
         );
 
     let settings = Settings::fetch();
-    if settings.ssr {
-        insert_ssr_resources(&mut app);
+    if settings.sse {
+        insert_sse_resources(&mut app);
     }
 
     #[cfg(debug_assertions)]
@@ -135,7 +132,7 @@ fn setup(
     mut graphs: ResMut<Assets<AnimationGraph>>,
     settings: Res<Settings>,
     mut meshes: ResMut<Assets<Mesh>>,
-    water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, ssr::Water>>>>,
+    water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, sse::Water>>>>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     materials: ResMut<Assets<StandardMaterial>>,
 ) {
@@ -151,7 +148,7 @@ fn setup(
     };
 
     if let Some(abc) = water_materials {
-        ssr::spawn_water(&mut commands, &asset_server, &mut meshes, abc);
+        sse::spawn_water(&mut commands, &asset_server, &mut meshes, abc);
     }
 
     terrain::spawn_terrain(&mut commands, meshes, materials);
@@ -185,12 +182,11 @@ fn setup(
         }),
         Hdr,
         CameraMarker,
-        ScreenSpaceAmbientOcclusion::default(),
         ChildOf(aircraft),
     ));
 
-    if let Some(ssr) = ssr_config(&settings) {
-        camera.insert(ssr);
+    if let Some(sse) = sse_config(&settings) {
+        camera.insert(sse);
     }
 
     if let Some(a) = motion_blur(&settings) {

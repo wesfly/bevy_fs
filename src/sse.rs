@@ -1,3 +1,7 @@
+// SSE stands for screen space effects.
+// It includes screen space reflections and
+// screen space ambient occlusion
+
 use crate::Settings;
 use bevy::{
     anti_alias::fxaa::Fxaa,
@@ -7,7 +11,8 @@ use bevy::{
         ImageSamplerDescriptor,
     },
     pbr::{
-        DefaultOpaqueRendererMethod, ExtendedMaterial, MaterialExtension, ScreenSpaceReflections,
+        DefaultOpaqueRendererMethod, ExtendedMaterial, MaterialExtension,
+        ScreenSpaceAmbientOcclusion, ScreenSpaceReflections,
     },
     prelude::*,
     render::render_resource::{AsBindGroup, ShaderType},
@@ -49,12 +54,20 @@ pub struct WaterSettings {
 
 const SHADER_ASSET_PATH: &str = "shaders/water_material.wgsl";
 
-pub fn ssr_config(settings: &Settings) -> Option<(ScreenSpaceReflections, Msaa, Fxaa)> {
-    if settings.ssr {
+pub fn sse_config(
+    settings: &Settings,
+) -> Option<(
+    ScreenSpaceReflections,
+    Msaa,
+    Fxaa,
+    ScreenSpaceAmbientOcclusion,
+)> {
+    if settings.sse {
         Some((
             ScreenSpaceReflections::default(),
             Msaa::Off,
             Fxaa::default(),
+            ScreenSpaceAmbientOcclusion::default(),
         ))
     } else {
         None
@@ -69,7 +82,7 @@ pub fn spawn_water(
 ) {
     // ssr water plane
     commands.spawn((
-        Mesh3d(meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(100.0)))),
+        Mesh3d(meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(10.0)))),
         MeshMaterial3d(water_materials.add(ExtendedMaterial {
             base: StandardMaterial {
                 base_color: BLACK.into(),
@@ -106,7 +119,7 @@ pub fn spawn_water(
     ));
 }
 
-pub fn insert_ssr_resources(app: &mut App) {
+pub fn insert_sse_resources(app: &mut App) {
     app.insert_resource(DefaultOpaqueRendererMethod::deferred())
         .add_plugins(MaterialPlugin::<ExtendedMaterial<StandardMaterial, Water>>::default());
 }
