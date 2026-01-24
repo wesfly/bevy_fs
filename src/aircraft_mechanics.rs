@@ -20,7 +20,7 @@ pub fn aircraft_mechanics(
     let thrust_factor;
 
     if state.engine_on {
-        thrust_factor = 84_000.
+        thrust_factor = 64_000.
     } else {
         thrust_factor = 0.
     }
