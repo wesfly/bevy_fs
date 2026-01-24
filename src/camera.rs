@@ -39,12 +39,11 @@ impl Default for CameraSettings {
                 z: 0.0,
             },
             cockpit_default_position: Vec3 {
-                x: 0.35,
-                y: 1.,
-                z: -3.0,
+                x: 0.38,
+                y: 1.2,
+                z: -2.6,
             },
             view: 0,
-            // follow_rotation: Dir3::from_xyz(0.0, 0.0, 1.0).unwrap(),
         }
     }
 }
