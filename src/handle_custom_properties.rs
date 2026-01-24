@@ -43,8 +43,6 @@ pub fn buttons_from_gltf(
             continue;
         };
         let Ok(data) = serde_json::from_str::<Button>(&gltf_mesh_extras.value) else {
-            #[cfg(debug_assertions)]
-            error!("Couldn't deserialize Button from GLTF extras on {}", entity);
             continue;
         };
         match data.button {
