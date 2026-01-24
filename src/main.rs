@@ -53,7 +53,7 @@ pub struct Settings {
     gamepad: Gamepad,
     motion_blur_enabled: bool,
     shadow_distance: f32,
-    sse: bool,
+    screen_space_effects: bool,
     sun_position: Vec3,
 }
 
@@ -115,7 +115,7 @@ fn main() {
         );
 
     let settings = Settings::fetch();
-    if settings.sse {
+    if settings.screen_space_effects {
         insert_sse_resources(&mut app);
     }
 

@@ -62,7 +62,7 @@ pub fn sse_config(
     Fxaa,
     ScreenSpaceAmbientOcclusion,
 )> {
-    if settings.sse {
+    if settings.screen_space_effects {
         Some((
             ScreenSpaceReflections::default(),
             Msaa::Off,
