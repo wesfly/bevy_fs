@@ -67,7 +67,7 @@ impl Settings {
 }
 
 #[derive(Component)]
-struct CameraMarker;
+struct Camera;
 
 #[derive(Component)]
 struct Aircraft;
@@ -181,7 +181,7 @@ fn setup(
             ..default()
         }),
         Hdr,
-        CameraMarker,
+        Camera,
         ChildOf(aircraft),
     ));
 
