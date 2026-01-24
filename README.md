@@ -7,10 +7,13 @@ This is a little flight sim made in Bevy.
 ## Features
 
 - Support for both keyboard and gamepad, but gamepad is recommended
-- An altitude display
+- A display for throttle and altitude
+- Procedural terrain
+- Loading data from GLTF with custom properties
 - 3D cockpit with clickable buttons
-- Laggy collisions that make low FPS (I hope this will fix itself in the next `avian_3d` version, there is a weird bug since Bevy 0.18.0)
+- Collisions with `avian3d`
 - Water with screen space reflections
+- Screen space ambient occlusion
 - FPS counter in when in `Debug`
 - A settings file (settings.json)
 
@@ -26,9 +29,9 @@ If not, you can install it here: https://rust-lang.org/tools/install/
 
 ## Controls
 
-To switch between gamepad and keyboard, manipulate the `gamepad_enabled` field in settings.json.
+To switch between gamepad and keyboard, manipulate the `gamepad -> enabled` field in settings.json.
 
-### If gamepad_enabled is true
+### Gamepad
 
 - Left stick to steer
 - `DPadUp` and `DPadDown` to throttle up and down respectively
@@ -37,7 +40,7 @@ To switch between gamepad and keyboard, manipulate the `gamepad_enabled` field i
 - Mouse wheel to zoom camera
 - `R` to reset camera
 
-### If gamepad_enabled is false
+### Keyboard
 
 - `WASDQE` to steer
 - `PgUp` and `PgDown` to throttle up and down respectively
