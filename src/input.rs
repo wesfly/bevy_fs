@@ -1,8 +1,5 @@
 use crate::{CameraSettings, InputAxis, Settings};
-use bevy::{
-    input::{gamepad::GamepadEvent, keyboard::KeyboardInput},
-    prelude::*,
-};
+use bevy::prelude::*;
 
 #[derive(Resource)]
 pub struct Keymap {
@@ -36,12 +33,12 @@ impl Default for Keymap {
 }
 
 pub fn input_system(
-    mut gamepad_events: MessageReader<GamepadEvent>,
     mut input: ResMut<InputAxis>,
-    mut keyboard_events: MessageReader<KeyboardInput>,
+    keys: Res<ButtonInput<KeyCode>>,
     keymap: Res<Keymap>,
     settings: Res<Settings>,
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
+    gamepad: Single<&Gamepad>,
     mut camera_settings: ResMut<CameraSettings>,
 ) {
     let mut gamepad_input = InputAxis {
@@ -60,33 +57,26 @@ pub fn input_system(
     }
 
     if settings.gamepad.enabled {
-        for event in gamepad_events.read() {
-            match event {
-                GamepadEvent::Connection(e) => info!("Gamepad connection: {:?}", e),
-                GamepadEvent::Button(e) => {
-                    if e.button == GamepadButton::DPadLeft {
-                        gamepad_input.yaw = 1.;
-                    } else if e.button == GamepadButton::DPadRight {
-                        gamepad_input.yaw = -1.
-                    } else {
-                        gamepad_input.yaw = 0.
-                    }
+        if let (Some(x), Some(y)) = (
+            gamepad.get(GamepadAxis::LeftStickX),
+            gamepad.get(GamepadAxis::LeftStickY),
+        ) {
+            gamepad_input.pitch = -y;
+            gamepad_input.roll = -x;
+        }
 
-                    if e.button == GamepadButton::DPadUp {
-                        gamepad_input.throttle = 0.1;
-                    } else if e.button == GamepadButton::DPadDown {
-                        gamepad_input.throttle = -0.1
-                    }
-                }
-                GamepadEvent::Axis(e) => {
-                    if e.axis == GamepadAxis::LeftStickX {
-                        gamepad_input.roll = -e.value
-                    }
-                    if e.axis == GamepadAxis::LeftStickY {
-                        gamepad_input.pitch = -e.value
-                    }
-                }
-            }
+        if gamepad.just_pressed(GamepadButton::DPadDown) {
+            gamepad_input.throttle = -0.1;
+        }
+        if gamepad.just_pressed(GamepadButton::DPadUp) {
+            gamepad_input.throttle = 0.1;
+        }
+
+        if gamepad.just_pressed(GamepadButton::DPadLeft) {
+            gamepad_input.yaw = 1.0;
+        }
+        if gamepad.just_pressed(GamepadButton::DPadRight) {
+            gamepad_input.yaw = -1.0;
         }
 
         input.pitch = gamepad_input.pitch;
@@ -101,25 +91,36 @@ pub fn input_system(
             yaw: 0.,
             throttle: 0.,
         };
+        if keys.pressed(keymap.up) {
+            button_input.pitch = -1.0
+        }
+        if keys.pressed(keymap.down) {
+            button_input.pitch = 1.0
+        }
+        if keys.pressed(keymap.roll_left) {
+            button_input.roll = 1.0
+        }
+        if keys.pressed(keymap.roll_right) {
+            button_input.roll = -1.0
+        }
 
-        for event in keyboard_events.read() {
-            match event.key_code {
-                a if a == keymap.up => button_input.pitch = -1.,
-                a if a == keymap.down => button_input.pitch = 1.,
-                a if a == keymap.roll_left => button_input.roll = 1.,
-                a if a == keymap.roll_right => button_input.roll = -1.,
-                a if a == keymap.rudder_right => button_input.yaw = -1.,
-                a if a == keymap.rudder_left => button_input.yaw = 1.,
-                a if a == keymap.throttle_up => button_input.throttle = 0.1,
-                a if a == keymap.throttle_down => button_input.throttle = -0.1,
+        if keys.pressed(keymap.rudder_left) {
+            button_input.yaw = 1.0
+        }
+        if keys.pressed(keymap.rudder_right) {
+            button_input.yaw = -1.0
+        }
 
-                _ => {}
-            }
+        if keys.just_pressed(keymap.throttle_up) {
+            button_input.throttle = 0.1
+        }
+        if keys.just_pressed(keymap.throttle_down) {
+            button_input.throttle = -0.1
         }
 
         input.pitch = button_input.pitch;
         input.roll = button_input.roll;
         input.yaw = button_input.yaw;
-        input.throttle += button_input.throttle;
+        input.throttle += button_input.throttle.clamp(-1.0, 1.0);
     }
 }
