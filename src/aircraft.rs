@@ -39,7 +39,7 @@ pub fn button_listener(
     }
 }
 
-pub fn update_anti_col(
+pub fn update_lights(
     material_handles: Query<(&MeshMaterial3d<StandardMaterial>, &Lights), With<Lights>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     state: Res<AircraftState>,

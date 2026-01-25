@@ -15,7 +15,7 @@ mod terrain;
 mod ui;
 
 use crate::{
-    aircraft::{AircraftState, update_anti_col},
+    aircraft::{AircraftState, update_lights},
     camera::{CameraSettings, camera_controller},
     data_from_gltf::{buttons_from_gltf, lights_from_gltf},
     sse::{insert_sse_resources, sse_config},
@@ -108,7 +108,7 @@ fn main() {
                 input::input_system,
                 aircraft::mechanics,
                 camera_controller,
-                update_anti_col.run_if(on_timer(Duration::from_secs(1))),
+                update_lights.run_if(on_timer(Duration::from_secs(1))),
             ),
         );
 
