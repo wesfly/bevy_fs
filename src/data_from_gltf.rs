@@ -51,11 +51,10 @@ pub fn buttons_from_gltf(
         match data.button {
             ButtonTypes::Button | ButtonTypes::Switch => {
                 let function;
-                match data.function {
-                    Some(ButtonID::AntiColLt) => function = ButtonID::AntiColLt,
-                    Some(ButtonID::PositionLt) => function = ButtonID::PositionLt,
-                    Some(ButtonID::Engine) => function = ButtonID::Engine,
-                    _ => function = ButtonID::None,
+                if let Some(func) = data.function {
+                    function = func
+                } else {
+                    function = ButtonID::None
                 }
                 let bundle = (Pickable::default(), function);
                 commands
