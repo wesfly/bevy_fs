@@ -7,7 +7,6 @@ ignoring them.
 */
 
 mod aircraft;
-mod aircraft_mechanics;
 mod camera;
 mod data_from_gltf;
 mod input;
@@ -17,7 +16,6 @@ mod ui;
 
 use crate::{
     aircraft::{AircraftState, update_anti_col},
-    aircraft_mechanics::aircraft_mechanics,
     camera::{CameraSettings, camera_controller},
     data_from_gltf::{buttons_from_gltf, lights_from_gltf},
     sse::{insert_sse_resources, sse_config},
@@ -108,7 +106,7 @@ fn main() {
             Update,
             (
                 input::input_system,
-                aircraft_mechanics,
+                aircraft::mechanics,
                 camera_controller,
                 update_anti_col.run_if(on_timer(Duration::from_secs(1))),
             ),

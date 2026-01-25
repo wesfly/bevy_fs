@@ -1,5 +1,7 @@
-use crate::data_from_gltf::ButtonID;
+use crate::{Aircraft, InputAxis, data_from_gltf::ButtonID};
+use avian3d::prelude::*;
 use bevy::prelude::*;
+
 #[derive(Resource)]
 pub struct AircraftState {
     pub engine_on: bool,
@@ -52,5 +54,28 @@ pub fn update_anti_col(
                 *red = 0.0
             }
         }
+    }
+}
+
+pub fn mechanics(
+    transform: Single<&GlobalTransform, With<Aircraft>>,
+    mut query: Query<Forces, With<Aircraft>>,
+    input: Res<InputAxis>,
+    state: Res<AircraftState>,
+) {
+    let thrust_factor;
+
+    if state.engine_on {
+        thrust_factor = 64_000.
+    } else {
+        thrust_factor = 0.
+    }
+
+    let force = transform.up() * thrust_factor * (input.throttle);
+    let torque = Vec3::new(input.pitch, input.yaw, input.roll);
+
+    for mut forces in &mut query {
+        forces.apply_force(force);
+        forces.apply_local_torque(torque * 500.0);
     }
 }
