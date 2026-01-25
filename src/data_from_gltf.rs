@@ -21,8 +21,9 @@ pub enum ButtonTypes {
 
 #[derive(Component, Debug, Serialize, Deserialize)]
 pub enum ButtonID {
-    AntiCol,
+    AntiColLt,
     Engine,
+    PositionLt,
     None,
 }
 
@@ -51,7 +52,8 @@ pub fn buttons_from_gltf(
             ButtonTypes::Button | ButtonTypes::Switch => {
                 let function;
                 match data.function {
-                    Some(ButtonID::AntiCol) => function = ButtonID::AntiCol,
+                    Some(ButtonID::AntiColLt) => function = ButtonID::AntiColLt,
+                    Some(ButtonID::PositionLt) => function = ButtonID::PositionLt,
                     Some(ButtonID::Engine) => function = ButtonID::Engine,
                     _ => function = ButtonID::None,
                 }
@@ -72,6 +74,9 @@ pub fn buttons_from_gltf(
 pub enum Lights {
     AntiCol,
     Strobe,
+    PositionPort,
+    PositionStarboard,
+    PositionRear,
 }
 
 #[derive(Debug, Deserialize)]
@@ -94,19 +99,13 @@ pub fn lights_from_gltf(
         let Ok(data) = serde_json::from_str::<Light>(&gltf_mesh_extras.value) else {
             continue;
         };
-        match data.light {
-            Lights::AntiCol => {
-                let material_emissive = materials.add(StandardMaterial {
-                    emissive: LinearRgba::rgb(0.0, 0.0, 0.0),
-                    ..default()
-                });
-                commands
-                    .entity(entity)
-                    .insert((MeshMaterial3d(material_emissive), Lights::AntiCol));
-            }
-            _ => {
-                warn!("not handled yet")
-            }
-        }
+        let material_emissive = materials.add(StandardMaterial {
+            emissive: LinearRgba::rgb(0.0, 0.0, 0.0),
+            ..default()
+        });
+
+        commands
+            .entity(entity)
+            .insert((MeshMaterial3d(material_emissive), data.light));
     }
 }

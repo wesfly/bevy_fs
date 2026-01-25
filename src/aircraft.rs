@@ -1,18 +1,23 @@
-use crate::{Aircraft, InputAxis, data_from_gltf::ButtonID};
+use crate::{
+    Aircraft, InputAxis,
+    data_from_gltf::{ButtonID, Lights},
+};
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
 #[derive(Resource)]
 pub struct AircraftState {
     pub engine_on: bool,
-    pub anti_col_lights_on: bool,
+    pub anti_col_lts_on: bool,
+    pub pos_lts_on: bool,
 }
 
 impl Default for AircraftState {
     fn default() -> Self {
         Self {
             engine_on: false,
-            anti_col_lights_on: false,
+            anti_col_lts_on: false,
+            pos_lts_on: false,
         }
     }
 }
@@ -26,7 +31,8 @@ pub fn button_listener(
     let button_id = function_comps.get(press.entity.entity()).unwrap();
     match button_id {
         ButtonID::Engine => state.engine_on = !state.engine_on,
-        ButtonID::AntiCol => state.anti_col_lights_on = !state.anti_col_lights_on,
+        ButtonID::AntiColLt => state.anti_col_lts_on = !state.anti_col_lts_on,
+        ButtonID::PositionLt => state.pos_lts_on = !state.pos_lts_on,
         _ => {
             info!("This button isn't implemented yet. Do it yourself or wait. =)")
         }
@@ -34,24 +40,54 @@ pub fn button_listener(
 }
 
 pub fn update_anti_col(
-    material_handles: Query<&MeshMaterial3d<StandardMaterial>, With<crate::data_from_gltf::Lights>>,
+    material_handles: Query<(&MeshMaterial3d<StandardMaterial>, &Lights), With<Lights>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     state: Res<AircraftState>,
 ) {
     #[allow(irrefutable_let_patterns)] // Acting like I know what I'm doing
     for material_handle in material_handles.iter() {
-        if let Some(material) = materials.get_mut(material_handle)
+        if let Some(material) = materials.get_mut(material_handle.0)
             && let LinearRgba {
                 ref mut red,
-                green: _,
-                blue: _,
+                ref mut green,
+                ref mut blue,
                 alpha: _,
             } = material.emissive
         {
-            if *red == 0.0 && state.anti_col_lights_on {
-                *red = 100.
-            } else {
-                *red = 0.0
+            match material_handle.1 {
+                Lights::AntiCol => {
+                    if *red == 0.0 && state.anti_col_lts_on {
+                        *red = 100.
+                    } else {
+                        *red = 0.0
+                    }
+                }
+                Lights::PositionPort => {
+                    if state.pos_lts_on {
+                        *green = 100.
+                    } else {
+                        *green = 0.0
+                    }
+                }
+                Lights::PositionStarboard => {
+                    if state.pos_lts_on {
+                        *red = 100.
+                    } else {
+                        *red = 0.0
+                    }
+                }
+                Lights::PositionRear => {
+                    if state.pos_lts_on {
+                        *red = 100.;
+                        *green = 100.;
+                        *blue = 100.
+                    } else {
+                        *red = 0.;
+                        *green = 0.;
+                        *blue = 0.
+                    }
+                }
+                _ => {}
             }
         }
     }
