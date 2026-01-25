@@ -72,10 +72,10 @@ pub fn input_system(
             gamepad_input.throttle = 0.1;
         }
 
-        if gamepad.just_pressed(GamepadButton::DPadLeft) {
+        if gamepad.pressed(GamepadButton::DPadLeft) {
             gamepad_input.yaw = 1.0;
         }
-        if gamepad.just_pressed(GamepadButton::DPadRight) {
+        if gamepad.pressed(GamepadButton::DPadRight) {
             gamepad_input.yaw = -1.0;
         }
 
@@ -121,6 +121,7 @@ pub fn input_system(
         input.pitch = button_input.pitch;
         input.roll = button_input.roll;
         input.yaw = button_input.yaw;
-        input.throttle += button_input.throttle.clamp(-1.0, 1.0);
+        input.throttle += button_input.throttle;
+        input.throttle = input.throttle.clamp(-1.0, 1.0);
     }
 }
