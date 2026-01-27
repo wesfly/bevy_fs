@@ -1,6 +1,6 @@
 use crate::{
     Aircraft, InputAxis,
-    data_from_gltf::{ButtonID, Lights},
+    data_from_gltf::{ButtonID, ButtonTypes, Lights},
 };
 use avian3d::prelude::*;
 use bevy::prelude::*;
@@ -24,18 +24,53 @@ impl Default for AircraftState {
 
 pub fn button_listener(
     press: On<Pointer<Press>>,
-    function_comps: Query<&ButtonID>,
+    function_comps: Query<&crate::data_from_gltf::Button>,
+    mut transform: Query<&mut Transform, With<crate::data_from_gltf::Button>>,
     mut state: ResMut<AircraftState>,
 ) {
-    // TODO add button animation
-    let button_id = function_comps.get(press.entity.entity()).unwrap();
-    match button_id {
-        ButtonID::Engine => state.engine_on = !state.engine_on,
-        ButtonID::AntiColLt => state.anti_col_lts_on = !state.anti_col_lts_on,
-        ButtonID::PositionLt => state.pos_lts_on = !state.pos_lts_on,
-        _ => {
-            info!("This button isn't implemented yet. Do it yourself or wait. =)")
+    let button = function_comps.get(press.entity.entity()).unwrap();
+    let bool;
+    match button.function.as_ref().unwrap() {
+        ButtonID::Engine => {
+            bool = Some(state.engine_on);
+            state.engine_on = !state.engine_on
         }
+        ButtonID::AntiColLt => {
+            bool = Some(state.anti_col_lts_on);
+            state.anti_col_lts_on = !state.anti_col_lts_on
+        }
+        ButtonID::PositionLt => {
+            bool = Some(state.pos_lts_on);
+            state.pos_lts_on = !state.pos_lts_on
+        }
+        _ => {
+            warn!("This button isn't implemented yet. Do it yourself or wait. =)");
+            bool = None;
+        }
+    }
+
+    const SWITCH_ANGLE_LIMIT: f32 = 70.0;
+    match button.button {
+        ButtonTypes::Switch => {
+            if let Some(mut bool) = bool {
+                if let Some(inversed) = button.inversed {
+                    if inversed {
+                        bool = !bool
+                    }
+                }
+
+                let angle: f32;
+                match bool {
+                    true => angle = -SWITCH_ANGLE_LIMIT,
+                    false => angle = SWITCH_ANGLE_LIMIT,
+                }
+                transform
+                    .get_mut(press.entity.entity())
+                    .unwrap()
+                    .rotate_local_x(angle.to_radians());
+            }
+        }
+        _ => {}
     }
 }
 

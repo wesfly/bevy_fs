@@ -12,7 +12,7 @@ use bevy::{gltf::GltfMeshExtras, prelude::*, scene::SceneInstanceReady};
 use serde::{Deserialize, Serialize};
 
 // TODO a switch is more complex than a button, it needs some more fields
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Component, Serialize, Deserialize)]
 pub enum ButtonTypes {
     Switch,
     Button,
@@ -27,10 +27,11 @@ pub enum ButtonID {
     None,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Component, Serialize, Deserialize)]
 pub struct Button {
-    button: ButtonTypes,
-    function: Option<ButtonID>,
+    pub button: ButtonTypes,
+    pub function: Option<ButtonID>,
+    pub inversed: Option<bool>,
 }
 
 pub fn buttons_from_gltf(
@@ -46,17 +47,19 @@ pub fn buttons_from_gltf(
         let Ok(data) = serde_json::from_str::<Button>(&gltf_mesh_extras.value) else {
             continue;
         };
+
         #[cfg(debug_assertions)]
         dbg!(&data);
         match data.button {
             ButtonTypes::Button | ButtonTypes::Switch => {
-                let function;
-                if let Some(func) = data.function {
-                    function = func
-                } else {
-                    function = ButtonID::None
-                }
-                let bundle = (Pickable::default(), function);
+                let bundle = (
+                    Pickable::default(),
+                    Button {
+                        button: data.button,
+                        inversed: data.inversed,
+                        function: data.function,
+                    },
+                );
                 commands
                     .entity(entity)
                     .insert(bundle)
