@@ -2,16 +2,22 @@
 This file handles importing gltfs from Blender with custom properties.
 
 How to make buttons with custom properties (don't forget to export with custom properties enabled)
-Colliders are automatically hidden.
 Thanks to Christopher Biscardi for making a tutorial about it.
+
+buttons_from_gltf
+-----------------
 button: ButtonTypes
 function: ButtonID
+inversed: bool
+
+lights_from_gltf
+----------------
+light: Lights
 */
 
 use bevy::{gltf::GltfMeshExtras, prelude::*, scene::SceneInstanceReady};
 use serde::{Deserialize, Serialize};
 
-// TODO a switch is more complex than a button, it needs some more fields
 #[derive(Debug, Component, Serialize, Deserialize)]
 pub enum ButtonTypes {
     Switch,
@@ -86,7 +92,7 @@ pub struct Light {
     light: Lights,
 }
 
-// TODO new observer for glass
+// TODO new observer for glass (needs proper shadow transparency)
 pub fn lights_from_gltf(
     trigger: On<SceneInstanceReady>,
     mut commands: Commands,
