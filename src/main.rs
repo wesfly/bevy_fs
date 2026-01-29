@@ -19,6 +19,7 @@ use crate::{
     camera::{CameraSettings, camera_controller},
     data_from_gltf::{buttons_from_gltf, lights_from_gltf},
     sse::{insert_sse_resources, sse_config},
+    terrain::TerrainData,
     ui::UI,
 };
 
@@ -100,6 +101,7 @@ fn main() {
         .insert_resource(Settings::fetch())
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AircraftState::default())
+        .insert_resource(TerrainData(Vec::new()))
         .add_plugins(UI)
         .add_systems(Startup, setup)
         .add_systems(
@@ -133,6 +135,7 @@ fn setup(
     water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, sse::Water>>>>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     materials: ResMut<Assets<StandardMaterial>>,
+    terrain_data: ResMut<TerrainData>,
 ) {
     let (graph, index) = AnimationGraph::from_clip(
         asset_server.load(GltfAssetLabel::Animation(0).from_asset("aircraft.glb")),
@@ -149,7 +152,7 @@ fn setup(
         sse::spawn_water(&mut commands, &asset_server, &mut meshes, abc);
     }
 
-    terrain::spawn_terrain(&mut commands, meshes, materials);
+    terrain::spawn_terrain(&mut commands, meshes, materials, terrain_data);
 
     // Aircraft collider
     let aircraft = commands
