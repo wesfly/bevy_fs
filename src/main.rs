@@ -167,6 +167,24 @@ fn setup(
         ))
         .id();
 
+    // The real aircraft model
+    commands
+        .spawn((
+            SceneRoot(asset_server.load("aircraft.glb#Scene0")),
+            Visibility::Visible,
+            ChildOf(aircraft),
+            animation_to_play,
+        ))
+        .observe(buttons_from_gltf)
+        .observe(lights_from_gltf)
+        .observe(play_animation_when_ready);
+
+    let cascade = CascadeShadowConfigBuilder {
+        maximum_distance: settings.shadow_distance,
+        ..Default::default()
+    }
+    .build();
+
     let mut camera = commands.spawn((
         Camera3d::default(),
         Transform::from_translation(camera_settings.follow_default_position)
@@ -193,24 +211,6 @@ fn setup(
     if let Some(a) = motion_blur(&settings) {
         camera.insert(a);
     }
-
-    // The real aircraft model
-    commands
-        .spawn((
-            SceneRoot(asset_server.load("aircraft.glb#Scene0")),
-            Visibility::Visible,
-            ChildOf(aircraft),
-            animation_to_play,
-        ))
-        .observe(buttons_from_gltf)
-        .observe(lights_from_gltf)
-        .observe(play_animation_when_ready);
-
-    let cascade = CascadeShadowConfigBuilder {
-        maximum_distance: settings.shadow_distance,
-        ..Default::default()
-    }
-    .build();
 
     let sun_position = settings.sun_position;
     commands.spawn((
