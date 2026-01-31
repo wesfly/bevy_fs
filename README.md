@@ -8,7 +8,7 @@ This is a little flight sim made in Bevy.
 
 - Support for both keyboard and gamepad, but gamepad is recommended
 - A display for throttle and altitude
-- Procedural terrain
+- Terrain with real-world elevation data
 - Loading data from GLTF with custom properties
 - 3D cockpit with clickable buttons
 - Collisions with `avian3d`
@@ -26,6 +26,10 @@ git lfs pull # Pull the big files
 
 If you have Rust installed, use `cargo run (--release)` to run the program.
 If not, you can install it here: https://rust-lang.org/tools/install/
+
+## Terrain
+
+Terrain data will be stored in terrain.json after the first fetch. If you want a different location or resolution, you need to delete it and refetch it.
 
 ## Controls
 
