@@ -1,5 +1,3 @@
-/* It always fails in line 60, positions and height_list don't have the same length, but height_list.len() can be modified by changing the MAX_PUSH_LEN in get_elev, I think I messed up somewhere there. */
-
 // Once again, Chis Biscardi saved me here. Without him, I'd probably still be struggling.
 
 use avian3d::prelude::{Collider, RigidBody};
@@ -38,7 +36,7 @@ pub fn spawn_terrain(
         if file_exists {
             let mut i = 0;
             for pos in positions.iter_mut() {
-                pos[1] = 0.01
+                pos[1] = TERRAIN_HEIGHT_FACTOR
                     * *fetched_data
                         .iter()
                         .nth(0)
