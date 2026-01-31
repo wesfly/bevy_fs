@@ -13,6 +13,7 @@ pub fn spawn_terrain(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut terrain_data: ResMut<TerrainData>,
 ) {
+    const TERRAIN_HEIGHT_FACTOR: f32 = 0.05;
     let mesh_size = 2000.0;
     let mut terrain = Mesh::from(
         Plane3d::default()
@@ -62,7 +63,7 @@ pub fn spawn_terrain(
                 assert_eq!(positions.len(), height_list.len());
 
                 for (pos, height) in positions.iter_mut().zip(height_list) {
-                    pos[1] = height;
+                    pos[1] = height * TERRAIN_HEIGHT_FACTOR;
                 }
             }
 
@@ -104,19 +105,46 @@ fn get_elev(coords: Vec<[f32; 2]>, data: &mut ResMut<TerrainData>) -> Result<Vec
 
     let mut result = vec![];
     let mut buffer = vec![];
-    for coord in coords {
+    for (i, coord) in coords.iter().enumerate() {
         if buffer.len() < MAX_PUSH_LEN {
-            buffer.push(coord)
+            buffer.push(coord);
+            if i == coords.len() - 1 {
+                let get_string =
+                    format!("https://www.elevation-api.eu/v1/elevation?pts={buffer:?}");
+
+                let resp = match reqwest::blocking::get(get_string.trim()) {
+                    Ok(resp) => resp.text()?,
+                    Err(err) => panic!("Error: {err}"),
+                };
+
+                let response: Response;
+                response = serde_json::from_str(&resp)?;
+
+                let elev = response.elevations;
+
+                for elevation in &elev {
+                    match elevation {
+                        Some(t) => {
+                            data.0.push(*t);
+                            result.push(*t);
+                        }
+                        _ => {
+                            data.0.push(0.0);
+                            result.push(0.0);
+                        }
+                    }
+                }
+            }
         } else {
             let get_string = format!("https://www.elevation-api.eu/v1/elevation?pts={buffer:?}");
 
             let resp = match reqwest::blocking::get(get_string.trim()) {
-                Ok(resp) => resp.text().unwrap(),
-                Err(err) => panic!("Error: {}", err),
+                Ok(resp) => resp.text()?,
+                Err(err) => panic!("Error: {err}"),
             };
 
             let response: Response;
-            response = serde_json::from_str(&resp).unwrap();
+            response = serde_json::from_str(&resp)?;
 
             let elev = response.elevations;
 
@@ -126,10 +154,15 @@ fn get_elev(coords: Vec<[f32; 2]>, data: &mut ResMut<TerrainData>) -> Result<Vec
                         data.0.push(*t);
                         result.push(*t);
                     }
-                    _ => {}
+                    _ => {
+                        data.0.push(0.0);
+                        result.push(0.0);
+                    }
                 }
             }
+
             buffer.clear();
+            buffer.push(coord);
         }
     }
 
