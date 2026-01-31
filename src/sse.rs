@@ -82,7 +82,7 @@ pub fn spawn_water(
 ) {
     // ssr water plane
     commands.spawn((
-        Mesh3d(meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(10.0)))),
+        Mesh3d(meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(100.0)))),
         MeshMaterial3d(water_materials.add(ExtendedMaterial {
             base: StandardMaterial {
                 base_color: BLACK.into(),
@@ -115,7 +115,7 @@ pub fn spawn_water(
                 },
             },
         })),
-        Transform::from_scale(Vec3::splat(100.0)),
+        Transform::from_scale(Vec3::splat(10.0)),
     ));
 }
 
