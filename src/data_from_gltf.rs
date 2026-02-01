@@ -31,7 +31,6 @@ pub enum ButtonID {
     Engine,
     PositionLt,
     StrobeLt,
-    None,
 }
 
 #[derive(Debug, Component, Serialize, Deserialize)]
@@ -94,6 +93,7 @@ pub struct Light {
 }
 
 // TODO new observer for glass (needs proper shadow transparency)
+// TODO move stick with input
 pub fn lights_from_gltf(
     trigger: On<SceneInstanceReady>,
     mut commands: Commands,
