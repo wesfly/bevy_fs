@@ -101,7 +101,6 @@ struct Response {
 }
 
 // Thanks to Frank Villaro-Dixon, the guy that provides this API
-// https://www.elevation-api.eu/v1/elevation?pts=[[46.24566,6.17081],[46.85499,6.78134]]
 fn get_elev(coords: Vec<[f32; 2]>, data: &mut ResMut<TerrainData>) -> Result<Vec<f32>> {
     const MAX_PUSH_LEN: usize = 512;
 
@@ -116,25 +115,17 @@ fn get_elev(coords: Vec<[f32; 2]>, data: &mut ResMut<TerrainData>) -> Result<Vec
 
                 let resp = match reqwest::blocking::get(get_string.trim()) {
                     Ok(resp) => resp.text()?,
-                    Err(err) => panic!("Error: {err}"),
+                    Err(err) => panic!("Error while fetching terrain: {err}"),
                 };
 
                 let response: Response;
                 response = serde_json::from_str(&resp)?;
 
-                let elev = response.elevations;
-
-                for elevation in &elev {
-                    match elevation {
-                        Some(t) => {
-                            data.0.push(*t);
-                            result.push(*t);
-                        }
-                        _ => {
-                            data.0.push(0.0);
-                            result.push(0.0);
-                        }
-                    }
+                let elevations = response.elevations;
+                for o_elevation in &elevations {
+                    let elevation = o_elevation.unwrap_or(0.0);
+                    data.0.push(elevation);
+                    result.push(elevation);
                 }
             }
         } else {
@@ -148,19 +139,11 @@ fn get_elev(coords: Vec<[f32; 2]>, data: &mut ResMut<TerrainData>) -> Result<Vec
             let response: Response;
             response = serde_json::from_str(&resp)?;
 
-            let elev = response.elevations;
-
-            for elevation in &elev {
-                match elevation {
-                    Some(t) => {
-                        data.0.push(*t);
-                        result.push(*t);
-                    }
-                    _ => {
-                        data.0.push(0.0);
-                        result.push(0.0);
-                    }
-                }
+            let elevations = response.elevations;
+            for o_elevation in &elevations {
+                let elevation = o_elevation.unwrap_or(0.0);
+                data.0.push(elevation);
+                result.push(elevation);
             }
 
             buffer.clear();
