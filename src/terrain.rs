@@ -34,8 +34,7 @@ pub fn spawn_terrain(
         terrain.try_attribute_mut(Mesh::ATTRIBUTE_POSITION).unwrap()
     {
         if file_exists {
-            let mut i = 0;
-            for pos in positions.iter_mut() {
+            for (i, pos) in positions.iter_mut().enumerate() {
                 pos[1] = TERRAIN_HEIGHT_FACTOR
                     * *fetched_data
                         .iter()
@@ -44,7 +43,6 @@ pub fn spawn_terrain(
                         .iter()
                         .nth(i)
                         .unwrap_or(&0.0);
-                i += 1;
             }
         } else {
             let mut buffer: Vec<[f32; 2]> = vec![];
