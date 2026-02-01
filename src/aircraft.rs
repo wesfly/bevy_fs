@@ -53,8 +53,8 @@ pub fn button_listener(
     match button.button {
         ButtonTypes::Switch => {
             if let Some(mut bool) = bool {
-                if let Some(inversed) = button.inversed {
-                    if inversed {
+                if let Some(inverse) = button.inverse {
+                    if inverse {
                         bool = !bool
                     }
                 }

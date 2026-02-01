@@ -8,7 +8,7 @@ buttons_from_gltf
 -----------------
 button: ButtonTypes
 function: ButtonID
-inversed: bool
+inverse: bool
 
 lights_from_gltf
 ----------------
@@ -37,7 +37,7 @@ pub enum ButtonID {
 pub struct Button {
     pub button: ButtonTypes,
     pub function: Option<ButtonID>,
-    pub inversed: Option<bool>,
+    pub inverse: Option<bool>,
 }
 
 pub fn buttons_from_gltf(
@@ -62,7 +62,7 @@ pub fn buttons_from_gltf(
                     Pickable::default(),
                     Button {
                         button: data.button,
-                        inversed: data.inversed,
+                        inverse: data.inverse,
                         function: data.function,
                     },
                 );
