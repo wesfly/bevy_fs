@@ -10,6 +10,7 @@ pub struct AircraftState {
     pub engine_on: bool,
     pub anti_col_lts_on: bool,
     pub pos_lts_on: bool,
+    pub strobe_lts_on: bool,
 }
 
 impl Default for AircraftState {
@@ -18,6 +19,7 @@ impl Default for AircraftState {
             engine_on: false,
             anti_col_lts_on: false,
             pos_lts_on: false,
+            strobe_lts_on: false,
         }
     }
 }
@@ -42,6 +44,10 @@ pub fn button_listener(
         ButtonID::PositionLt => {
             bool = Some(state.pos_lts_on);
             state.pos_lts_on = !state.pos_lts_on
+        }
+        ButtonID::StrobeLt => {
+            bool = Some(state.strobe_lts_on);
+            state.strobe_lts_on = !state.strobe_lts_on
         }
         _ => {
             warn!("This button isn't implemented yet. Do it yourself or wait. =)");
@@ -122,7 +128,17 @@ pub fn update_lights(
                         *blue = 0.
                     }
                 }
-                _ => {}
+                Lights::Strobe => {
+                    if state.strobe_lts_on && *red == 0.0 {
+                        *red = 100.;
+                        *green = 100.;
+                        *blue = 100.
+                    } else {
+                        *red = 0.;
+                        *green = 0.;
+                        *blue = 0.
+                    }
+                }
             }
         }
     }

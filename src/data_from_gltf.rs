@@ -30,6 +30,7 @@ pub enum ButtonID {
     AntiColLt,
     Engine,
     PositionLt,
+    StrobeLt,
     None,
 }
 
