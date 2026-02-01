@@ -15,7 +15,9 @@ mod terrain;
 mod ui;
 
 use crate::{
-    aircraft::{AircraftState, update_lights},
+    aircraft::{
+        ACOL_OFF_DURATION, AircraftState, LightsTimers, STROBE_OFF_DURATION, update_lights,
+    },
     camera::{CameraSettings, camera_controller},
     data_from_gltf::{buttons_from_gltf, lights_from_gltf},
     sse::{insert_sse_resources, sse_config},
@@ -34,10 +36,9 @@ use bevy::{
     prelude::*,
     render::view::Hdr,
     scene::SceneInstanceReady,
-    time::common_conditions::on_timer,
 };
 use serde::{Deserialize, Serialize};
-use std::{fs, time::Duration};
+use std::fs;
 
 #[cfg(debug_assertions)]
 use bevy::dev_tools::fps_overlay::FpsOverlayPlugin;
@@ -99,6 +100,12 @@ fn main() {
         .insert_resource(CameraSettings::default())
         .insert_resource(input::Keymap::default())
         .insert_resource(Settings::fetch())
+        .insert_resource(LightsTimers {
+            acol: Timer::from_seconds(ACOL_OFF_DURATION, TimerMode::Repeating),
+            acol_on_cycle: false,
+            strobe: Timer::from_seconds(STROBE_OFF_DURATION, TimerMode::Repeating),
+            strobe_on_cycle: false,
+        })
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AircraftState::default())
         .insert_resource(TerrainData(Vec::new()))
@@ -110,7 +117,7 @@ fn main() {
                 input::input_system,
                 aircraft::mechanics,
                 camera_controller,
-                update_lights.run_if(on_timer(Duration::from_secs(1))),
+                update_lights,
             ),
         );
 

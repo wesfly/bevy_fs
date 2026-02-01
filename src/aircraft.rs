@@ -1,9 +1,16 @@
+use std::time::Duration;
+
 use crate::{
     Aircraft, InputAxis,
     data_from_gltf::{ButtonID, ButtonTypes, Lights},
 };
 use avian3d::prelude::*;
 use bevy::prelude::*;
+
+pub const STROBE_OFF_DURATION: f32 = 1.0;
+pub const STROBE_ON_DURATION: f32 = 0.1;
+pub const ACOL_OFF_DURATION: f32 = 1.2;
+pub const ACOL_ON_DURATION: f32 = 0.1;
 
 #[derive(Resource)]
 pub struct AircraftState {
@@ -80,11 +87,49 @@ pub fn button_listener(
     }
 }
 
+#[derive(Resource)]
+pub struct LightsTimers {
+    pub acol: Timer,
+    pub acol_on_cycle: bool,
+    pub strobe: Timer,
+    pub strobe_on_cycle: bool,
+}
+
 pub fn update_lights(
-    material_handles: Query<(&MeshMaterial3d<StandardMaterial>, &Lights), With<Lights>>,
+    material_handles: Query<(&MeshMaterial3d<StandardMaterial>, &Lights, Entity), With<Lights>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     state: Res<AircraftState>,
+    time: Res<Time>,
+    mut timer: ResMut<LightsTimers>,
 ) {
+    let delta = time.delta();
+    if timer.acol.just_finished() && !timer.acol_on_cycle {
+        timer.acol_on_cycle = true;
+        timer
+            .acol
+            .set_duration(Duration::from_secs_f32(ACOL_ON_DURATION));
+    } else if timer.acol.just_finished() && timer.acol_on_cycle {
+        timer.acol_on_cycle = false;
+        timer
+            .acol
+            .set_duration(Duration::from_secs_f32(ACOL_OFF_DURATION));
+    }
+
+    if timer.strobe.just_finished() && !timer.strobe_on_cycle {
+        timer.strobe_on_cycle = true;
+        timer
+            .strobe
+            .set_duration(Duration::from_secs_f32(STROBE_ON_DURATION));
+    } else if timer.strobe.just_finished() && timer.strobe_on_cycle {
+        timer.strobe_on_cycle = false;
+        timer
+            .strobe
+            .set_duration(Duration::from_secs_f32(STROBE_OFF_DURATION));
+    }
+
+    timer.acol.tick(delta);
+    timer.strobe.tick(delta);
+
     #[allow(irrefutable_let_patterns)] // Acting like I know what I'm doing
     for material_handle in material_handles.iter() {
         if let Some(material) = materials.get_mut(material_handle.0)
@@ -97,8 +142,8 @@ pub fn update_lights(
         {
             match material_handle.1 {
                 Lights::AntiCol => {
-                    if *red == 0.0 && state.anti_col_lts_on {
-                        *red = 100.
+                    if state.anti_col_lts_on && timer.acol_on_cycle {
+                        *red = 100.0
                     } else {
                         *red = 0.0
                     }
@@ -129,7 +174,7 @@ pub fn update_lights(
                     }
                 }
                 Lights::Strobe => {
-                    if state.strobe_lts_on && *red == 0.0 {
+                    if state.strobe_lts_on && timer.strobe_on_cycle {
                         *red = 100.;
                         *green = 100.;
                         *blue = 100.
