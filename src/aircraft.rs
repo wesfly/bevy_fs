@@ -56,10 +56,6 @@ pub fn button_listener(
             bool = Some(state.strobe_lts_on);
             state.strobe_lts_on = !state.strobe_lts_on
         }
-        _ => {
-            warn!("This button isn't implemented yet. Do it yourself or wait. =)");
-            bool = None;
-        }
     }
 
     const SWITCH_ANGLE_LIMIT: f32 = 70.0;
