@@ -11,13 +11,13 @@ pub fn spawn_terrain(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut terrain_data: ResMut<TerrainData>,
 ) {
-    const TERRAIN_HEIGHT_FACTOR: f32 = 0.05;
-    let mesh_size = 2000.0;
+    const TERRAIN_HEIGHT_FACTOR: f32 = 0.2;
+    let mesh_size = 20_000.0;
     let mut terrain = Mesh::from(
         Plane3d::default()
             .mesh()
             .size(mesh_size, mesh_size)
-            .subdivisions(256),
+            .subdivisions(512),
     );
 
     let fetched_data: Option<Vec<f32>>;
@@ -48,12 +48,14 @@ pub fn spawn_terrain(
             }
         } else {
             let mut buffer: Vec<[f32; 2]> = vec![];
-            let midpoint_coords = Vec2::new(-42.163, 146.646);
+            let midpoint_coords = Vec2::new(-42.8829, 147.3310);
             info!("Get yourself a coffee, this will take a while.");
+
+            const TERRAIN_SCALE: f32 = 0.0001;
 
             let mut coords;
             for pos in positions.iter_mut() {
-                coords = Vec2::new(pos[0], pos[2]) * 0.002 + midpoint_coords;
+                coords = Vec2::new(pos[0], pos[2]) * TERRAIN_SCALE + midpoint_coords;
                 buffer.push(coords.to_array());
             }
 
@@ -74,9 +76,10 @@ pub fn spawn_terrain(
     terrain.compute_normals();
 
     commands.spawn((
-        Mesh3d(meshes.add(terrain)),
+        Mesh3d(meshes.add(terrain.clone())),
         MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: bevy::color::palettes::css::GREEN_YELLOW.into(),
+            base_color: bevy::color::palettes::css::GREEN.into(),
+            perceptual_roughness: 1.0,
             ..Default::default()
         })),
         Transform::from_translation(Vec3 {
@@ -85,7 +88,10 @@ pub fn spawn_terrain(
             z: 0.0,
         }),
     ));
-    commands.spawn((RigidBody::Static, Collider::cuboid(1000.0, 1.0, 1000.0)));
+    commands.spawn((
+        RigidBody::Static,
+        Collider::trimesh_from_mesh(&terrain).unwrap(),
+    ));
 }
 
 #[derive(Resource, Serialize, Deserialize)]
