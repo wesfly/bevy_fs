@@ -54,6 +54,7 @@ pub struct Settings {
     motion_blur_enabled: bool,
     shadow_distance: f32,
     screen_space_effects: bool,
+    terrain_collisions: bool,
     sun_position: Vec3,
 }
 
@@ -159,7 +160,7 @@ fn setup(
         sse::spawn_water(&mut commands, &asset_server, &mut meshes, abc);
     }
 
-    terrain::spawn_terrain(&mut commands, meshes, materials, terrain_data);
+    terrain::spawn_terrain(&mut commands, meshes, materials, terrain_data, &settings);
 
     // Aircraft collider
     let aircraft = commands
@@ -168,7 +169,7 @@ fn setup(
             Aircraft,
             RigidBody::Dynamic,
             ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
-            Transform::from_xyz(0., 20., 0.),
+            Transform::from_xyz(0., 20., 10.),
             Mass(5000.),
             Visibility::Hidden,
         ))

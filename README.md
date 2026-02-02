@@ -27,6 +27,11 @@ git lfs pull # Pull the big files
 If you have Rust installed, use `cargo run (--release)` to run the program.
 If not, you can install it here: https://rust-lang.org/tools/install/
 
+## Flying
+
+To start flying, you need to go to the cockpit view and turn on the engine. The switch is located in the center console and is labelled `ENG`.
+You should start flying immediatly. If that is not the case and the performance is bad, turn off the terrain collisions in the settings.
+
 ## Terrain
 
 Terrain data will be stored in terrain.json after the first fetch. If you want a different location or resolution, you need to delete it and refetch it.

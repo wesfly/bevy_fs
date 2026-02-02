@@ -1,5 +1,6 @@
 // Once again, Chis Biscardi saved me here. Without him, I'd probably still be struggling.
 
+use crate::Settings;
 use avian3d::prelude::{Collider, RigidBody};
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -10,6 +11,7 @@ pub fn spawn_terrain(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut terrain_data: ResMut<TerrainData>,
+    settings: &Res<Settings>,
 ) {
     const TERRAIN_HEIGHT_FACTOR: f32 = 0.2;
     let mesh_size = 20_000.0;
@@ -72,7 +74,6 @@ pub fn spawn_terrain(
     }
 
     terrain.compute_normals();
-
     commands.spawn((
         Mesh3d(meshes.add(terrain.clone())),
         MeshMaterial3d(materials.add(StandardMaterial {
@@ -86,6 +87,15 @@ pub fn spawn_terrain(
             z: 0.0,
         }),
     ));
+
+    if settings.terrain_collisions {
+        spawn_terrain_collider(commands, terrain);
+    } else {
+        commands.spawn((RigidBody::Static, Collider::cuboid(10000.0, 1.0, 10000.0)));
+    }
+}
+
+fn spawn_terrain_collider(commands: &mut Commands, terrain: Mesh) {
     commands.spawn((
         RigidBody::Static,
         Collider::trimesh_from_mesh(&terrain).unwrap(),
