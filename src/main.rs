@@ -182,6 +182,8 @@ fn setup(
             Visibility::Visible,
             ChildOf(aircraft),
             animation_to_play,
+            ColliderDisabled,
+            RigidBodyDisabled,
         ))
         .observe(buttons_from_gltf)
         .observe(lights_from_gltf)
