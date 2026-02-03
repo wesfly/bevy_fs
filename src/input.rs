@@ -38,7 +38,7 @@ pub fn input_system(
     keymap: Res<Keymap>,
     settings: Res<Settings>,
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
-    gamepad: Single<&Gamepad>,
+    gp: Option<Single<&Gamepad>>,
     mut camera_settings: ResMut<CameraSettings>,
 ) {
     let mut gamepad_input = InputAxis {
@@ -57,6 +57,7 @@ pub fn input_system(
     }
 
     if settings.gamepad.enabled {
+        let gamepad = gp.expect("gamepad.enabled set to true but no gamepad detected.");
         if let (Some(x), Some(y)) = (
             gamepad.get(GamepadAxis::LeftStickX),
             gamepad.get(GamepadAxis::LeftStickY),
