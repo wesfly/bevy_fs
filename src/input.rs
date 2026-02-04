@@ -123,6 +123,6 @@ pub fn input_system(
         input.roll = button_input.roll;
         input.yaw = button_input.yaw;
         input.throttle += button_input.throttle;
-        input.throttle = input.throttle.clamp(-1.0, 1.0);
+        input.throttle = input.throttle.clamp(0.0, 1.0);
     }
 }
