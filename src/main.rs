@@ -93,10 +93,10 @@ fn main() {
         .add_plugins(PhysicsPlugins::default())
         .add_plugins(MeshPickingPlugin)
         .insert_resource(InputAxis {
-            pitch: 0.,
-            yaw: 0.,
-            roll: 0.,
-            throttle: 1.,
+            pitch: 0.0,
+            yaw: 0.0,
+            roll: 0.0,
+            throttle: 0.0,
         })
         .insert_resource(CameraSettings::default())
         .insert_resource(input::Keymap::default())
@@ -169,7 +169,7 @@ fn setup(
             Aircraft,
             RigidBody::Dynamic,
             ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
-            Transform::from_xyz(0., 20., 10.),
+            Transform::from_xyz(0., 8., 10.),
             Mass(5000.),
             Visibility::Hidden,
         ))
@@ -214,6 +214,7 @@ fn setup(
         ChildOf(aircraft),
     ));
 
+    // TODO make this a plugin
     if let Some(sse) = sse_config(&settings) {
         camera.insert(sse);
     }
