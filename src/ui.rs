@@ -16,7 +16,7 @@ impl Plugin for UI {
     }
 }
 
-pub fn setup_ui(mut commands: Commands) {
+fn setup_ui(mut commands: Commands) {
     commands.spawn((
         Node {
             position_type: PositionType::Absolute,
