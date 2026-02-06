@@ -6,6 +6,12 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 
+#[derive(Serialize, Deserialize)]
+struct Chunk {
+    coordinates: Vec2,
+    height_data: Vec<f32>,
+}
+
 pub fn spawn_terrain(
     commands: &mut Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -13,16 +19,13 @@ pub fn spawn_terrain(
     mut terrain_data: ResMut<TerrainData>,
     settings: &Res<Settings>,
 ) {
+    const SUBDIVISIONS: i32 = 16; // Subdivisions per axis for chunking
+    const SUBDIVISIONS_PER_CHUNK: u32 = 128;
+    const MESH_SIZE: f32 = 20_000.0;
     const TERRAIN_HEIGHT_FACTOR: f32 = 0.2;
-    let mesh_size = 20_000.0;
-    let mut terrain = Mesh::from(
-        Plane3d::default()
-            .mesh()
-            .size(mesh_size, mesh_size)
-            .subdivisions(512),
-    );
+    const TERRAIN_SCALE: f32 = 0.0001;
 
-    let fetched_data: Option<Vec<f32>>;
+    let fetched_data: Option<Vec<Chunk>>;
     let file_exists: bool;
     if let Ok(json_data) = std::fs::read_to_string("terrain.json") {
         fetched_data = serde_json::from_str(&json_data).unwrap();
@@ -32,66 +35,99 @@ pub fn spawn_terrain(
         fetched_data = None;
     }
 
-    if let bevy::mesh::VertexAttributeValues::Float32x3(positions) =
-        terrain.try_attribute_mut(Mesh::ATTRIBUTE_POSITION).unwrap()
-    {
-        if file_exists {
-            for (i, pos) in positions.iter_mut().enumerate() {
-                pos[1] = TERRAIN_HEIGHT_FACTOR
-                    * *fetched_data
-                        .iter()
-                        .nth(0)
-                        .unwrap()
-                        .iter()
-                        .nth(i)
-                        .unwrap_or(&0.0);
-            }
-        } else {
-            let mut buffer: Vec<[f32; 2]> = vec![];
-            let midpoint_coords = Vec2::new(-42.8829, 147.3310);
-            info!("Get yourself a coffee, this will take a while.");
+    let mut chunk_buffer: Vec<Chunk> = vec![];
+    for chunk_index in 0..SUBDIVISIONS.pow(2) {
+        let mut terrain = Mesh::from(
+            Plane3d::default()
+                .mesh()
+                .size(
+                    MESH_SIZE / SUBDIVISIONS as f32,
+                    MESH_SIZE / SUBDIVISIONS as f32,
+                )
+                .subdivisions(SUBDIVISIONS_PER_CHUNK),
+        );
 
-            const TERRAIN_SCALE: f32 = 0.0001;
-
-            let mut coords;
+        if let bevy::mesh::VertexAttributeValues::Float32x3(positions) =
+            terrain.try_attribute_mut(Mesh::ATTRIBUTE_POSITION).unwrap()
+        {
+            // Positioning chunks
             for pos in positions.iter_mut() {
-                coords = Vec2::new(pos[0], pos[2]) * TERRAIN_SCALE + midpoint_coords;
-                buffer.push(coords.to_array());
+                pos[0] += ((chunk_index % SUBDIVISIONS) as f32 * MESH_SIZE / SUBDIVISIONS as f32)
+                    - MESH_SIZE / 2.0;
+                pos[2] += ((chunk_index / SUBDIVISIONS) as i32 as f32 * MESH_SIZE
+                    / SUBDIVISIONS as f32)
+                    - MESH_SIZE / 2.0;
             }
 
-            if let Ok(height_list) = get_elev(buffer, &mut terrain_data) {
-                assert_eq!(positions.len(), height_list.len());
+            if file_exists {
+                for (i, pos) in positions.iter_mut().enumerate() {
+                    pos[1] = TERRAIN_HEIGHT_FACTOR
+                        * *fetched_data
+                            // TODO fix this mess
+                            .iter()
+                            .nth(0)
+                            .unwrap()
+                            .iter()
+                            .nth(chunk_index as usize)
+                            .unwrap()
+                            .height_data
+                            .iter()
+                            .nth(i)
+                            .unwrap_or(&0.0);
+                }
+            } else {
+                let mut buffer: Vec<[f32; 2]> = vec![];
+                let midpoint_coords = Vec2::new(-42.8829, 147.3310);
+                info!(
+                    "Fetching chunk {} of {}...",
+                    chunk_index,
+                    SUBDIVISIONS.pow(2)
+                );
 
-                for (pos, height) in positions.iter_mut().zip(height_list) {
-                    pos[1] = height * TERRAIN_HEIGHT_FACTOR;
+                let mut coords;
+                for pos in positions.iter_mut() {
+                    coords = Vec2::new(pos[0], pos[2]) * TERRAIN_SCALE + midpoint_coords;
+                    buffer.push(coords.to_array());
+                }
+
+                if let Ok(height_list) = get_elev(buffer, &mut terrain_data) {
+                    assert_eq!(positions.len(), height_list.len());
+
+                    for (pos, height) in positions.iter_mut().zip(&height_list) {
+                        pos[1] = height * TERRAIN_HEIGHT_FACTOR;
+                    }
+                    chunk_buffer.push(Chunk {
+                        coordinates: midpoint_coords,
+                        height_data: height_list,
+                    });
                 }
             }
+        }
 
-            let mut file = std::fs::File::create("terrain.json").unwrap();
-            let json_data = serde_json::to_string(&terrain_data.0).unwrap();
-            file.write_all(json_data.as_bytes()).unwrap();
+        terrain.compute_normals();
+        commands.spawn((
+            Mesh3d(meshes.add(terrain.clone())),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: bevy::color::palettes::css::GREEN.into(),
+                perceptual_roughness: 1.0,
+                ..Default::default()
+            })),
+            Transform::from_translation(Vec3 {
+                x: 0.0,
+                y: -0.1,
+                z: 0.0,
+            }),
+        ));
+
+        if settings.terrain_collisions {
+            spawn_terrain_collider(commands, terrain);
         }
     }
 
-    terrain.compute_normals();
-    commands.spawn((
-        Mesh3d(meshes.add(terrain.clone())),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: bevy::color::palettes::css::GREEN.into(),
-            perceptual_roughness: 1.0,
-            ..Default::default()
-        })),
-        Transform::from_translation(Vec3 {
-            x: 0.0,
-            y: -0.1,
-            z: 0.0,
-        }),
-    ));
-
-    if settings.terrain_collisions {
-        spawn_terrain_collider(commands, terrain);
-    } else {
-        commands.spawn((RigidBody::Static, Collider::cuboid(10000.0, 1.0, 10000.0)));
+    if !file_exists {
+        let mut file = std::fs::File::create("terrain.json").unwrap();
+        let json_data = serde_json::to_string(&chunk_buffer).unwrap();
+        file.write_all(json_data.as_bytes()).unwrap();
     }
 }
 
@@ -161,6 +197,5 @@ fn get_elev(coords: Vec<[f32; 2]>, data: &mut ResMut<TerrainData>) -> Result<Vec
         }
     }
 
-    info!(?result);
     Ok(result)
 }
