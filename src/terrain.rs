@@ -54,8 +54,7 @@ pub fn spawn_terrain(
             for pos in positions.iter_mut() {
                 pos[0] += ((chunk_index % SUBDIVISIONS) as f32 * MESH_SIZE / SUBDIVISIONS as f32)
                     - MESH_SIZE / 2.0;
-                pos[2] += ((chunk_index / SUBDIVISIONS) as i32 as f32 * MESH_SIZE
-                    / SUBDIVISIONS as f32)
+                pos[2] += ((chunk_index / SUBDIVISIONS) as f32 * MESH_SIZE / SUBDIVISIONS as f32)
                     - MESH_SIZE / 2.0;
             }
 
@@ -65,19 +64,17 @@ pub fn spawn_terrain(
                         * *fetched_data
                             // TODO fix this mess
                             .iter()
-                            .nth(0)
+                            .next()
                             .unwrap()
-                            .iter()
-                            .nth(chunk_index as usize)
+                            .get(chunk_index as usize)
                             .unwrap()
                             .height_data
-                            .iter()
-                            .nth(i)
+                            .get(i)
                             .unwrap_or(&0.0);
                 }
             } else {
                 let mut buffer: Vec<[f32; 2]> = vec![];
-                let midpoint_coords = Vec2::new(-42.8829, 147.3310);
+                let midpoint_coords = Vec2::new(-42.8829, 147.331);
                 info!(
                     "Fetching chunk {} of {}...",
                     chunk_index,
@@ -164,8 +161,7 @@ fn get_elev(coords: Vec<[f32; 2]>, data: &mut ResMut<TerrainData>) -> Result<Vec
                     Err(err) => panic!("Error while fetching terrain: {err}"),
                 };
 
-                let response: Response;
-                response = serde_json::from_str(&resp)?;
+                let response: Response = serde_json::from_str(&resp)?;
 
                 let elevations = response.elevations;
                 for o_elevation in &elevations {
@@ -182,8 +178,7 @@ fn get_elev(coords: Vec<[f32; 2]>, data: &mut ResMut<TerrainData>) -> Result<Vec
                 Err(err) => panic!("Error: {err}"),
             };
 
-            let response: Response;
-            response = serde_json::from_str(&resp)?;
+            let response: Response = serde_json::from_str(&resp)?;
 
             let elevations = response.elevations;
             for o_elevation in &elevations {

@@ -12,23 +12,12 @@ pub const STROBE_ON_DURATION: f32 = 0.1;
 pub const ACOL_OFF_DURATION: f32 = 1.2;
 pub const ACOL_ON_DURATION: f32 = 0.1;
 
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct AircraftState {
     pub engine_on: bool,
     pub anti_col_lts_on: bool,
     pub pos_lts_on: bool,
     pub strobe_lts_on: bool,
-}
-
-impl Default for AircraftState {
-    fn default() -> Self {
-        Self {
-            engine_on: false,
-            anti_col_lts_on: false,
-            pos_lts_on: false,
-            strobe_lts_on: false,
-        }
-    }
 }
 
 pub fn button_listener(
@@ -59,27 +48,23 @@ pub fn button_listener(
     }
 
     const SWITCH_ANGLE_LIMIT: f32 = 70.0;
-    match button.button {
-        ButtonTypes::Switch => {
-            if let Some(mut bool) = bool {
-                if let Some(inverse) = button.inverse {
-                    if inverse {
-                        bool = !bool
-                    }
-                }
-
-                let angle: f32;
-                match bool {
-                    true => angle = -SWITCH_ANGLE_LIMIT,
-                    false => angle = SWITCH_ANGLE_LIMIT,
-                }
-                transform
-                    .get_mut(press.entity.entity())
-                    .unwrap()
-                    .rotate_local_x(angle.to_radians());
-            }
+    if let ButtonTypes::Switch = button.button
+        && let Some(mut bool) = bool
+    {
+        if let Some(inverse) = button.inverse
+            && inverse
+        {
+            bool = !bool
         }
-        _ => {}
+
+        let angle = match bool {
+            true => -SWITCH_ANGLE_LIMIT,
+            false => SWITCH_ANGLE_LIMIT,
+        };
+        transform
+            .get_mut(press.entity.entity())
+            .unwrap()
+            .rotate_local_x(angle.to_radians());
     }
 }
 
