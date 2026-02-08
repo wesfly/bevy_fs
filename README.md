@@ -31,7 +31,7 @@ Use `cargo run --release` to run the program from the project root folder.
 ## Flying
 
 To start flying, you need to go to the cockpit view and turn on the engine. The switch is located in the center console and is labelled `ENG`.
-You should start flying immediatly. If that is not the case and the performance is bad, turn off the terrain collisions in the settings.
+If you now bring the throttle to 100%, you should start flying immediatly.
 
 ## Terrain
 
