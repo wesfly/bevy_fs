@@ -19,13 +19,14 @@ This is a little flight sim made in Bevy.
 
 ## Installation
 
+First you need to install Rust from [here](https://rust-lang.org/tools/install/), if you haven't already, and `git-lfs` by installing it with your package manager and then running `git lfs install`.
+
 ```sh
 git clone https://codeberg.org/wesfly/bevy-fs.git
 git lfs pull # Pull the big files
 ```
 
-If you have Rust installed, use `cargo run (--release)` to run the program.
-If not, you can install it here: https://rust-lang.org/tools/install/
+Use `cargo run --release` to run the program from the project root folder.
 
 ## Flying
 
