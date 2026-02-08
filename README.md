@@ -4,6 +4,8 @@ This is a little flight sim made in Bevy.
 
 ![](Screenshot.png)
 
+[Discord server](https://discord.gg/epMBz5m2Ad)
+
 ## Features
 
 - Support for both keyboard and gamepad, but gamepad is recommended
