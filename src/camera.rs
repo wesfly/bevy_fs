@@ -75,17 +75,13 @@ pub fn camera_controller(
     let delta_yaw;
 
     match camera_settings.view {
-        CameraView::Cockpit => {
-            delta_pitch = -delta.y * camera_settings.pitch_speed;
-            delta_yaw = -delta.x * camera_settings.yaw_speed;
-        }
-        CameraView::Tail => {
-            delta_pitch = -delta.y * camera_settings.pitch_speed;
-            delta_yaw = -delta.x * camera_settings.yaw_speed;
-        }
-        _ => {
+        CameraView::Follow => {
             delta_pitch = delta.y * camera_settings.pitch_speed;
             delta_yaw = delta.x * camera_settings.yaw_speed;
+        }
+        _ => {
+            delta_pitch = -delta.y * camera_settings.pitch_speed;
+            delta_yaw = -delta.x * camera_settings.yaw_speed;
         }
     }
 
