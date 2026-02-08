@@ -19,14 +19,14 @@ use bevy::{gltf::GltfMeshExtras, prelude::*, scene::SceneInstanceReady};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Component, Serialize, Deserialize)]
-pub enum ButtonTypes {
+pub enum InputDeviceType {
     Switch,
     Button,
     Lever,
 }
 
 #[derive(Component, Debug, Serialize, Deserialize)]
-pub enum ButtonID {
+pub enum Function {
     AntiColLt,
     Engine,
     PositionLt,
@@ -35,8 +35,8 @@ pub enum ButtonID {
 
 #[derive(Debug, Component, Serialize, Deserialize)]
 pub struct Button {
-    pub button: ButtonTypes,
-    pub function: Option<ButtonID>,
+    pub input_device_type: InputDeviceType,
+    pub function: Option<Function>,
     pub inverse: Option<bool>,
 }
 
@@ -56,12 +56,12 @@ pub fn buttons_from_gltf(
 
         #[cfg(debug_assertions)]
         dbg!(&data);
-        match data.button {
-            ButtonTypes::Button | ButtonTypes::Switch => {
+        match data.input_device_type {
+            InputDeviceType::Button | InputDeviceType::Switch => {
                 let bundle = (
                     Pickable::default(),
                     Button {
-                        button: data.button,
+                        input_device_type: data.input_device_type,
                         inverse: data.inverse,
                         function: data.function,
                     },
