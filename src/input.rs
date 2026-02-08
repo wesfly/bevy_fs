@@ -1,4 +1,4 @@
-use crate::{CameraSettings, InputAxis, Settings};
+use crate::{CameraSettings, InputAxis, Settings, camera::CameraView};
 use bevy::prelude::*;
 
 #[derive(Resource)]
@@ -49,10 +49,10 @@ pub fn input_system(
     };
 
     if keyboard_input.just_pressed(keymap.change_camera) {
-        if camera_settings.view == 0 {
-            camera_settings.view = 1
-        } else if camera_settings.view == 1 {
-            camera_settings.view = 0
+        match camera_settings.view {
+            CameraView::Follow => camera_settings.view = CameraView::Cockpit,
+            CameraView::Cockpit => camera_settings.view = CameraView::Tail,
+            CameraView::Tail => camera_settings.view = CameraView::Follow,
         }
     }
 

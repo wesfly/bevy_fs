@@ -136,7 +136,6 @@ fn main() {
 fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    camera_settings: Res<CameraSettings>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
     settings: Res<Settings>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -197,8 +196,6 @@ fn setup(
 
     let mut camera = commands.spawn((
         Camera3d::default(),
-        Transform::from_translation(camera_settings.follow_default_position)
-            .looking_at(camera_settings.follow_default_lookat, Vec3::Y),
         Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
         AtmosphereEnvironmentMapLight::default(),
         AtmosphereSettings::default(),

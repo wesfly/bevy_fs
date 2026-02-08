@@ -5,6 +5,13 @@ use bevy::{
 };
 use std::{f32::consts::FRAC_PI_2, ops::Range};
 
+#[derive(Debug)]
+pub enum CameraView {
+    Cockpit,
+    Follow,
+    Tail,
+}
+
 #[derive(Debug, Resource)]
 pub struct CameraSettings {
     pub orbit_distance: f32,
@@ -12,11 +19,11 @@ pub struct CameraSettings {
     // Clamp pitch to this range
     pub pitch_range: Range<f32>,
     pub yaw_speed: f32,
-    pub follow_default_position: Vec3,
-    // pub follow_rotation: Dir3,
-    pub follow_default_lookat: Vec3,
-    pub cockpit_default_position: Vec3,
-    pub view: u8,
+    follow_default_position: Vec3,
+    follow_default_lookat: Vec3,
+    cockpit_default_position: Vec3,
+    tail_default_position: Vec3,
+    pub view: CameraView,
 }
 
 impl Default for CameraSettings {
@@ -43,7 +50,12 @@ impl Default for CameraSettings {
                 y: 1.2,
                 z: -2.6,
             },
-            view: 0,
+            tail_default_position: Vec3 {
+                x: 0.5,
+                y: 3.0,
+                z: 8.0,
+            },
+            view: CameraView::Follow,
         }
     }
 }
@@ -57,20 +69,24 @@ pub fn camera_controller(
     keymap: Res<Keymap>,
     mut projection: Single<&mut Projection, With<Camera>>,
     mut scroll_events: MessageReader<MouseWheel>,
-    // aircraft: Single<&Transform, (With<Aircraft>, Without<Camera>)>,
 ) {
-    let cockpit_cam: bool = camera_settings.view == 1;
-
     let delta = mouse_motion.delta;
     let delta_pitch;
     let delta_yaw;
 
-    if cockpit_cam {
-        delta_pitch = -delta.y * camera_settings.pitch_speed;
-        delta_yaw = -delta.x * camera_settings.yaw_speed;
-    } else {
-        delta_pitch = delta.y * camera_settings.pitch_speed;
-        delta_yaw = delta.x * camera_settings.yaw_speed;
+    match camera_settings.view {
+        CameraView::Cockpit => {
+            delta_pitch = -delta.y * camera_settings.pitch_speed;
+            delta_yaw = -delta.x * camera_settings.yaw_speed;
+        }
+        CameraView::Tail => {
+            delta_pitch = -delta.y * camera_settings.pitch_speed;
+            delta_yaw = -delta.x * camera_settings.yaw_speed;
+        }
+        _ => {
+            delta_pitch = delta.y * camera_settings.pitch_speed;
+            delta_yaw = delta.x * camera_settings.yaw_speed;
+        }
     }
 
     // Obtain the existing pitch, yaw, and roll values from the transform.
@@ -83,21 +99,30 @@ pub fn camera_controller(
 
     let yaw = yaw + delta_yaw;
 
-    if cockpit_cam {
-        if mouse_buttons.pressed(MouseButton::Right) {
-            camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
+    match camera_settings.view {
+        CameraView::Cockpit => {
+            if mouse_buttons.pressed(MouseButton::Right) {
+                camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
+            }
+            camera.translation = camera_settings.cockpit_default_position;
         }
-        camera.translation = camera_settings.cockpit_default_position;
-    } else {
-        let target = camera_settings.follow_default_lookat;
-        if mouse_buttons.pressed(MouseButton::Right) {
-            camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
+        CameraView::Tail => {
+            if mouse_buttons.pressed(MouseButton::Right) {
+                camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
+            }
+            camera.translation = camera_settings.tail_default_position;
         }
-        camera.translation = target - camera.forward() * camera_settings.orbit_distance;
+        CameraView::Follow => {
+            let target = camera_settings.follow_default_lookat;
+            if mouse_buttons.pressed(MouseButton::Right) {
+                camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
+            }
+            camera.translation = target - camera.forward() * camera_settings.orbit_distance;
 
-        if keyboard_input.just_pressed(keymap.reset_camera) {
-            camera.translation = camera_settings.follow_default_position;
-            camera.look_at(target, Vec3::Y);
+            if keyboard_input.just_pressed(keymap.reset_camera) {
+                camera.translation = camera_settings.follow_default_position;
+                camera.look_at(target, Vec3::Y);
+            }
         }
     }
 
