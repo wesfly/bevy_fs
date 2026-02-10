@@ -44,20 +44,24 @@ Terrain data will be stored in terrain.json after the first fetch. If you want a
 It's worth taking a look at the `settings.json` file and updating the settings according to your setup.
 Gamepad is enabled by default, you might want to disable it if you don't have one.
 
-### Gamepad
+- `RMB + drag` to orbit camera
+- `C` to switch the camera view
+- Mouse wheel to zoom camera
+- `R` to reset camera
+
+### Some additional bindings for different configs
+
+#### Controller
+
+- Left stick to throttle and yaw
+- Right stick to pitch and roll
+
+#### HOTAS
 
 - Left stick to steer
 - `DPadUp` and `DPadDown` to throttle up and down respectively
-- `RMB + drag` to orbit camera
-- `C` to switch the camera view
-- Mouse wheel to zoom camera
-- `R` to reset camera
 
-### Keyboard
+#### Keyboard
 
 - `WASDQE` to steer
 - `PgUp` and `PgDown` to throttle up and down respectively
-- `RMB + drag` to orbit camera
-- `C` to switch the camera view
-- Mouse wheel to zoom camera
-- `R` to reset camera
