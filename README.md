@@ -10,7 +10,7 @@ This is a little flight sim made in Bevy.
 
 - Support for both keyboard and gamepad, but gamepad is recommended
 - A display for throttle and altitude
-- Terrain with real-world elevation data
+- Terrain with real-world elevation data and collisions
 - Loading data from GLTF with custom properties
 - 3D cockpit with clickable buttons
 - Collisions with `avian3d`
@@ -41,7 +41,8 @@ Terrain data will be stored in terrain.json after the first fetch. If you want a
 
 ## Controls
 
-To switch between gamepad and keyboard, manipulate the `gamepad -> enabled` field in settings.json.
+It's worth taking a look at the `settings.json` file and updating the settings according to your setup.
+Gamepad is enabled by default, you might want to disable it if you don't have one.
 
 ### Gamepad
 
