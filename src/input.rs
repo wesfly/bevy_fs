@@ -58,26 +58,44 @@ pub fn input_system(
 
     if settings.gamepad.enabled {
         let gamepad = gp.expect("gamepad.enabled set to true but no gamepad detected.");
-        if let (Some(x), Some(y)) = (
-            gamepad.get(GamepadAxis::LeftStickX),
-            gamepad.get(GamepadAxis::LeftStickY),
-        ) {
-            gamepad_input.pitch = -y;
-            gamepad_input.roll = -x;
-        }
 
-        if gamepad.just_pressed(GamepadButton::DPadDown) {
-            gamepad_input.throttle = -0.1;
-        }
-        if gamepad.just_pressed(GamepadButton::DPadUp) {
-            gamepad_input.throttle = 0.1;
-        }
+        if settings.gamepad.hotas {
+            if let (Some(x), Some(y)) = (
+                gamepad.get(GamepadAxis::LeftStickX),
+                gamepad.get(GamepadAxis::LeftStickY),
+            ) {
+                gamepad_input.pitch = -y;
+                gamepad_input.roll = -x;
+            }
 
-        if gamepad.pressed(GamepadButton::DPadLeft) {
-            gamepad_input.yaw = 1.0;
-        }
-        if gamepad.pressed(GamepadButton::DPadRight) {
-            gamepad_input.yaw = -1.0;
+            if gamepad.just_pressed(GamepadButton::DPadDown) {
+                gamepad_input.throttle = -0.1;
+            }
+            if gamepad.just_pressed(GamepadButton::DPadUp) {
+                gamepad_input.throttle = 0.1;
+            }
+
+            if gamepad.pressed(GamepadButton::DPadLeft) {
+                gamepad_input.yaw = 1.0;
+            }
+            if gamepad.pressed(GamepadButton::DPadRight) {
+                gamepad_input.yaw = -1.0;
+            }
+        } else {
+            if let (Some(x), Some(y)) = (
+                gamepad.get(GamepadAxis::RightStickX),
+                gamepad.get(GamepadAxis::RightStickY),
+            ) {
+                gamepad_input.pitch = -y;
+                gamepad_input.roll = -x;
+            }
+            if let (Some(x), Some(y)) = (
+                gamepad.get(GamepadAxis::LeftStickX),
+                gamepad.get(GamepadAxis::LeftStickY),
+            ) {
+                gamepad_input.throttle += y * 0.01;
+                gamepad_input.yaw = -x;
+            }
         }
 
         input.pitch = gamepad_input.pitch;

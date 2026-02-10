@@ -46,6 +46,7 @@ use bevy::dev_tools::fps_overlay::FpsOverlayPlugin;
 #[derive(Serialize, Deserialize)]
 struct Gamepad {
     enabled: bool,
+    hotas: bool,
 }
 
 #[derive(Resource, Serialize, Deserialize)]
