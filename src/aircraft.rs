@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::{
     Aircraft, InputAxis,
-    data_from_gltf::{Function, InputDeviceType, Lights},
+    data_from_gltf::{InterfaceOperation, InterfaceType, Lights},
 };
 use avian3d::prelude::*;
 use bevy::prelude::*;
@@ -28,27 +28,27 @@ pub fn button_listener(
 ) {
     let button = function_comps.get(press.entity.entity()).unwrap();
     let bool;
-    match button.function.as_ref().unwrap() {
-        Function::Engine => {
+    match button.operation.as_ref().unwrap() {
+        InterfaceOperation::Engine => {
             bool = Some(state.engine_on);
             state.engine_on = !state.engine_on
         }
-        Function::AntiColLt => {
+        InterfaceOperation::AntiColLt => {
             bool = Some(state.anti_col_lts_on);
             state.anti_col_lts_on = !state.anti_col_lts_on
         }
-        Function::PositionLt => {
+        InterfaceOperation::PositionLt => {
             bool = Some(state.pos_lts_on);
             state.pos_lts_on = !state.pos_lts_on
         }
-        Function::StrobeLt => {
+        InterfaceOperation::StrobeLt => {
             bool = Some(state.strobe_lts_on);
             state.strobe_lts_on = !state.strobe_lts_on
         }
     }
 
     const SWITCH_ANGLE_LIMIT: f32 = 70.0;
-    if let InputDeviceType::Switch = button.input_device_type
+    if let InterfaceType::Switch = button.interface_type
         && let Some(mut bool) = bool
     {
         if let Some(inverse) = button.inverse

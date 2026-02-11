@@ -6,8 +6,8 @@ Thanks to Christopher Biscardi for making a tutorial about it.
 
 buttons_from_gltf
 -----------------
-button: ButtonTypes
-function: ButtonID
+interface_type: InterfaceType
+function: InterfaceOperation
 inverse: bool
 
 lights_from_gltf
@@ -19,14 +19,14 @@ use bevy::{gltf::GltfMeshExtras, prelude::*, scene::SceneInstanceReady};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Component, Serialize, Deserialize)]
-pub enum InputDeviceType {
+pub enum InterfaceType {
     Switch,
     Button,
     Lever,
 }
 
 #[derive(Component, Debug, Serialize, Deserialize)]
-pub enum Function {
+pub enum InterfaceOperation {
     AntiColLt,
     Engine,
     PositionLt,
@@ -35,8 +35,8 @@ pub enum Function {
 
 #[derive(Debug, Component, Serialize, Deserialize)]
 pub struct Button {
-    pub input_device_type: InputDeviceType,
-    pub function: Option<Function>,
+    pub interface_type: InterfaceType,
+    pub operation: Option<InterfaceOperation>,
     pub inverse: Option<bool>,
 }
 
@@ -56,14 +56,14 @@ pub fn buttons_from_gltf(
 
         #[cfg(debug_assertions)]
         dbg!(&data);
-        match data.input_device_type {
-            InputDeviceType::Button | InputDeviceType::Switch => {
+        match data.interface_type {
+            InterfaceType::Button | InterfaceType::Switch => {
                 let bundle = (
                     Pickable::default(),
                     Button {
-                        input_device_type: data.input_device_type,
+                        interface_type: data.interface_type,
                         inverse: data.inverse,
-                        function: data.function,
+                        operation: data.operation,
                     },
                 );
                 commands
