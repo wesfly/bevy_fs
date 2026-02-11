@@ -65,3 +65,7 @@ Gamepad is enabled by default, you might want to disable it if you don't have on
 
 - `WASDQE` to steer
 - `PgUp` and `PgDown` to throttle up and down respectively
+
+---
+
+Please report any problems as an issue. Thanks!
