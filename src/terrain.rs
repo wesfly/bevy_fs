@@ -74,7 +74,10 @@ pub fn spawn_terrain(
                 }
             } else {
                 let mut buffer: Vec<[f32; 2]> = vec![];
-                let midpoint_coords = Vec2::new(-42.8829, 147.331);
+                let midpoint_coords = Vec2::new(
+                    settings.terrain.coordinates.lat,
+                    settings.terrain.coordinates.long,
+                );
                 info!(
                     "Fetching chunk {} of {}...",
                     chunk_index,
