@@ -68,4 +68,8 @@ Gamepad is enabled by default, you might want to disable it if you don't have on
 
 ---
 
-Please report any problems as an issue. Thanks!
+## Contributions
+
+Contributions are welcome.
+
+If you have any problems regarding this repository, please report them as an issue. Thanks!
