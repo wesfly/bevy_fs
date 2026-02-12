@@ -74,16 +74,8 @@ pub fn camera_controller(
     let delta_pitch;
     let delta_yaw;
 
-    match camera_settings.view {
-        CameraView::Follow => {
-            delta_pitch = delta.y * camera_settings.pitch_speed;
-            delta_yaw = delta.x * camera_settings.yaw_speed;
-        }
-        _ => {
-            delta_pitch = -delta.y * camera_settings.pitch_speed;
-            delta_yaw = -delta.x * camera_settings.yaw_speed;
-        }
-    }
+    delta_pitch = -delta.y * camera_settings.pitch_speed;
+    delta_yaw = -delta.x * camera_settings.yaw_speed;
 
     // Obtain the existing pitch, yaw, and roll values from the transform.
     let (yaw, pitch, roll) = camera.rotation.to_euler(EulerRot::YXZ);
