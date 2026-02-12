@@ -10,8 +10,7 @@ struct ThrottleUI;
 pub struct UI;
 impl Plugin for UI {
     fn build(&self, app: &mut App) {
-        app // ok
-            .add_systems(Startup, setup_ui)
+        app.add_systems(Startup, setup_ui)
             .add_systems(Update, (update_altitude, update_throttle));
     }
 }
