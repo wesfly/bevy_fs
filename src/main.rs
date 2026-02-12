@@ -49,13 +49,20 @@ struct Gamepad {
     hotas: bool,
 }
 
+#[derive(Serialize, Deserialize)]
+struct Terrain {
+    collisions: bool,
+    number_of_chunks: u32,
+    subdivisions_per_chunk: u32,
+}
+
 #[derive(Resource, Serialize, Deserialize)]
 pub struct Settings {
     gamepad: Gamepad,
     motion_blur_enabled: bool,
     shadow_distance: f32,
     screen_space_effects: bool,
-    terrain_collisions: bool,
+    terrain: Terrain,
     sun_position: Vec3,
 }
 
@@ -63,7 +70,8 @@ impl Settings {
     fn fetch() -> Self {
         let json_data = fs::read_to_string("settings.json")
             .expect("Try running 'cargo run (--release)' from the project root folder.");
-        let settings: Self = serde_json::from_str(&json_data).unwrap();
+        let settings: Self =
+            serde_json::from_str(&json_data).expect("Failed to serialize settings file");
         settings
     }
 }

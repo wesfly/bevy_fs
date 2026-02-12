@@ -5,7 +5,11 @@
   },
   "motion_blur_enabled": true,
   "shadow_distance": 5000.0,
-  "screen_space_effects": true,
+  "screen_space_effects": false,
   "sun_position": [1.0, 1.2, -1.0],
-  "terrain_collisions": true
+  "terrain": {
+    "collisions": true,
+    "number_of_chunks": 256,
+    "subdivisions_per_chunk": 64
+  }
 }

@@ -19,8 +19,8 @@ pub fn spawn_terrain(
     mut terrain_data: ResMut<TerrainData>,
     settings: &Res<Settings>,
 ) {
-    const SUBDIVISIONS: i32 = 16; // Subdivisions per axis for chunking
-    const SUBDIVISIONS_PER_CHUNK: u32 = 128;
+    let subdivisions = settings.terrain.number_of_chunks.isqrt(); // Subdivisions per axis for chunking
+    let subdivisions_per_chunk: u32 = settings.terrain.subdivisions_per_chunk;
     const MESH_SIZE: f32 = 20_000.0;
     const TERRAIN_HEIGHT_FACTOR: f32 = 0.2;
     const TERRAIN_SCALE: f32 = 0.0001;
@@ -36,15 +36,15 @@ pub fn spawn_terrain(
     }
 
     let mut chunk_buffer: Vec<Chunk> = vec![];
-    for chunk_index in 0..SUBDIVISIONS.pow(2) {
+    for chunk_index in 0..subdivisions.pow(2) {
         let mut terrain = Mesh::from(
             Plane3d::default()
                 .mesh()
                 .size(
-                    MESH_SIZE / SUBDIVISIONS as f32,
-                    MESH_SIZE / SUBDIVISIONS as f32,
+                    MESH_SIZE / subdivisions as f32,
+                    MESH_SIZE / subdivisions as f32,
                 )
-                .subdivisions(SUBDIVISIONS_PER_CHUNK),
+                .subdivisions(subdivisions_per_chunk),
         );
 
         if let bevy::mesh::VertexAttributeValues::Float32x3(positions) =
@@ -52,9 +52,9 @@ pub fn spawn_terrain(
         {
             // Positioning chunks
             for pos in positions.iter_mut() {
-                pos[0] += ((chunk_index % SUBDIVISIONS) as f32 * MESH_SIZE / SUBDIVISIONS as f32)
+                pos[0] += ((chunk_index % subdivisions) as f32 * MESH_SIZE / subdivisions as f32)
                     - MESH_SIZE / 2.0;
-                pos[2] += ((chunk_index / SUBDIVISIONS) as f32 * MESH_SIZE / SUBDIVISIONS as f32)
+                pos[2] += ((chunk_index / subdivisions) as f32 * MESH_SIZE / subdivisions as f32)
                     - MESH_SIZE / 2.0;
             }
 
@@ -78,7 +78,7 @@ pub fn spawn_terrain(
                 info!(
                     "Fetching chunk {} of {}...",
                     chunk_index,
-                    SUBDIVISIONS.pow(2)
+                    subdivisions.pow(2)
                 );
 
                 let mut coords;
@@ -116,7 +116,7 @@ pub fn spawn_terrain(
             }),
         ));
 
-        if settings.terrain_collisions {
+        if settings.terrain.collisions {
             spawn_terrain_collider(commands, terrain);
         }
     }
