@@ -50,10 +50,17 @@ struct Gamepad {
 }
 
 #[derive(Serialize, Deserialize)]
+struct Coordinates {
+    lat: f32,
+    long: f32,
+}
+
+#[derive(Serialize, Deserialize)]
 struct Terrain {
     collisions: bool,
     number_of_chunks: u32,
     subdivisions_per_chunk: u32,
+    coordinates: Coordinates,
 }
 
 #[derive(Resource, Serialize, Deserialize)]
