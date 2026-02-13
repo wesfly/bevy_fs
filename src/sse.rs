@@ -11,8 +11,7 @@ use bevy::{
         ImageSamplerDescriptor,
     },
     pbr::{
-        DefaultOpaqueRendererMethod, ExtendedMaterial, MaterialExtension,
-        ScreenSpaceAmbientOcclusion, ScreenSpaceReflections,
+        DefaultOpaqueRendererMethod, ExtendedMaterial, MaterialExtension, ScreenSpaceReflections,
     },
     prelude::*,
     render::render_resource::{AsBindGroup, ShaderType},
@@ -54,20 +53,12 @@ pub struct WaterSettings {
 
 const SHADER_ASSET_PATH: &str = "shaders/water_material.wgsl";
 
-pub fn sse_config(
-    settings: &Settings,
-) -> Option<(
-    ScreenSpaceReflections,
-    Msaa,
-    Fxaa,
-    ScreenSpaceAmbientOcclusion,
-)> {
+pub fn sse_config(settings: &Settings) -> Option<(ScreenSpaceReflections, Msaa, Fxaa)> {
     if settings.screen_space_effects {
         Some((
             ScreenSpaceReflections::default(),
             Msaa::Off,
             Fxaa::default(),
-            ScreenSpaceAmbientOcclusion::default(),
         ))
     } else {
         None
