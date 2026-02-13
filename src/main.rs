@@ -186,6 +186,13 @@ fn setup(
 
     terrain::spawn_terrain(&mut commands, meshes, materials, terrain_data, &settings);
 
+    commands.spawn((
+        SceneRoot(asset_server.load("hospital.glb#Scene0")),
+        RigidBody::Static,
+        ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
+        Transform::from_xyz(0.0, 0.0, 0.0),
+    ));
+
     // Aircraft collider
     let aircraft = commands
         .spawn((
@@ -193,7 +200,7 @@ fn setup(
             Aircraft,
             RigidBody::Dynamic,
             ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
-            Transform::from_xyz(0., 8., 10.),
+            Transform::from_xyz(0., 20., 0.),
             Mass(5000.),
             Visibility::Hidden,
         ))
