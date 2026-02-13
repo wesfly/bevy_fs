@@ -9,8 +9,8 @@
   "sun_position": [1.0, 1.2, -1.0],
   "terrain": {
     "collisions": true,
-    "number_of_chunks": 256,
-    "subdivisions_per_chunk": 64,
+    "number_of_chunks": 1024,
+    "subdivisions_per_chunk": 32,
     "coordinates": { "lat": -42.8829, "long": 147.331 }
   }
 }
