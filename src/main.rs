@@ -144,7 +144,16 @@ fn main() {
     }
 
     #[cfg(debug_assertions)]
-    app.add_plugins(FpsOverlayPlugin::default());
+    app.add_plugins(FpsOverlayPlugin {
+        config: FpsOverlayConfig {
+            frame_time_graph_config: FrameTimeGraphConfig {
+                enabled: true,
+                min_fps: 40.0,
+                target_fps: 100.0,
+            },
+            ..default()
+        },
+    });
 
     app.run();
 }
