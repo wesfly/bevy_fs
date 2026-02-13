@@ -41,7 +41,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 
 #[cfg(debug_assertions)]
-use bevy::dev_tools::fps_overlay::FpsOverlayPlugin;
+use bevy::dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig};
 
 #[derive(Serialize, Deserialize)]
 struct Gamepad {
