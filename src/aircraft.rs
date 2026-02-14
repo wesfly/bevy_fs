@@ -271,12 +271,12 @@ pub fn spawn(
     ));
 
     // TODO make this a plugin
-    if let Some(sse) = crate::sse_config(&settings) {
+    if let Some(sse) = crate::sse_config(settings) {
         camera.insert(sse);
     }
 
-    if let Some(a) = motion_blur(&settings) {
-        camera.insert(a);
+    if let Some(mb) = motion_blur(settings) {
+        camera.insert(mb);
     }
 }
 

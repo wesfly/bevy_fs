@@ -74,11 +74,9 @@ pub fn camera_controller(
     mut scroll_events: MessageReader<MouseWheel>,
 ) {
     let delta = mouse_motion.delta;
-    let delta_pitch;
-    let delta_yaw;
 
-    delta_pitch = -delta.y * camera_settings.pitch_speed;
-    delta_yaw = -delta.x * camera_settings.yaw_speed;
+    let delta_pitch = -delta.y * camera_settings.pitch_speed;
+    let delta_yaw = -delta.x * camera_settings.yaw_speed;
 
     // Obtain the existing pitch, yaw, and roll values from the transform.
     let (yaw, pitch, roll) = camera.rotation.to_euler(EulerRot::YXZ);

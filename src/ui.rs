@@ -159,21 +159,18 @@ fn spawn_scene(
     terrain_data: ResMut<TerrainData>,
     mut messages: MessageReader<GameModeChanged>,
 ) {
-    match messages.read().last() {
-        Some(GameModeChanged(GameState::Running)) => {
-            commands.entity(*camera).despawn();
-            crate::setup_scene(
-                commands,
-                asset_server,
-                graphs,
-                settings,
-                meshes,
-                water_materials,
-                scattering_mediums,
-                materials,
-                terrain_data,
-            );
-        }
-        _ => {}
+    if let Some(GameModeChanged(GameState::Running)) = messages.read().last() {
+        commands.entity(*camera).despawn();
+        crate::setup_scene(
+            commands,
+            asset_server,
+            graphs,
+            settings,
+            meshes,
+            water_materials,
+            scattering_mediums,
+            materials,
+            terrain_data,
+        );
     }
 }
