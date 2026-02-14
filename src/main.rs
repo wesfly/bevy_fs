@@ -132,8 +132,8 @@ pub fn setup_scene(
     materials: ResMut<Assets<StandardMaterial>>,
     terrain_data: ResMut<TerrainData>,
 ) {
-    if let Some(abc) = water_materials {
-        sse::spawn_water(&mut commands, &asset_server, &mut meshes, abc);
+    if let Some(material) = water_materials {
+        sse::spawn_water(&mut commands, &asset_server, &mut meshes, material);
     }
 
     aircraft::spawn(
