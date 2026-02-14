@@ -43,6 +43,12 @@ use std::fs;
 #[cfg(debug_assertions)]
 use bevy::dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig};
 
+#[derive(Resource, PartialEq)]
+pub enum GameState {
+    Running,
+    Menu,
+}
+
 #[derive(Serialize, Deserialize)]
 struct Gamepad {
     enabled: bool,
@@ -114,6 +120,7 @@ fn main() {
             roll: 0.0,
             throttle: 0.0,
         })
+        .insert_resource(GameState::Menu)
         .insert_resource(CameraSettings::default())
         .insert_resource(input::Keymap::default())
         .insert_resource(Settings::fetch())
@@ -123,11 +130,11 @@ fn main() {
             strobe: Timer::from_seconds(STROBE_OFF_DURATION, TimerMode::Repeating),
             strobe_on_cycle: false,
         })
-        .insert_resource(ClearColor(Color::BLACK))
+        // .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AircraftState::default())
         .insert_resource(TerrainData(Vec::new()))
         .add_plugins(UI)
-        .add_systems(Startup, setup)
+        // .add_systems(Startup, setup_scene)
         .add_systems(
             Update,
             (
@@ -158,7 +165,7 @@ fn main() {
     app.run();
 }
 
-fn setup(
+pub fn setup_scene(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
