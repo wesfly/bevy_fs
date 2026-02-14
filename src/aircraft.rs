@@ -1,11 +1,21 @@
 use std::time::Duration;
 
 use crate::{
-    Aircraft, InputAxis,
+    Aircraft, InputAxis, Settings,
     data_from_gltf::{InterfaceOperation, InterfaceType, Lights},
+    motion_blur,
 };
 use avian3d::prelude::*;
-use bevy::prelude::*;
+use bevy::{
+    camera::Exposure,
+    core_pipeline::tonemapping::Tonemapping,
+    light::AtmosphereEnvironmentMapLight,
+    pbr::{Atmosphere, AtmosphereSettings, ScatteringMedium},
+    post_process::bloom::Bloom,
+    prelude::*,
+    render::view::Hdr,
+    scene::SceneInstanceReady,
+};
 
 pub const STROBE_OFF_DURATION: f32 = 1.0;
 pub const STROBE_ON_DURATION: f32 = 0.1;
@@ -184,6 +194,103 @@ pub fn mechanics(
         for mut forces in &mut query {
             forces.apply_force(force);
             forces.apply_local_torque(torque * 500.0);
+        }
+    }
+}
+
+#[derive(Component)]
+struct AnimationToPlay {
+    graph_handle: Handle<AnimationGraph>,
+    index: AnimationNodeIndex,
+}
+
+pub fn spawn(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
+    mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
+    settings: &Res<Settings>,
+) {
+    let (graph, index) = AnimationGraph::from_clip(
+        asset_server.load(GltfAssetLabel::Animation(0).from_asset("aircraft.glb")),
+    );
+    let graph_handle = graphs.add(graph);
+
+    // Create a component that stores a reference to our animation.
+    let animation_to_play = AnimationToPlay {
+        graph_handle,
+        index,
+    };
+
+    // Aircraft collider
+    let aircraft = commands
+        .spawn((
+            SceneRoot(asset_server.load("aircraft.glb#Scene1")),
+            Aircraft,
+            RigidBody::Dynamic,
+            ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
+            Transform::from_xyz(0., 20., 0.),
+            Mass(5000.),
+            Visibility::Hidden,
+        ))
+        .id();
+
+    // The real aircraft model
+    commands
+        .spawn((
+            SceneRoot(asset_server.load("aircraft.glb#Scene0")),
+            Visibility::Visible,
+            ChildOf(aircraft),
+            animation_to_play,
+            ColliderDisabled,
+            RigidBodyDisabled,
+        ))
+        .observe(crate::buttons_from_gltf)
+        .observe(crate::lights_from_gltf)
+        .observe(play_animation_when_ready);
+
+    let mut camera = commands.spawn((
+        Camera3d::default(),
+        Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
+        AtmosphereEnvironmentMapLight::default(),
+        AtmosphereSettings::default(),
+        Exposure::SUNLIGHT,
+        Tonemapping::AgX,
+        Bloom::NATURAL,
+        Projection::from(PerspectiveProjection {
+            fov: 50.0_f32.to_radians(),
+            ..default()
+        }),
+        Hdr,
+        crate::camera::Camera,
+        ChildOf(aircraft),
+    ));
+
+    // TODO make this a plugin
+    if let Some(sse) = crate::sse_config(&settings) {
+        camera.insert(sse);
+    }
+
+    if let Some(a) = motion_blur(&settings) {
+        camera.insert(a);
+    }
+}
+
+fn play_animation_when_ready(
+    scene_ready: On<SceneInstanceReady>,
+    mut commands: Commands,
+    children: Query<&Children>,
+    animations_to_play: Query<&AnimationToPlay>,
+    mut players: Query<&mut AnimationPlayer>,
+) {
+    if let Ok(animation_to_play) = animations_to_play.get(scene_ready.entity) {
+        for child in children.iter_descendants(scene_ready.entity) {
+            if let Ok(mut player) = players.get_mut(child) {
+                player.play(animation_to_play.index).repeat();
+                commands
+                    .entity(child)
+                    .insert(AnimationGraphHandle(animation_to_play.graph_handle.clone()));
+            }
         }
     }
 }

@@ -5,6 +5,9 @@ use bevy::{
 };
 use std::{f32::consts::FRAC_PI_2, ops::Range};
 
+#[derive(Component)]
+pub struct Camera;
+
 #[derive(Debug)]
 pub enum CameraView {
     Cockpit,

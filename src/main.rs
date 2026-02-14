@@ -28,14 +28,10 @@ use crate::{
 use avian3d::prelude::*;
 
 use bevy::{
-    camera::Exposure,
-    core_pipeline::tonemapping::Tonemapping,
-    light::{AtmosphereEnvironmentMapLight, CascadeShadowConfigBuilder, light_consts::lux},
-    pbr::{Atmosphere, AtmosphereSettings, ExtendedMaterial, ScatteringMedium},
-    post_process::{bloom::Bloom, motion_blur::MotionBlur},
+    light::{CascadeShadowConfigBuilder, light_consts::lux},
+    pbr::{ExtendedMaterial, ScatteringMedium},
+    post_process::motion_blur::MotionBlur,
     prelude::*,
-    render::view::Hdr,
-    scene::SceneInstanceReady,
 };
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -90,9 +86,6 @@ impl Settings {
 }
 
 #[derive(Component)]
-struct Camera;
-
-#[derive(Component)]
 struct Aircraft;
 
 #[derive(Resource)]
@@ -101,12 +94,6 @@ struct InputAxis {
     yaw: f32,      // Yaw
     roll: f32,     // Roll
     throttle: f32, // Throttle
-}
-
-#[derive(Component)]
-struct AnimationToPlay {
-    graph_handle: Handle<AnimationGraph>,
-    index: AnimationNodeIndex,
 }
 
 fn main() {
@@ -168,28 +155,25 @@ fn main() {
 pub fn setup_scene(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut graphs: ResMut<Assets<AnimationGraph>>,
+    graphs: ResMut<Assets<AnimationGraph>>,
     settings: Res<Settings>,
     mut meshes: ResMut<Assets<Mesh>>,
     water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, sse::Water>>>>,
-    mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
+    scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     materials: ResMut<Assets<StandardMaterial>>,
     terrain_data: ResMut<TerrainData>,
 ) {
-    let (graph, index) = AnimationGraph::from_clip(
-        asset_server.load(GltfAssetLabel::Animation(0).from_asset("aircraft.glb")),
-    );
-    let graph_handle = graphs.add(graph);
-
-    // Create a component that stores a reference to our animation.
-    let animation_to_play = AnimationToPlay {
-        graph_handle,
-        index,
-    };
-
     if let Some(abc) = water_materials {
         sse::spawn_water(&mut commands, &asset_server, &mut meshes, abc);
     }
+
+    aircraft::spawn(
+        &mut commands,
+        &asset_server,
+        graphs,
+        scattering_mediums,
+        &settings,
+    );
 
     terrain::spawn_terrain(&mut commands, meshes, materials, terrain_data, &settings);
 
@@ -200,64 +184,11 @@ pub fn setup_scene(
         Transform::from_xyz(0.0, 0.0, 0.0),
     ));
 
-    // Aircraft collider
-    let aircraft = commands
-        .spawn((
-            SceneRoot(asset_server.load("aircraft.glb#Scene1")),
-            Aircraft,
-            RigidBody::Dynamic,
-            ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
-            Transform::from_xyz(0., 20., 0.),
-            Mass(5000.),
-            Visibility::Hidden,
-        ))
-        .id();
-
-    // The real aircraft model
-    commands
-        .spawn((
-            SceneRoot(asset_server.load("aircraft.glb#Scene0")),
-            Visibility::Visible,
-            ChildOf(aircraft),
-            animation_to_play,
-            ColliderDisabled,
-            RigidBodyDisabled,
-        ))
-        .observe(buttons_from_gltf)
-        .observe(lights_from_gltf)
-        .observe(play_animation_when_ready);
-
     let cascade = CascadeShadowConfigBuilder {
         maximum_distance: settings.shadow_distance,
         ..Default::default()
     }
     .build();
-
-    let mut camera = commands.spawn((
-        Camera3d::default(),
-        Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
-        AtmosphereEnvironmentMapLight::default(),
-        AtmosphereSettings::default(),
-        Exposure::SUNLIGHT,
-        Tonemapping::AgX,
-        Bloom::NATURAL,
-        Projection::from(PerspectiveProjection {
-            fov: 50.0_f32.to_radians(),
-            ..default()
-        }),
-        Hdr,
-        Camera,
-        ChildOf(aircraft),
-    ));
-
-    // TODO make this a plugin
-    if let Some(sse) = sse_config(&settings) {
-        camera.insert(sse);
-    }
-
-    if let Some(a) = motion_blur(&settings) {
-        camera.insert(a);
-    }
 
     let sun_position = settings.sun_position;
     commands.spawn((
@@ -269,25 +200,6 @@ pub fn setup_scene(
         Transform::from_translation(sun_position).looking_at(Vec3::ZERO, Vec3::Y),
         cascade,
     ));
-}
-
-fn play_animation_when_ready(
-    scene_ready: On<SceneInstanceReady>,
-    mut commands: Commands,
-    children: Query<&Children>,
-    animations_to_play: Query<&AnimationToPlay>,
-    mut players: Query<&mut AnimationPlayer>,
-) {
-    if let Ok(animation_to_play) = animations_to_play.get(scene_ready.entity) {
-        for child in children.iter_descendants(scene_ready.entity) {
-            if let Ok(mut player) = players.get_mut(child) {
-                player.play(animation_to_play.index).repeat();
-                commands
-                    .entity(child)
-                    .insert(AnimationGraphHandle(animation_to_play.graph_handle.clone()));
-            }
-        }
-    }
 }
 
 fn motion_blur(settings: &Res<Settings>) -> Option<MotionBlur> {
