@@ -1,15 +1,11 @@
-use crate::{GameState, InputAxis, Settings, aircraft::Aircraft, sse, terrain::TerrainData};
-use bevy::{
-    input_focus::InputFocus,
-    pbr::{ExtendedMaterial, ScatteringMedium},
-    prelude::*,
-};
+use crate::{GameState, InputAxis, aircraft::Aircraft};
+use bevy::{input_focus::InputFocus, prelude::*};
 
 #[derive(Message)]
-struct GameModeChanged(GameState);
+pub struct GameModeChanged(pub GameState);
 
 #[derive(Component)]
-struct MenuCamera;
+pub struct MenuCamera;
 
 #[derive(Component)]
 struct AltitudeUI;
@@ -25,7 +21,12 @@ impl Plugin for UI {
             .add_message::<GameModeChanged>()
             .add_systems(
                 Update,
-                (update_altitude, update_throttle, button_system, spawn_scene),
+                (
+                    update_altitude,
+                    update_throttle,
+                    button_system,
+                    crate::setup_scene,
+                ),
             );
     }
 }
@@ -144,33 +145,4 @@ fn update_altitude(
 fn update_throttle(input: Res<InputAxis>, mut throttle: Single<&mut Text, With<ThrottleUI>>) {
     let string = format!("Throttle: {}%", (input.throttle * 100.0).round());
     throttle.0 = string;
-}
-
-fn spawn_scene(
-    mut commands: Commands,
-    camera: Single<Entity, With<MenuCamera>>,
-    asset_server: Res<AssetServer>,
-    graphs: ResMut<Assets<AnimationGraph>>,
-    settings: Res<Settings>,
-    meshes: ResMut<Assets<Mesh>>,
-    water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, sse::Water>>>>,
-    scattering_mediums: ResMut<Assets<ScatteringMedium>>,
-    materials: ResMut<Assets<StandardMaterial>>,
-    terrain_data: ResMut<TerrainData>,
-    mut messages: MessageReader<GameModeChanged>,
-) {
-    if let Some(GameModeChanged(GameState::Running)) = messages.read().last() {
-        commands.entity(*camera).despawn();
-        crate::setup_scene(
-            commands,
-            asset_server,
-            graphs,
-            settings,
-            meshes,
-            water_materials,
-            scattering_mediums,
-            materials,
-            terrain_data,
-        );
-    }
 }

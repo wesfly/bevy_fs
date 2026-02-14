@@ -23,7 +23,7 @@ use crate::{
     input::InputAxis,
     sse::{insert_sse_resources, sse_config},
     terrain::{Terrain, TerrainData},
-    ui::UI,
+    ui::{GameModeChanged, MenuCamera, UI},
 };
 
 use avian3d::prelude::*;
@@ -133,44 +133,50 @@ pub fn setup_scene(
     scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     materials: ResMut<Assets<StandardMaterial>>,
     terrain_data: ResMut<TerrainData>,
+    mut messages: MessageReader<GameModeChanged>,
+    camera: Single<Entity, With<MenuCamera>>,
 ) {
-    if let Some(material) = water_materials {
-        sse::spawn_water(&mut commands, &asset_server, &mut meshes, material);
+    if let Some(GameModeChanged(GameState::Running)) = messages.read().last() {
+        commands.entity(*camera).despawn();
+
+        if let Some(material) = water_materials {
+            sse::spawn_water(&mut commands, &asset_server, &mut meshes, material);
+        }
+
+        aircraft::spawn(
+            &mut commands,
+            &asset_server,
+            graphs,
+            scattering_mediums,
+            &settings,
+        );
+
+        terrain::spawn_terrain(&mut commands, meshes, materials, terrain_data, &settings);
+
+        commands.spawn((
+            SceneRoot(asset_server.load("hospital.glb#Scene0")),
+            RigidBody::Static,
+            ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
+            Transform::from_xyz(0.0, 0.0, 0.0),
+        ));
+
+        let cascade = CascadeShadowConfigBuilder {
+            maximum_distance: settings.shadow_distance,
+            ..Default::default()
+        }
+        .build();
+
+        let sun_position = settings.sun_position;
+        commands.spawn((
+            DirectionalLight {
+                shadows_enabled: true,
+                illuminance: lux::RAW_SUNLIGHT,
+                ..default()
+            },
+            Transform::from_translation(sun_position).looking_at(Vec3::ZERO, Vec3::Y),
+            cascade,
+        ));
     }
-
-    aircraft::spawn(
-        &mut commands,
-        &asset_server,
-        graphs,
-        scattering_mediums,
-        &settings,
-    );
-
-    terrain::spawn_terrain(&mut commands, meshes, materials, terrain_data, &settings);
-
-    commands.spawn((
-        SceneRoot(asset_server.load("hospital.glb#Scene0")),
-        RigidBody::Static,
-        ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
-        Transform::from_xyz(0.0, 0.0, 0.0),
-    ));
-
-    let cascade = CascadeShadowConfigBuilder {
-        maximum_distance: settings.shadow_distance,
-        ..Default::default()
-    }
-    .build();
-
-    let sun_position = settings.sun_position;
-    commands.spawn((
-        DirectionalLight {
-            shadows_enabled: true,
-            illuminance: lux::RAW_SUNLIGHT,
-            ..default()
-        },
-        Transform::from_translation(sun_position).looking_at(Vec3::ZERO, Vec3::Y),
-        cascade,
-    ));
 }
 
 fn motion_blur(settings: &Res<Settings>) -> Option<MotionBlur> {
