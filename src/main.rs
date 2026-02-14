@@ -71,6 +71,8 @@ fn main() {
     app.add_plugins(DefaultPlugins)
         .add_plugins(PhysicsPlugins::default())
         .add_plugins(MeshPickingPlugin)
+        .add_plugins(UI)
+        // Resources
         .insert_resource(InputAxis {
             pitch: 0.0,
             yaw: 0.0,
@@ -90,7 +92,7 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AircraftState::default())
         .insert_resource(TerrainData(Vec::new()))
-        .add_plugins(UI)
+        // Systems
         .add_systems(
             Update,
             (
