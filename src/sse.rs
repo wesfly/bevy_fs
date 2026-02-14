@@ -1,11 +1,12 @@
-// SSE stands for screen space effects.
-// It includes screen space reflections and
-// screen space ambient occlusion
+/*
+SSE stands for screen space effects.
+It includes screen space reflections (and technically screen space ambient occlusion,
+but it doesn't work for large terrain because of f32 accuracy)
+*/
 
 use crate::Settings;
 use bevy::{
     anti_alias::fxaa::Fxaa,
-    color::palettes::css::BLACK,
     image::{
         ImageAddressMode, ImageFilterMode, ImageLoaderSettings, ImageSampler,
         ImageSamplerDescriptor,
@@ -22,7 +23,6 @@ use bevy::{
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub struct Water {
     // The normal map image.
-    //
     // Note that, like all normal maps, this must not be loaded as sRGB.
     #[texture(100)]
     #[sampler(101)]
@@ -71,13 +71,19 @@ pub fn spawn_water(
     meshes: &mut ResMut<Assets<Mesh>>,
     mut water_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, Water>>>,
 ) {
-    // ssr water plane
     commands.spawn((
-        Mesh3d(meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(100.0)))),
+        Mesh3d(meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(10000.0)))),
         MeshMaterial3d(water_materials.add(ExtendedMaterial {
             base: StandardMaterial {
-                base_color: BLACK.into(),
+                base_color: Color::Srgba(Srgba {
+                    red: 0.01,
+                    green: 0.1,
+                    blue: 0.2,
+                    alpha: 1.0,
+                }),
                 perceptual_roughness: 0.,
+                reflectance: 0.5,
+
                 ..default()
             },
             extension: Water {
@@ -101,12 +107,11 @@ pub fn spawn_water(
                         vec4(0.080, 0.059, 0.073, -0.062),
                         vec4(0.153, 0.138, -0.149, -0.195),
                     ],
-                    octave_scales: vec4(1.0, 2.1, 7.9, 14.9) * 5.0,
-                    octave_strengths: vec4(0.16, 0.18, 0.093, 0.044),
+                    octave_scales: vec4(1.0, 2.1, 7.9, 14.9) * 250.0,
+                    octave_strengths: vec4(0.16, 0.18, 0.093, 0.044) * 0.2,
                 },
             },
         })),
-        Transform::from_scale(Vec3::splat(10.0)),
     ));
 }
 
