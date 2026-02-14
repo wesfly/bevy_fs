@@ -1,4 +1,4 @@
-use crate::{Aircraft, GameState, InputAxis, Settings, sse, terrain::TerrainData};
+use crate::{GameState, InputAxis, Settings, aircraft::Aircraft, sse, terrain::TerrainData};
 use bevy::{
     input_focus::InputFocus,
     pbr::{ExtendedMaterial, ScatteringMedium},

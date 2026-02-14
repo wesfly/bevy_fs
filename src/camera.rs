@@ -1,4 +1,4 @@
-use crate::{Aircraft, input::Keymap};
+use crate::{aircraft::Aircraft, input::Keymap};
 use bevy::{
     input::mouse::{AccumulatedMouseMotion, MouseScrollUnit, MouseWheel},
     prelude::*,

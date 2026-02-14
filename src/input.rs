@@ -1,5 +1,20 @@
-use crate::{CameraSettings, InputAxis, Settings, camera::CameraView};
+use crate::{CameraSettings, Settings, camera::CameraView};
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
+
+#[derive(Resource)]
+pub struct InputAxis {
+    pub pitch: f32,    // Pitch
+    pub yaw: f32,      // Yaw
+    pub roll: f32,     // Roll
+    pub throttle: f32, // Throttle
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Gamepad {
+    enabled: bool,
+    hotas: bool,
+}
 
 #[derive(Resource)]
 pub struct Keymap {
@@ -38,7 +53,7 @@ pub fn input_system(
     keymap: Res<Keymap>,
     settings: Res<Settings>,
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
-    gp: Option<Single<&Gamepad>>,
+    gp: Option<Single<&bevy::prelude::Gamepad>>,
     mut camera_settings: ResMut<CameraSettings>,
 ) {
     let mut gamepad_input = InputAxis {

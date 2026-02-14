@@ -20,8 +20,9 @@ use crate::{
     },
     camera::{CameraSettings, camera_controller},
     data_from_gltf::{buttons_from_gltf, lights_from_gltf},
+    input::InputAxis,
     sse::{insert_sse_resources, sse_config},
-    terrain::TerrainData,
+    terrain::{Terrain, TerrainData},
     ui::UI,
 };
 
@@ -45,29 +46,9 @@ pub enum GameState {
     Menu,
 }
 
-#[derive(Serialize, Deserialize)]
-struct Gamepad {
-    enabled: bool,
-    hotas: bool,
-}
-
-#[derive(Serialize, Deserialize)]
-struct Coordinates {
-    lat: f32,
-    long: f32,
-}
-
-#[derive(Serialize, Deserialize)]
-struct Terrain {
-    collisions: bool,
-    number_of_chunks: u32,
-    subdivisions_per_chunk: u32,
-    coordinates: Coordinates,
-}
-
 #[derive(Resource, Serialize, Deserialize)]
 pub struct Settings {
-    gamepad: Gamepad,
+    gamepad: input::Gamepad,
     motion_blur_enabled: bool,
     shadow_distance: f32,
     screen_space_effects: bool,
@@ -83,17 +64,6 @@ impl Settings {
             serde_json::from_str(&json_data).expect("Failed to serialize settings file");
         settings
     }
-}
-
-#[derive(Component)]
-struct Aircraft;
-
-#[derive(Resource)]
-struct InputAxis {
-    pitch: f32,    // Pitch
-    yaw: f32,      // Yaw
-    roll: f32,     // Roll
-    throttle: f32, // Throttle
 }
 
 fn main() {
@@ -117,11 +87,10 @@ fn main() {
             strobe: Timer::from_seconds(STROBE_OFF_DURATION, TimerMode::Repeating),
             strobe_on_cycle: false,
         })
-        // .insert_resource(ClearColor(Color::BLACK))
+        .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AircraftState::default())
         .insert_resource(TerrainData(Vec::new()))
         .add_plugins(UI)
-        // .add_systems(Startup, setup_scene)
         .add_systems(
             Update,
             (

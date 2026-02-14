@@ -1,8 +1,9 @@
 use std::time::Duration;
 
 use crate::{
-    Aircraft, InputAxis, Settings,
+    Settings,
     data_from_gltf::{InterfaceOperation, InterfaceType, Lights},
+    input::InputAxis,
     motion_blur,
 };
 use avian3d::prelude::*;
@@ -29,6 +30,9 @@ pub struct AircraftState {
     pub pos_lts_on: bool,
     pub strobe_lts_on: bool,
 }
+
+#[derive(Component)]
+pub struct Aircraft;
 
 pub fn button_listener(
     press: On<Pointer<Press>>,
