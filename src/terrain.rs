@@ -47,6 +47,7 @@ pub fn spawn_terrain(
     } else {
         file_exists = false;
         fetched_data = None;
+        info!("Fetching terrain data...");
     }
 
     let mut chunk_buffer: Vec<Chunk> = vec![];
