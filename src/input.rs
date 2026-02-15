@@ -55,7 +55,10 @@ pub fn input_system(
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
     gp: Option<Single<&bevy::prelude::Gamepad>>,
     mut camera_settings: ResMut<CameraSettings>,
+    time: Res<Time>,
 ) {
+    let delta = time.delta_secs();
+
     let mut gamepad_input = InputAxis {
         pitch: 0.,
         roll: 0.,
@@ -79,8 +82,8 @@ pub fn input_system(
                 gamepad.get(GamepadAxis::LeftStickX),
                 gamepad.get(GamepadAxis::LeftStickY),
             ) {
-                gamepad_input.pitch = -y;
-                gamepad_input.roll = -x;
+                gamepad_input.pitch = -y * delta * 100.0;
+                gamepad_input.roll = -x * delta * 100.0;
             }
 
             if gamepad.just_pressed(GamepadButton::DPadDown) {
@@ -101,15 +104,15 @@ pub fn input_system(
                 gamepad.get(GamepadAxis::RightStickX),
                 gamepad.get(GamepadAxis::RightStickY),
             ) {
-                gamepad_input.pitch = -y;
-                gamepad_input.roll = -x;
+                gamepad_input.pitch = -y * delta * 100.0;
+                gamepad_input.roll = -x * delta * 100.0;
             }
             if let (Some(x), Some(y)) = (
                 gamepad.get(GamepadAxis::LeftStickX),
                 gamepad.get(GamepadAxis::LeftStickY),
             ) {
-                gamepad_input.throttle += y * 0.01;
-                gamepad_input.yaw = -x;
+                gamepad_input.throttle += y * delta;
+                gamepad_input.yaw = -x * delta * 100.0;
             }
         }
 
@@ -155,7 +158,7 @@ pub fn input_system(
         input.pitch = button_input.pitch;
         input.roll = button_input.roll;
         input.yaw = button_input.yaw;
-        input.throttle += button_input.throttle;
+        input.throttle += button_input.throttle * delta * 100.0;
         input.throttle = input.throttle.clamp(0.0, 1.0);
     }
 }
