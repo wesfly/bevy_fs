@@ -66,7 +66,7 @@ fn setup_ui(mut commands: Commands) {
             right: px(10.0),
             ..default()
         },
-        Text::new("Airspeed"),
+        Text::new("Velocity"),
         VelocityUI,
     ));
 
