@@ -1,4 +1,5 @@
 use crate::{GameState, InputAxis, aircraft::Aircraft};
+use avian3d::prelude::LinearVelocity;
 use bevy::{input_focus::InputFocus, prelude::*};
 
 #[derive(Message)]
@@ -13,6 +14,9 @@ struct AltitudeUI;
 #[derive(Component)]
 struct ThrottleUI;
 
+#[derive(Component)]
+struct VelocityUI;
+
 pub struct UI;
 impl Plugin for UI {
     fn build(&self, app: &mut App) {
@@ -23,6 +27,7 @@ impl Plugin for UI {
                 Update,
                 (
                     update_altitude,
+                    update_velocity,
                     update_throttle,
                     button_system,
                     crate::setup_scene,
@@ -55,6 +60,17 @@ fn setup_ui(mut commands: Commands) {
     ));
 
     commands.spawn((
+        Node {
+            position_type: PositionType::Absolute,
+            bottom: px(50.0),
+            right: px(10.0),
+            ..default()
+        },
+        Text::new("Airspeed"),
+        VelocityUI,
+    ));
+
+    commands.spawn((
         Button,
         Node {
             position_type: PositionType::Absolute,
@@ -67,7 +83,6 @@ fn setup_ui(mut commands: Commands) {
             justify_content: JustifyContent::Center,
             // vertically center child text
             align_items: AlignItems::Center,
-            // border_radius: BorderRadius::MAX,
             ..default()
         },
         BorderColor::all(Color::WHITE),
@@ -117,7 +132,6 @@ fn button_system(
             }
             Interaction::Hovered => {
                 input_focus.set(entity);
-                // *color = HOVERED_BUTTON.into();
                 *border_color = BorderColor::all(Color::WHITE);
                 button.set_changed();
             }
@@ -145,4 +159,16 @@ fn update_altitude(
 fn update_throttle(input: Res<InputAxis>, mut throttle: Single<&mut Text, With<ThrottleUI>>) {
     let string = format!("Throttle: {}%", (input.throttle * 100.0).round());
     throttle.0 = string;
+}
+
+fn update_velocity(
+    vel: Single<&LinearVelocity, With<Aircraft>>,
+    transform: Single<&Transform, With<Aircraft>>,
+    mut velocity: Single<&mut Text, With<VelocityUI>>,
+) {
+    let string = format!(
+        "Velocity: {:?}m/s",
+        (vel.0 * *transform.forward()).length() as i32
+    );
+    velocity.0 = string;
 }
