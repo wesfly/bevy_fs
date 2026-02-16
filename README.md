@@ -6,17 +6,14 @@ This is a little flight sim made in Bevy.
 
 [Discord server](https://discord.gg/epMBz5m2Ad)
 
-## Features
+## Highlights
 
 - Support for both keyboard and gamepad, but gamepad is recommended
-- A display for throttle and altitude
 - Terrain with real-world elevation data and collisions
 - Loading data from GLTF with custom properties
 - 3D cockpit with clickable buttons
 - Collisions with `avian3d`
 - Water with screen space reflections
-- Screen space ambient occlusion
-- FPS counter in when in `Debug`
 - A settings file (settings.json)
 
 ## Installation
