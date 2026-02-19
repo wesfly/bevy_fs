@@ -1,9 +1,11 @@
 /*
 I made a little flight simulator here. Check out the README for further information.
-If you have fixes or want to contribute, just make a pull request (unless it's AI-generated)
+If you have fixes or want to contribute, just make a pull request.
 
 I don't exactly know where these InheritedVisibility warnings are coming from (they're probably from the aircraft and its hitbox), I'm just
 ignoring them.
+
+TODO: Add big_space someday
 */
 
 mod aircraft;
@@ -19,7 +21,7 @@ use crate::{
         ACOL_OFF_DURATION, AircraftState, LightsTimers, STROBE_OFF_DURATION, update_lights,
     },
     camera::{CameraSettings, camera_controller},
-    data_from_gltf::{buttons_from_gltf, lights_from_gltf},
+    data_from_gltf::load,
     input::InputAxis,
     sse::{insert_sse_resources, sse_config},
     terrain::{Terrain, TerrainData},

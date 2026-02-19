@@ -249,8 +249,7 @@ pub fn spawn(
             ColliderDisabled,
             RigidBodyDisabled,
         ))
-        .observe(crate::buttons_from_gltf)
-        .observe(crate::lights_from_gltf)
+        .observe(crate::load)
         .observe(play_animation_when_ready);
 
     let mut camera = commands.spawn((
