@@ -40,41 +40,51 @@ pub struct Button {
     pub inverse: Option<bool>,
 }
 
-pub fn buttons_from_gltf(
+pub fn load(
     trigger: On<SceneInstanceReady>,
     mut commands: Commands,
     children: Query<&Children>,
     extras: Query<&GltfMeshExtras>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for entity in children.iter_descendants(trigger.entity.entity()) {
         let Ok(gltf_mesh_extras) = extras.get(entity) else {
             continue;
         };
-        let Ok(data) = serde_json::from_str::<Button>(&gltf_mesh_extras.value) else {
-            continue;
+
+        if let Ok(light_data) = serde_json::from_str::<Light>(&gltf_mesh_extras.value) {
+            dbg!(&light_data);
+            let material_emissive = materials.add(StandardMaterial {
+                emissive: LinearRgba::rgb(0.0, 0.0, 0.0),
+                ..default()
+            });
+            commands
+                .entity(entity)
+                .insert((MeshMaterial3d(material_emissive), light_data.light));
         };
 
-        #[cfg(debug_assertions)]
-        dbg!(&data);
-        match data.interface_type {
-            InterfaceType::Button | InterfaceType::Switch => {
-                let bundle = (
-                    Pickable::default(),
-                    Button {
-                        interface_type: data.interface_type,
-                        inverse: data.inverse,
-                        operation: data.operation,
-                    },
-                );
-                commands
-                    .entity(entity)
-                    .insert(bundle)
-                    .observe(crate::aircraft::button_listener);
+        if let Ok(button_data) = serde_json::from_str::<Button>(&gltf_mesh_extras.value) {
+            dbg!(&button_data);
+            match button_data.interface_type {
+                InterfaceType::Button | InterfaceType::Switch => {
+                    let bundle = (
+                        Pickable::default(),
+                        Button {
+                            interface_type: button_data.interface_type,
+                            inverse: button_data.inverse,
+                            operation: button_data.operation,
+                        },
+                    );
+                    commands
+                        .entity(entity)
+                        .insert(bundle)
+                        .observe(crate::aircraft::button_listener);
+                }
+                _ => {
+                    warn!("not handled yet")
+                }
             }
-            _ => {
-                warn!("not handled yet")
-            }
-        }
+        };
     }
 }
 
@@ -90,31 +100,4 @@ pub enum Lights {
 #[derive(Debug, Deserialize)]
 pub struct Light {
     light: Lights,
-}
-
-// TODO new observer for glass (needs proper shadow transparency)
-// TODO move stick with input
-pub fn lights_from_gltf(
-    trigger: On<SceneInstanceReady>,
-    mut commands: Commands,
-    children: Query<&Children>,
-    extras: Query<&GltfMeshExtras>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    for entity in children.iter_descendants(trigger.entity.entity()) {
-        let Ok(gltf_mesh_extras) = extras.get(entity) else {
-            continue;
-        };
-        let Ok(data) = serde_json::from_str::<Light>(&gltf_mesh_extras.value) else {
-            continue;
-        };
-        let material_emissive = materials.add(StandardMaterial {
-            emissive: LinearRgba::rgb(0.0, 0.0, 0.0),
-            ..default()
-        });
-
-        commands
-            .entity(entity)
-            .insert((MeshMaterial3d(material_emissive), data.light));
-    }
 }
