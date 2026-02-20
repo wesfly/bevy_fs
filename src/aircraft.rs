@@ -145,16 +145,16 @@ pub fn update_lights(
                 }
                 Lights::PositionPort => {
                     if state.pos_lts_on {
-                        *green = 100.
+                        *red = 100.
                     } else {
-                        *green = 0.0
+                        *red = 0.0
                     }
                 }
                 Lights::PositionStarboard => {
                     if state.pos_lts_on {
-                        *red = 100.
+                        *green = 100.
                     } else {
-                        *red = 0.0
+                        *green = 0.0
                     }
                 }
                 Lights::PositionRear => {
