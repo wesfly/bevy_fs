@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::{
     Settings,
-    data_from_gltf::{InterfaceOperation, InterfaceType, Lights},
+    data_from_gltf::{InterfaceOperation, InterfaceType, Lights, load},
     input::InputAxis,
     motion_blur,
 };
@@ -249,7 +249,7 @@ pub fn spawn(
             ColliderDisabled,
             RigidBodyDisabled,
         ))
-        .observe(crate::load)
+        .observe(load)
         .observe(play_animation_when_ready);
 
     let mut camera = commands.spawn((
