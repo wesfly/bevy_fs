@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::{
     Settings,
-    data_from_gltf::{InterfaceOperation, InterfaceType, Lights, load},
+    data_from_gltf::{InterfaceOperation, InterfaceType, Lights, RotorTypes, load},
     input::InputAxis,
     motion_blur,
 };
@@ -212,6 +212,18 @@ pub fn update_lights(
             point_light.intensity = 10000.0;
         } else {
             point_light.intensity = 0.0
+        }
+    }
+}
+
+pub fn update_rotors(
+    query: Query<&mut Transform, With<RotorTypes>>,
+    state: Res<AircraftState>,
+    time: Res<Time>,
+) {
+    if state.engine_on {
+        for mut rotor in query {
+            rotor.rotate_local_y(100.0 * time.delta_secs());
         }
     }
 }

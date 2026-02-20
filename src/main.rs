@@ -19,10 +19,9 @@ mod ui;
 use crate::{
     aircraft::{
         ACOL_OFF_DURATION, AircraftState, LightsTimers, STROBE_OFF_DURATION, update_light_cycle,
-        update_lights, update_mesh_lights,
+        update_lights, update_mesh_lights, update_rotors,
     },
     camera::{CameraSettings, camera_controller},
-    data_from_gltf::load,
     input::InputAxis,
     sse::{insert_sse_resources, sse_config},
     terrain::{Terrain, TerrainData},
@@ -102,6 +101,7 @@ fn main() {
                 aircraft::mechanics,
                 camera_controller,
                 update_light_cycle,
+                update_rotors,
                 (update_mesh_lights, update_lights).after(update_light_cycle),
             ),
         );
@@ -128,7 +128,6 @@ fn main() {
 pub fn setup_scene(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    graphs: ResMut<Assets<AnimationGraph>>,
     settings: Res<Settings>,
     mut meshes: ResMut<Assets<Mesh>>,
     water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, sse::Water>>>>,
@@ -145,13 +144,7 @@ pub fn setup_scene(
             sse::spawn_water(&mut commands, &asset_server, &mut meshes, material);
         }
 
-        aircraft::spawn(
-            &mut commands,
-            &asset_server,
-            graphs,
-            scattering_mediums,
-            &settings,
-        );
+        aircraft::spawn(&mut commands, &asset_server, scattering_mediums, &settings);
 
         terrain::spawn_terrain(&mut commands, meshes, materials, terrain_data, &settings);
 

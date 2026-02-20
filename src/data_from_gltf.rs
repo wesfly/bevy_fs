@@ -38,6 +38,36 @@ pub struct Button {
     pub inverse: Option<bool>,
 }
 
+#[derive(Deserialize, Debug, Component)]
+pub enum Lights {
+    AntiCol,
+    Strobe,
+    PositionPort,
+    PositionStarboard,
+    PositionRear,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Light {
+    light: Lights,
+}
+
+#[derive(Debug, Component)]
+pub enum LightType {
+    Scene,
+    Mesh,
+}
+
+#[derive(Debug, Deserialize, Component)]
+pub enum RotorTypes {
+    Main,
+    Rear,
+}
+#[derive(Debug, Deserialize)]
+pub struct Rotor {
+    rotor: RotorTypes,
+}
+
 pub fn load(
     trigger: On<SceneInstanceReady>,
     mut commands: Commands,
@@ -59,6 +89,11 @@ pub fn load(
                     light_mesh_data.light,
                     LightType::Mesh,
                 ));
+            };
+
+            if let Ok(rotor_data) = serde_json::from_str::<Rotor>(&gltf_mesh_extras.value) {
+                dbg!(&rotor_data);
+                commands.entity(entity).insert(rotor_data.rotor);
             };
 
             if let Ok(button_data) = serde_json::from_str::<Button>(&gltf_mesh_extras.value) {
@@ -94,24 +129,4 @@ pub fn load(
             };
         };
     }
-}
-
-#[derive(Deserialize, Debug, Component)]
-pub enum Lights {
-    AntiCol,
-    Strobe,
-    PositionPort,
-    PositionStarboard,
-    PositionRear,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Light {
-    light: Lights,
-}
-
-#[derive(Debug, Component)]
-pub enum LightType {
-    Scene,
-    Mesh,
 }
