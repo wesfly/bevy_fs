@@ -90,13 +90,7 @@ pub struct LightsTimers {
     pub strobe_on_cycle: bool,
 }
 
-pub fn update_lights(
-    material_handles: Query<(&MeshMaterial3d<StandardMaterial>, &Lights, Entity), With<Lights>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    state: Res<AircraftState>,
-    time: Res<Time>,
-    mut timer: ResMut<LightsTimers>,
-) {
+pub fn update_light_cycle(time: Res<Time>, mut timer: ResMut<LightsTimers>) {
     let delta = time.delta();
     if timer.acol.just_finished() && !timer.acol_on_cycle {
         timer.acol_on_cycle = true;
@@ -124,7 +118,14 @@ pub fn update_lights(
 
     timer.acol.tick(delta);
     timer.strobe.tick(delta);
+}
 
+pub fn update_mesh_lights(
+    material_handles: Query<(&MeshMaterial3d<StandardMaterial>, &Lights, Entity), With<Lights>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    state: Res<AircraftState>,
+    timer: ResMut<LightsTimers>,
+) {
     #[allow(irrefutable_let_patterns)] // Acting like I know what I'm doing
     for material_handle in material_handles.iter() {
         if let Some(material) = materials.get_mut(material_handle.0)
@@ -180,6 +181,38 @@ pub fn update_lights(
                     }
                 }
             }
+        }
+    }
+}
+
+pub fn update_lights(
+    state: Res<AircraftState>,
+    timer: ResMut<LightsTimers>,
+    query: Query<(&mut PointLight, &Lights)>,
+) {
+    for (mut point_light, light) in query {
+        let (colour, on) = match light {
+            Lights::PositionPort => (Color::linear_rgb(1.0, 0.0, 0.0), state.pos_lts_on),
+            Lights::PositionStarboard => (Color::linear_rgb(0.0, 1.0, 0.0), state.pos_lts_on),
+            Lights::PositionRear => (Color::linear_rgb(1.0, 1.0, 1.0), state.pos_lts_on),
+
+            Lights::AntiCol => (
+                Color::linear_rgb(1.0, 0.0, 0.0),
+                (state.anti_col_lts_on && timer.acol_on_cycle),
+            ),
+
+            Lights::Strobe => (
+                Color::linear_rgb(1.0, 1.0, 1.0),
+                (state.strobe_lts_on && timer.strobe_on_cycle),
+            ),
+        };
+
+        point_light.color = colour;
+
+        if on {
+            point_light.intensity = 10000.0;
+        } else {
+            point_light.intensity = 0.0
         }
     }
 }

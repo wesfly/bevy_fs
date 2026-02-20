@@ -18,7 +18,8 @@ mod ui;
 
 use crate::{
     aircraft::{
-        ACOL_OFF_DURATION, AircraftState, LightsTimers, STROBE_OFF_DURATION, update_lights,
+        ACOL_OFF_DURATION, AircraftState, LightsTimers, STROBE_OFF_DURATION, update_light_cycle,
+        update_lights, update_mesh_lights,
     },
     camera::{CameraSettings, camera_controller},
     data_from_gltf::load,
@@ -100,7 +101,8 @@ fn main() {
                 input::input_system,
                 aircraft::mechanics,
                 camera_controller,
-                update_lights,
+                update_light_cycle,
+                (update_mesh_lights, update_lights).after(update_light_cycle),
             ),
         );
 
