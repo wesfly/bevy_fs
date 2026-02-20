@@ -35,9 +35,9 @@ impl Default for CameraSettings {
         let pitch_limit = FRAC_PI_2 - 0.01;
         Self {
             orbit_distance: 20.0,
-            pitch_speed: 0.003,
+            pitch_speed: 0.001,
             pitch_range: -pitch_limit..pitch_limit,
-            yaw_speed: 0.004,
+            yaw_speed: 0.001,
             follow_default_position: Vec3 {
                 x: 0.0,
                 y: 4.0,
