@@ -52,12 +52,6 @@ pub struct Light {
     light: Lights,
 }
 
-#[derive(Debug, Component)]
-pub enum LightType {
-    Scene,
-    Mesh,
-}
-
 #[derive(Debug, Deserialize, Component)]
 pub enum RotorTypes {
     Main,
@@ -84,11 +78,9 @@ pub fn load(
                     emissive: LinearRgba::rgb(0.0, 0.0, 0.0),
                     ..default()
                 });
-                commands.entity(entity).insert((
-                    MeshMaterial3d(material_emissive),
-                    light_mesh_data.light,
-                    LightType::Mesh,
-                ));
+                commands
+                    .entity(entity)
+                    .insert((MeshMaterial3d(material_emissive), light_mesh_data.light));
             };
 
             if let Ok(rotor_data) = serde_json::from_str::<Rotor>(&gltf_mesh_extras.value) {
@@ -123,9 +115,7 @@ pub fn load(
         if let Ok(gltf_other_extras) = other_extras.get(entity) {
             if let Ok(light_data) = serde_json::from_str::<Light>(&gltf_other_extras.value) {
                 dbg!(&light_data);
-                commands
-                    .entity(entity)
-                    .insert((light_data.light, LightType::Scene));
+                commands.entity(entity).insert(light_data.light);
             };
         };
     }
