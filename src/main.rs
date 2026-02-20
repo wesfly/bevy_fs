@@ -39,7 +39,6 @@ use bevy::{
 use serde::{Deserialize, Serialize};
 use std::fs;
 
-#[cfg(debug_assertions)]
 use bevy::dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig};
 
 #[derive(Resource, PartialEq)]
@@ -110,7 +109,6 @@ fn main() {
         insert_sse_resources(&mut app);
     }
 
-    #[cfg(debug_assertions)]
     app.add_plugins(FpsOverlayPlugin {
         config: FpsOverlayConfig {
             frame_time_graph_config: FrameTimeGraphConfig {
