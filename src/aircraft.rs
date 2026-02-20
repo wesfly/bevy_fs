@@ -15,7 +15,6 @@ use bevy::{
     post_process::bloom::Bloom,
     prelude::*,
     render::view::Hdr,
-    scene::SceneInstanceReady,
 };
 
 pub const STROBE_OFF_DURATION: f32 = 1.0;
@@ -235,30 +234,12 @@ pub fn mechanics(
     }
 }
 
-#[derive(Component)]
-struct AnimationToPlay {
-    graph_handle: Handle<AnimationGraph>,
-    index: AnimationNodeIndex,
-}
-
 pub fn spawn(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
-    mut graphs: ResMut<Assets<AnimationGraph>>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     settings: &Res<Settings>,
 ) {
-    let (graph, index) = AnimationGraph::from_clip(
-        asset_server.load(GltfAssetLabel::Animation(0).from_asset("aircraft.glb")),
-    );
-    let graph_handle = graphs.add(graph);
-
-    // Create a component that stores a reference to our animation.
-    let animation_to_play = AnimationToPlay {
-        graph_handle,
-        index,
-    };
-
     // Aircraft collider
     let aircraft = commands
         .spawn((
@@ -278,12 +259,10 @@ pub fn spawn(
             SceneRoot(asset_server.load("aircraft.glb#Scene0")),
             Visibility::Visible,
             ChildOf(aircraft),
-            animation_to_play,
             ColliderDisabled,
             RigidBodyDisabled,
         ))
-        .observe(load)
-        .observe(play_animation_when_ready);
+        .observe(load);
 
     let mut camera = commands.spawn((
         Camera3d::default(),
@@ -309,24 +288,5 @@ pub fn spawn(
 
     if let Some(mb) = motion_blur(settings) {
         camera.insert(mb);
-    }
-}
-
-fn play_animation_when_ready(
-    scene_ready: On<SceneInstanceReady>,
-    mut commands: Commands,
-    children: Query<&Children>,
-    animations_to_play: Query<&AnimationToPlay>,
-    mut players: Query<&mut AnimationPlayer>,
-) {
-    if let Ok(animation_to_play) = animations_to_play.get(scene_ready.entity) {
-        for child in children.iter_descendants(scene_ready.entity) {
-            if let Ok(mut player) = players.get_mut(child) {
-                player.play(animation_to_play.index).repeat();
-                commands
-                    .entity(child)
-                    .insert(AnimationGraphHandle(animation_to_play.graph_handle.clone()));
-            }
-        }
     }
 }
