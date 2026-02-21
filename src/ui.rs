@@ -128,6 +128,8 @@ fn button_system(
                 if *game_state == GameState::Menu {
                     *game_state = GameState::Running;
                     messages.write(GameModeChanged(GameState::Running));
+                } else {
+                    info!("Scene already spawned")
                 }
             }
             Interaction::Hovered => {
