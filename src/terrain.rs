@@ -26,6 +26,7 @@ pub struct Terrain {
     coordinates: Coordinates,
 }
 
+// TODO make this async some way plss
 pub fn spawn_terrain(
     commands: &mut Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -36,8 +37,8 @@ pub fn spawn_terrain(
     let subdivisions = settings.terrain.number_of_chunks.isqrt(); // Subdivisions per axis for chunking
     let subdivisions_per_chunk: u32 = settings.terrain.subdivisions_per_chunk;
     const MESH_SIZE: f32 = 20_000.0;
-    const TERRAIN_HEIGHT_FACTOR: f32 = 0.2;
-    const TERRAIN_SCALE: f32 = 0.0001;
+    const TERRAIN_HEIGHT_FACTOR: f32 = 1.0;
+    const TERRAIN_SCALE: f32 = 0.00001;
 
     let fetched_data: Option<Vec<Chunk>>;
     let file_exists: bool;
