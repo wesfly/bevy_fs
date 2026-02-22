@@ -36,7 +36,7 @@ use bevy::{
     post_process::motion_blur::MotionBlur,
     prelude::*,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::fs;
 
 use bevy::dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig};
@@ -47,7 +47,7 @@ pub enum GameState {
     Menu,
 }
 
-#[derive(Resource, Serialize, Deserialize)]
+#[derive(Resource, Deserialize)]
 pub struct Settings {
     gamepad: input::Gamepad,
     motion_blur_enabled: bool,
