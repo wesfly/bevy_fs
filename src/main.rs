@@ -27,10 +27,9 @@ use crate::{
     terrain::{Terrain, TerrainData},
     ui::{GameModeChanged, MenuCamera, UI},
 };
-
 use avian3d::prelude::*;
-
 use bevy::{
+    dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig},
     light::{CascadeShadowConfigBuilder, light_consts::lux},
     pbr::{ExtendedMaterial, ScatteringMedium},
     post_process::motion_blur::MotionBlur,
@@ -38,8 +37,6 @@ use bevy::{
 };
 use serde::Deserialize;
 use std::fs;
-
-use bevy::dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig};
 
 #[derive(Resource, PartialEq)]
 pub enum GameState {
