@@ -18,8 +18,8 @@ mod ui;
 
 use crate::{
     aircraft::{
-        ACOL_OFF_DURATION, AircraftState, LightsTimers, STROBE_OFF_DURATION, update_light_cycle,
-        update_lights, update_mesh_lights, update_rotors,
+        ACOL_OFF_DURATION, AircraftState, AircraftTypes, LightsTimers, STROBE_OFF_DURATION,
+        update_light_cycle, update_lights, update_mesh_lights, update_rotors,
     },
     camera::{CameraSettings, camera_controller},
     input::InputAxis,
@@ -49,6 +49,7 @@ pub enum GameState {
 
 #[derive(Resource, Deserialize)]
 pub struct Settings {
+    aircraft: AircraftTypes,
     gamepad: input::Gamepad,
     motion_blur_enabled: bool,
     shadow_distance: f32,
@@ -68,6 +69,8 @@ impl Settings {
 }
 
 fn main() {
+    let settings = Settings::fetch();
+
     let mut app = App::new();
     app.add_plugins(DefaultPlugins)
         .add_plugins(PhysicsPlugins::default())
@@ -91,7 +94,13 @@ fn main() {
             strobe_on_cycle: false,
         })
         .insert_resource(ClearColor(Color::BLACK))
-        .insert_resource(AircraftState::default())
+        .insert_resource(AircraftState {
+            engine_on: false,
+            anti_col_lts_on: false,
+            pos_lts_on: false,
+            strobe_lts_on: false,
+            aircraft_type: settings.aircraft,
+        })
         .insert_resource(TerrainData(Vec::new()))
         // Systems
         .add_systems(
@@ -106,7 +115,6 @@ fn main() {
             ),
         );
 
-    let settings = Settings::fetch();
     if settings.screen_space_effects {
         insert_sse_resources(&mut app);
     }
@@ -136,6 +144,7 @@ pub fn setup_scene(
     terrain_data: ResMut<TerrainData>,
     mut messages: MessageReader<GameModeChanged>,
     camera: Single<Entity, With<MenuCamera>>,
+    state: Res<AircraftState>,
 ) {
     if let Some(GameModeChanged(GameState::Running)) = messages.read().last() {
         commands.entity(*camera).despawn();
@@ -144,7 +153,13 @@ pub fn setup_scene(
             sse::spawn_water(&mut commands, &asset_server, &mut meshes, material);
         }
 
-        aircraft::spawn(&mut commands, &asset_server, scattering_mediums, &settings);
+        aircraft::spawn(
+            &mut commands,
+            &asset_server,
+            scattering_mediums,
+            &settings,
+            state,
+        );
 
         terrain::spawn_terrain(&mut commands, meshes, materials, terrain_data, &settings);
 

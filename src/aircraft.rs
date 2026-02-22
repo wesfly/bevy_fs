@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::{
     Settings,
     data_from_gltf::{InterfaceOperation, InterfaceType, Lights, RotorTypes, load},
@@ -16,18 +14,28 @@ use bevy::{
     prelude::*,
     render::view::Hdr,
 };
+use serde::Deserialize;
+use std::time::Duration;
 
 pub const STROBE_OFF_DURATION: f32 = 1.0;
 pub const STROBE_ON_DURATION: f32 = 0.1;
 pub const ACOL_OFF_DURATION: f32 = 1.2;
 pub const ACOL_ON_DURATION: f32 = 0.1;
 
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Deserialize)]
+pub enum AircraftTypes {
+    Helicopter,
+    #[default]
+    Aeroplane,
+}
+
+#[derive(Resource)]
 pub struct AircraftState {
     pub engine_on: bool,
     pub anti_col_lts_on: bool,
     pub pos_lts_on: bool,
     pub strobe_lts_on: bool,
+    pub aircraft_type: AircraftTypes,
 }
 
 #[derive(Component)]
@@ -237,15 +245,20 @@ pub fn mechanics(
     input: Res<InputAxis>,
     state: Res<AircraftState>,
 ) {
-    if state.engine_on {
-        let thrust_factor = 64_000.;
-        let force = transform.up() * thrust_factor * (input.throttle);
-        let torque = Vec3::new(input.pitch, input.yaw, input.roll);
+    match state.aircraft_type {
+        AircraftTypes::Helicopter => {
+            if state.engine_on {
+                let thrust_factor = 64_000.;
+                let force = transform.up() * thrust_factor * (input.throttle);
+                let torque = Vec3::new(input.pitch, input.yaw, input.roll);
 
-        for mut forces in &mut query {
-            forces.apply_force(force);
-            forces.apply_local_torque(torque * 500.0);
+                for mut forces in &mut query {
+                    forces.apply_force(force);
+                    forces.apply_local_torque(torque * 500.0);
+                }
+            }
         }
+        AircraftTypes::Aeroplane => {}
     }
 }
 
@@ -254,11 +267,17 @@ pub fn spawn(
     asset_server: &Res<AssetServer>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     settings: &Res<Settings>,
+    state: Res<AircraftState>,
 ) {
+    let path = match state.aircraft_type {
+        AircraftTypes::Aeroplane => "rafael.glb",
+        AircraftTypes::Helicopter => "aircraft.glb",
+    };
+
     // Aircraft collider
     let aircraft = commands
         .spawn((
-            SceneRoot(asset_server.load("aircraft.glb#Scene1")),
+            SceneRoot(asset_server.load(GltfAssetLabel::Scene(1).from_asset(path))),
             Aircraft,
             RigidBody::Dynamic,
             ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
@@ -271,7 +290,7 @@ pub fn spawn(
     // The real aircraft model
     commands
         .spawn((
-            SceneRoot(asset_server.load("aircraft.glb#Scene0")),
+            SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(path))),
             Visibility::Visible,
             ChildOf(aircraft),
             ColliderDisabled,
