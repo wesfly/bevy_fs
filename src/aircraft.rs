@@ -239,6 +239,10 @@ pub fn update_rotors(
     }
 }
 
+const ASPECT_RATIO: f32 = 7.0;
+const OSWALD_E: f32 = 0.8;
+const WWEATHERVANE_PITCH_ENABLED: bool = true;
+
 pub fn mechanics(
     transform: Single<&GlobalTransform, With<Aircraft>>,
     mut query: Query<Forces, With<Aircraft>>,
@@ -249,7 +253,7 @@ pub fn mechanics(
         AircraftTypes::Helicopter => {
             if state.engine_on {
                 let thrust_factor = 64_000.;
-                let force = transform.up() * thrust_factor * (input.throttle);
+                let force = transform.up() * thrust_factor * input.throttle;
                 let torque = Vec3::new(input.pitch, input.yaw, input.roll);
 
                 for mut forces in &mut query {
@@ -258,7 +262,103 @@ pub fn mechanics(
                 }
             }
         }
-        AircraftTypes::Aeroplane => {}
+        AircraftTypes::Aeroplane => {
+            for mut forces in &mut query {
+                let torque = Vec3::new(input.pitch, input.yaw, input.roll);
+                forces.apply_local_torque(torque * 100.0);
+
+                // if state.engine_on {
+                let thrust_factor = 150_000.0;
+                let thrust = transform.forward() * thrust_factor * input.throttle;
+
+                forces.apply_force(thrust);
+
+                let velocity = forces.linear_velocity();
+                let velocity_dir = velocity.normalize_or_zero();
+                let speed: f32 = velocity.length();
+
+                let forward = transform.forward();
+                let sin = forward.cross(velocity_dir).dot(transform.right().as_vec3());
+                let cos = forward.dot(velocity_dir);
+
+                let aoa_rad = -sin.atan2(cos);
+                let aoa_deg = aoa_rad.to_degrees();
+
+                let rho = 1.2041;
+                let cd0 = 0.55;
+                let cl = match aoa_deg {
+                    d if d < 15.0 => d / 15.0 * 1.0 + 0.5,
+                    d if d < 20.0 => 1.2 * (1.0 - (d - 15.0) / 5.0),
+                    _ => 0.2, // stalled
+                };
+
+                // add induced drag to the standard drag coefficient (cd)
+                // Induced drag generated in the real world as a byproduct of generating lift.
+                // More lift = more drag.
+                let cd = cd0 + cl * cl / (std::f32::consts::PI * ASPECT_RATIO * OSWALD_E);
+                let area = 10.6;
+                let drag_force = 0.5 * rho * speed.powi(2) * cd * area;
+                let move_dir = forces.linear_velocity().normalize_or_zero();
+                // let drag_vector = -move_dir * drag_force;
+                forces.apply_force(-move_dir * drag_force);
+
+                let right = transform.right();
+
+                // Calculate velocity components
+                let side_speed = velocity.dot(right.as_vec3());
+
+                // 1. Kill "Skidding" (Lateral Drag)
+                // This force pushes back against any sideways movement.
+                // The higher the multiplier, the more the plane "carves" through the air.
+                let lateral_friction_strength = 5.0;
+                let side_drag_vector =
+                    -right.as_vec3() * side_speed * lateral_friction_strength * speed;
+                forces.apply_force(side_drag_vector);
+
+                if speed > 2.0 {
+                    let velocity_dir = velocity.normalize();
+                    let forward = transform.forward().as_vec3();
+
+                    // 1. Find the rotation difference
+                    let stability_error = forward.cross(velocity_dir);
+
+                    // 2. Convert the error into LOCAL space so we can isolate Pitch
+                    // We transform the world-space error vector by the inverse of the plane's rotation
+                    let local_error = transform.rotation().inverse().mul_vec3(stability_error);
+
+                    // 3. ZERO OUT the Pitch (X) component
+                    // This ensures the weathervane effect doesn't try to pull the nose up or down
+                    let stabilized_local_error = Vec3::new(
+                        if WWEATHERVANE_PITCH_ENABLED {
+                            local_error.x
+                        } else {
+                            0.0
+                        },
+                        local_error.y,
+                        local_error.z,
+                    );
+
+                    let snap_intensity = 1.15;
+                    let stability_accel = stabilized_local_error * speed * snap_intensity;
+
+                    forces.apply_local_torque(stability_accel);
+                }
+
+                // L = Cl * p * (v^2/2) * A
+                // Lift = coefficient * density * (airspeed^2 / 2) * wing area
+                let wing_area = 15.0;
+                let dot_air = transform.forward().dot(move_dir);
+                let dot_air_clamped = dot_air.clamp(0.0, 1.0);
+                let airspeed = dot_air_clamped * forces.linear_velocity().length();
+                let lift_force = cl * rho * ((airspeed * airspeed) * 0.5) * wing_area;
+                let lift_dir = transform.up();
+                let lift_vector = lift_dir * lift_force;
+                forces.apply_force(lift_vector);
+
+                // forces.apply_force(force);
+            }
+            // }
+        }
     }
 }
 
@@ -281,8 +381,8 @@ pub fn spawn(
             Aircraft,
             RigidBody::Dynamic,
             ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
-            Transform::from_xyz(0., 20., 0.),
-            Mass(5000.),
+            Transform::from_xyz(0., 2000., 0.),
+            Mass(10_000.0),
             Visibility::Hidden,
         ))
         .id();
