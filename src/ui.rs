@@ -169,8 +169,8 @@ fn update_velocity(
     mut velocity: Single<&mut Text, With<VelocityUI>>,
 ) {
     let string = format!(
-        "Velocity: {:?}m/s",
-        (vel.0 * *transform.forward()).length() as i32
+        "Velocity: {:?} km/h",
+        ((vel.0 * *transform.forward()).length() * 3.6) as i32
     );
     velocity.0 = string;
 }
