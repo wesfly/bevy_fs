@@ -11,6 +11,8 @@ function: InterfaceOperation
 inverse: bool
 
 light: Lights
+
+rotor: RotorTypes
 */
 
 use bevy::{gltf::GltfMeshExtras, prelude::*, scene::SceneInstanceReady};
@@ -75,7 +77,9 @@ pub fn load(
             if let Ok(light_mesh_data) = serde_json::from_str::<Light>(&gltf_mesh_extras.value) {
                 dbg!(&light_mesh_data);
                 let material_emissive = materials.add(StandardMaterial {
-                    emissive: LinearRgba::rgb(0.0, 0.0, 0.0),
+                    perceptual_roughness: 0.1,
+                    specular_transmission: 1.0,
+                    base_color: Color::LinearRgba(LinearRgba::rgb(0.5, 0.5, 0.5).with_alpha(0.5)),
                     ..default()
                 });
                 commands
