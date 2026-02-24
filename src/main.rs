@@ -104,7 +104,7 @@ fn main() {
             Update,
             (
                 input::input_system,
-                aircraft::mechanics,
+                aircraft::mechanics::mechanics,
                 camera_controller,
                 update_light_cycle,
                 update_rotors,
