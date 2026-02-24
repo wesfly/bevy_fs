@@ -248,8 +248,8 @@ pub fn spawn(
     state: Res<AircraftState>,
 ) {
     let path = match state.aircraft_type {
-        AircraftTypes::Aeroplane => "rafael.glb",
-        AircraftTypes::Helicopter => "aircraft.glb",
+        AircraftTypes::Aeroplane => "aeroplane.glb",
+        AircraftTypes::Helicopter => "helicopter.glb",
     };
 
     // Aircraft collider
