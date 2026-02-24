@@ -2,7 +2,7 @@
   "aircraft": "Aeroplane",
   "gamepad": {
     "enabled": true,
-    "hotas": false
+    "hotas": true
   },
   "motion_blur_enabled": true,
   "shadow_distance": 5000.0,

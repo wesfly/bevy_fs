@@ -241,10 +241,10 @@ pub fn update_rotors(
 }
 
 pub fn spawn(
-    commands: &mut Commands,
-    asset_server: &Res<AssetServer>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
-    settings: &Res<Settings>,
+    settings: Res<Settings>,
     state: Res<AircraftState>,
 ) {
     let path = match state.aircraft_type {
@@ -299,11 +299,11 @@ pub fn spawn(
     ));
 
     // TODO make this a plugin
-    if let Some(sse) = crate::sse_config(settings) {
+    if let Some(sse) = crate::sse_config(&settings) {
         camera.insert(sse);
     }
 
-    if let Some(mb) = motion_blur(settings) {
+    if let Some(mb) = motion_blur(&settings) {
         camera.insert(mb);
     }
 }

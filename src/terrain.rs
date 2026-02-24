@@ -28,11 +28,11 @@ pub struct Terrain {
 
 // TODO make this async some way plss
 pub fn spawn_terrain(
-    commands: &mut Commands,
+    mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut terrain_data: ResMut<TerrainData>,
-    settings: &Res<Settings>,
+    settings: Res<Settings>,
 ) {
     let subdivisions = settings.terrain.number_of_chunks.isqrt(); // Subdivisions per axis for chunking
     let subdivisions_per_chunk: u32 = settings.terrain.subdivisions_per_chunk;
@@ -136,7 +136,7 @@ pub fn spawn_terrain(
         ));
 
         if settings.terrain.collisions {
-            spawn_terrain_collider(commands, terrain);
+            spawn_terrain_collider(&mut commands, terrain);
         }
     }
 

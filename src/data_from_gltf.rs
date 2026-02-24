@@ -15,7 +15,7 @@ light: Lights
 rotor: RotorTypes
 */
 
-use bevy::{gltf::GltfMeshExtras, prelude::*, scene::SceneInstanceReady};
+use bevy::{gltf::GltfMeshExtras, light::NotShadowCaster, prelude::*, scene::SceneInstanceReady};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Component, Serialize, Deserialize)]
@@ -64,6 +64,11 @@ pub struct Rotor {
     rotor: RotorTypes,
 }
 
+#[derive(Debug, Deserialize)]
+struct ShadingFromGltf {
+    not_shadow_caster: Option<bool>,
+}
+
 pub fn load(
     trigger: On<SceneInstanceReady>,
     mut commands: Commands,
@@ -90,6 +95,15 @@ pub fn load(
             if let Ok(rotor_data) = serde_json::from_str::<Rotor>(&gltf_mesh_extras.value) {
                 dbg!(&rotor_data);
                 commands.entity(entity).insert(rotor_data.rotor);
+            };
+
+            if let Ok(shading_data) =
+                serde_json::from_str::<ShadingFromGltf>(&gltf_mesh_extras.value)
+            {
+                if shading_data.not_shadow_caster == Some(true) {
+                    dbg!(&shading_data);
+                    commands.entity(entity).insert(NotShadowCaster);
+                }
             };
 
             if let Ok(button_data) = serde_json::from_str::<Button>(&gltf_mesh_extras.value) {

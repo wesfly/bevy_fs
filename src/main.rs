@@ -25,18 +25,19 @@ use crate::{
     input::InputAxis,
     sse::{insert_sse_resources, sse_config},
     terrain::{Terrain, TerrainData},
-    ui::{GameModeChanged, MenuCamera, UI},
+    ui::{MenuCamera, UI},
 };
 use avian3d::prelude::*;
 use bevy::{
     dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig},
+    ecs::system::SystemId,
     light::{CascadeShadowConfigBuilder, light_consts::lux},
-    pbr::{ExtendedMaterial, ScatteringMedium},
+    pbr::ExtendedMaterial,
     post_process::motion_blur::MotionBlur,
     prelude::*,
 };
 use serde::Deserialize;
-use std::fs;
+use std::{collections::HashMap, fs};
 
 #[derive(Resource, PartialEq)]
 pub enum GameState {
@@ -65,6 +66,28 @@ impl Settings {
     }
 }
 
+#[derive(Resource)]
+pub struct RunOnceSystemList(HashMap<String, SystemId>);
+
+impl FromWorld for RunOnceSystemList {
+    fn from_world(world: &mut World) -> Self {
+        let mut my_item_systems = RunOnceSystemList(HashMap::new());
+        my_item_systems
+            .0
+            .insert("setup_scene".into(), world.register_system(setup_scene));
+        my_item_systems.0.insert(
+            "setup_terrain".into(),
+            world.register_system(terrain::spawn_terrain),
+        );
+        my_item_systems.0.insert(
+            "setup_aircraft".into(),
+            world.register_system(aircraft::spawn),
+        );
+
+        my_item_systems
+    }
+}
+
 fn main() {
     let settings = Settings::fetch();
 
@@ -90,12 +113,13 @@ fn main() {
             strobe: Timer::from_seconds(STROBE_OFF_DURATION, TimerMode::Repeating),
             strobe_on_cycle: false,
         })
+        .init_resource::<RunOnceSystemList>()
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AircraftState {
             engine_on: true,
             anti_col_lts_on: true,
             pos_lts_on: true,
-            strobe_lts_on: false,
+            strobe_lts_on: true,
             aircraft_type: settings.aircraft,
         })
         .insert_resource(TerrainData(Vec::new()))
@@ -130,60 +154,43 @@ fn main() {
     app.run();
 }
 
-pub fn setup_scene(
+fn setup_scene(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     settings: Res<Settings>,
     mut meshes: ResMut<Assets<Mesh>>,
     water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, sse::Water>>>>,
-    scattering_mediums: ResMut<Assets<ScatteringMedium>>,
-    materials: ResMut<Assets<StandardMaterial>>,
-    terrain_data: ResMut<TerrainData>,
-    mut messages: MessageReader<GameModeChanged>,
     camera: Single<Entity, With<MenuCamera>>,
-    state: Res<AircraftState>,
 ) {
-    if let Some(GameModeChanged(GameState::Running)) = messages.read().last() {
-        commands.entity(*camera).despawn();
+    commands.entity(*camera).despawn();
 
-        if let Some(material) = water_materials {
-            sse::spawn_water(&mut commands, &asset_server, &mut meshes, material);
-        }
-
-        aircraft::spawn(
-            &mut commands,
-            &asset_server,
-            scattering_mediums,
-            &settings,
-            state,
-        );
-
-        terrain::spawn_terrain(&mut commands, meshes, materials, terrain_data, &settings);
-
-        commands.spawn((
-            SceneRoot(asset_server.load("hospital.glb#Scene0")),
-            RigidBody::Static,
-            ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
-            Transform::from_xyz(0.0, 0.0, 0.0),
-        ));
-
-        let cascade = CascadeShadowConfigBuilder {
-            maximum_distance: settings.shadow_distance,
-            ..Default::default()
-        }
-        .build();
-
-        let sun_position = settings.sun_position;
-        commands.spawn((
-            DirectionalLight {
-                shadows_enabled: true,
-                illuminance: lux::RAW_SUNLIGHT,
-                ..default()
-            },
-            Transform::from_translation(sun_position).looking_at(Vec3::ZERO, Vec3::Y),
-            cascade,
-        ));
+    if let Some(material) = water_materials {
+        sse::spawn_water(&mut commands, &asset_server, &mut meshes, material);
     }
+
+    commands.spawn((
+        SceneRoot(asset_server.load("hospital.glb#Scene0")),
+        RigidBody::Static,
+        ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
+        Transform::from_xyz(0.0, 0.0, 0.0),
+    ));
+
+    let cascade = CascadeShadowConfigBuilder {
+        maximum_distance: settings.shadow_distance,
+        ..Default::default()
+    }
+    .build();
+
+    let sun_position = settings.sun_position;
+    commands.spawn((
+        DirectionalLight {
+            shadows_enabled: true,
+            illuminance: lux::RAW_SUNLIGHT,
+            ..default()
+        },
+        Transform::from_translation(sun_position).looking_at(Vec3::ZERO, Vec3::Y),
+        cascade,
+    ));
 }
 
 fn motion_blur(settings: &Res<Settings>) -> Option<MotionBlur> {

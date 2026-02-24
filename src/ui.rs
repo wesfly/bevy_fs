@@ -1,9 +1,6 @@
-use crate::{GameState, InputAxis, aircraft::Aircraft};
+use crate::{GameState, InputAxis, RunOnceSystemList, aircraft::Aircraft};
 use avian3d::prelude::LinearVelocity;
 use bevy::{input_focus::InputFocus, prelude::*};
-
-#[derive(Message)]
-pub struct GameModeChanged(pub GameState);
 
 #[derive(Component)]
 pub struct MenuCamera;
@@ -22,7 +19,6 @@ impl Plugin for UI {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_ui)
             .init_resource::<InputFocus>()
-            .add_message::<GameModeChanged>()
             .add_systems(
                 Update,
                 (
@@ -30,7 +26,6 @@ impl Plugin for UI {
                     update_velocity,
                     update_throttle,
                     button_system,
-                    crate::setup_scene,
                 ),
             );
     }
@@ -99,9 +94,10 @@ fn setup_ui(mut commands: Commands) {
 }
 
 fn button_system(
+    mut commands: Commands,
+    system: Res<RunOnceSystemList>,
     mut game_state: ResMut<GameState>,
     mut input_focus: ResMut<InputFocus>,
-    mut messages: MessageWriter<GameModeChanged>,
     mut interaction_query: Query<
         (
             Entity,
@@ -127,7 +123,9 @@ fn button_system(
                 button.set_changed();
                 if *game_state == GameState::Menu {
                     *game_state = GameState::Running;
-                    messages.write(GameModeChanged(GameState::Running));
+                    commands.run_system(system.0["setup_scene"]);
+                    commands.run_system(system.0["setup_terrain"]);
+                    commands.run_system(system.0["setup_aircraft"]);
                 } else {
                     info!("Scene already spawned")
                 }
