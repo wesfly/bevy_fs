@@ -92,9 +92,9 @@ fn main() {
         })
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AircraftState {
-            engine_on: false,
-            anti_col_lts_on: false,
-            pos_lts_on: false,
+            engine_on: true,
+            anti_col_lts_on: true,
+            pos_lts_on: true,
             strobe_lts_on: false,
             aircraft_type: settings.aircraft,
         })
