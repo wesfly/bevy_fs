@@ -170,7 +170,7 @@ fn update_velocity(
 ) {
     let string = format!(
         "Velocity: {:?} km/h",
-        ((vel.0 * *transform.forward()).length() * 3.6) as i32
+        (transform.forward().dot(vel.0) * 3.6) as i32
     );
     velocity.0 = string;
 }
