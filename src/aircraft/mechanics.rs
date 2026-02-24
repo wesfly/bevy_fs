@@ -1,3 +1,5 @@
+// Thanks to Hermitao for making a prototype flight model (https://gist.github.com/Hermitao/0a908f8af19b11132e3bdb5ba4ef99f0)
+
 use avian3d::prelude::{Forces, ReadRigidBodyForces, WriteRigidBodyForces};
 use bevy::prelude::*;
 
@@ -54,18 +56,16 @@ pub fn mechanics(
             let drag = (-velocity_dir * induced_drag(lift_coeff, rho, speed))
                 + (-velocity_dir * parasitic_drag);
             force.apply_force(drag);
-            info!("drag {:#?}", drag);
 
             // Stabilisation (idk)
-            let stability_thing = stabilise(&transform, velocity_dir, speed);
-            force.apply_local_angular_acceleration(stability_thing);
+            let stability_thingy = stabilise(&transform, velocity_dir, speed);
+            // force.apply_local_angular_acceleration(stability_thingy);
 
             // L = Cl * p * (v^2/2) * A
             // Lift = coefficient * density * (airspeed^2 / 2) * wing area
             let wing_area = 49.0;
             let airspeed = forward.dot(velocity_dir).clamp(0.0, 1.0) * speed;
             let lift = lift(lift_coeff, airspeed, wing_area, transform.up(), rho);
-            info!("lift {:#?}", lift);
             force.apply_force(lift);
         } // }
     }
