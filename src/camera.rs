@@ -1,4 +1,4 @@
-use crate::{aircraft::Aircraft, input::Keymap};
+use crate::{Settings, aircraft::Aircraft, input::Keymap};
 use bevy::{
     input::mouse::{AccumulatedMouseMotion, MouseScrollUnit, MouseWheel},
     prelude::*,
@@ -19,7 +19,6 @@ pub enum CameraView {
 pub struct CameraSettings {
     pub orbit_distance: f32,
     pub pitch_speed: f32,
-    // Clamp pitch to this range
     pub pitch_range: Range<f32>,
     pub yaw_speed: f32,
     follow_default_position: Vec3,
@@ -29,9 +28,21 @@ pub struct CameraSettings {
     pub view: CameraView,
 }
 
-impl Default for CameraSettings {
-    fn default() -> Self {
+impl CameraSettings {
+    pub fn init(settings: &Settings) -> Self {
         // Limiting pitch stops some unexpected rotation past 90° up or down.
+        let cockpit_pos = match settings.aircraft {
+            crate::aircraft::AircraftTypes::Aeroplane => Vec3 {
+                x: 0.0,
+                y: 1.2,
+                z: -3.27,
+            },
+            crate::aircraft::AircraftTypes::Helicopter => Vec3 {
+                x: 0.38,
+                y: 1.2,
+                z: -2.6,
+            },
+        };
         let pitch_limit = FRAC_PI_2 - 0.01;
         Self {
             orbit_distance: 20.0,
@@ -48,11 +59,7 @@ impl Default for CameraSettings {
                 y: 0.5,
                 z: 0.0,
             },
-            cockpit_default_position: Vec3 {
-                x: 0.38,
-                y: 1.2,
-                z: -2.6,
-            },
+            cockpit_default_position: cockpit_pos,
             tail_default_position: Vec3 {
                 x: 0.5,
                 y: 3.0,

@@ -12,13 +12,13 @@ struct Chunk {
     height_data: Vec<f32>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 struct Coordinates {
     lat: f32,
     long: f32,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Terrain {
     collisions: bool,
     number_of_chunks: u32,

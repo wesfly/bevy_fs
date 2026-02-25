@@ -23,7 +23,7 @@ pub const STROBE_ON_DURATION: f32 = 0.1;
 pub const ACOL_OFF_DURATION: f32 = 1.2;
 pub const ACOL_ON_DURATION: f32 = 0.1;
 
-#[derive(Resource, Default, Deserialize)]
+#[derive(Resource, Default, Deserialize, Clone)]
 pub enum AircraftTypes {
     Helicopter,
     #[default]

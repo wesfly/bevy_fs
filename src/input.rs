@@ -10,7 +10,7 @@ pub struct InputAxis {
     pub throttle: f32, // Throttle
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Gamepad {
     enabled: bool,
     hotas: bool,

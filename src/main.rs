@@ -45,7 +45,7 @@ pub enum GameState {
     Menu,
 }
 
-#[derive(Resource, Deserialize)]
+#[derive(Resource, Deserialize, Clone)]
 pub struct Settings {
     aircraft: AircraftTypes,
     gamepad: input::Gamepad,
@@ -104,7 +104,7 @@ fn main() {
             throttle: 0.0,
         })
         .insert_resource(GameState::Menu)
-        .insert_resource(CameraSettings::default())
+        .insert_resource(CameraSettings::init(&settings))
         .insert_resource(input::Keymap::default())
         .insert_resource(Settings::fetch())
         .insert_resource(LightsTimers {
@@ -120,7 +120,7 @@ fn main() {
             anti_col_lts_on: true,
             pos_lts_on: true,
             strobe_lts_on: true,
-            aircraft_type: settings.aircraft,
+            aircraft_type: settings.aircraft.clone(),
         })
         .insert_resource(TerrainData(Vec::new()))
         // Systems
