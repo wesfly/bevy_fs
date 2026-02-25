@@ -22,6 +22,7 @@ First you need to install Rust from [here](https://rust-lang.org/tools/install/)
 
 ```sh
 git clone https://codeberg.org/wesfly/bevy-fs.git
+cd bevy-fs
 git lfs pull # Pull the big files
 ```
 
