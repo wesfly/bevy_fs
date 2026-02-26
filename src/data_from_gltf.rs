@@ -66,7 +66,7 @@ pub struct Rotor {
 
 #[derive(Debug, Deserialize)]
 struct ShadingFromGltf {
-    not_shadow_caster: Option<bool>,
+    not_shadow_caster: bool,
 }
 
 pub fn load(
@@ -100,7 +100,7 @@ pub fn load(
             if let Ok(shading_data) =
                 serde_json::from_str::<ShadingFromGltf>(&gltf_mesh_extras.value)
             {
-                if shading_data.not_shadow_caster == Some(true) {
+                if shading_data.not_shadow_caster {
                     dbg!(&shading_data);
                     commands.entity(entity).insert(NotShadowCaster);
                 }
