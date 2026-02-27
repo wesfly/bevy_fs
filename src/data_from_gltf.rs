@@ -5,14 +5,20 @@ How to make buttons with custom properties (don't forget to export with custom p
 Thanks to Christopher Biscardi for making a tutorial about it.
 
 load
------------------
+=================
+Buttons:
 interface_type: InterfaceType
-function: InterfaceOperation
+operation: InterfaceOperation
 inverse: bool
-
+-----------------
+Lights:
 light: Lights
-
+-----------------
+Rotors:
 rotor: RotorTypes
+-----------------
+Shading:
+not_shadow_caster: bool
 */
 
 use bevy::{gltf::GltfMeshExtras, light::NotShadowCaster, prelude::*, scene::SceneInstanceReady};
