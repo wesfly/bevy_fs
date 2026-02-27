@@ -94,6 +94,7 @@ fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins)
         .add_plugins(PhysicsPlugins::default())
+        // .add_plugins(PhysicsDebugPlugin)
         .add_plugins(MeshPickingPlugin)
         .add_plugins(UI)
         // Resources
