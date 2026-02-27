@@ -252,13 +252,13 @@ pub fn spawn(
         AircraftTypes::Helicopter => "helicopter.glb",
     };
 
-    // Aircraft collider
+    // Aircraft model
     let aircraft = commands
         .spawn((
-            SceneRoot(asset_server.load(GltfAssetLabel::Scene(1).from_asset(path))),
+            SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(path))),
             Aircraft,
             RigidBody::Dynamic,
-            ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
+            ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh),
             Transform::from_xyz(0., 2000., 0.),
             Mass(10_000.0),
             LinearVelocity(Vec3 {
@@ -266,20 +266,9 @@ pub fn spawn(
                 y: 0.0,
                 z: -100.0,
             }),
-            Visibility::Hidden,
         ))
+        .observe(load)
         .id();
-
-    // The real aircraft model
-    commands
-        .spawn((
-            SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(path))),
-            Visibility::Visible,
-            ChildOf(aircraft),
-            ColliderDisabled,
-            RigidBodyDisabled,
-        ))
-        .observe(load);
 
     let mut camera = commands.spawn((
         Camera3d::default(),
