@@ -37,6 +37,8 @@ pub enum InterfaceOperation {
     Engine,
     PositionLt,
     StrobeLt,
+    FormationLt,
+    APU,
 }
 
 #[derive(Debug, Component, Serialize, Deserialize)]

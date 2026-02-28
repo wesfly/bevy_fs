@@ -67,6 +67,7 @@ pub fn button_listener(
             bool = Some(state.strobe_lts_on);
             state.strobe_lts_on = !state.strobe_lts_on
         }
+        _ => bool = None,
     }
 
     const SWITCH_ANGLE_LIMIT: f32 = 70.0;
