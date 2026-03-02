@@ -2,7 +2,8 @@
 
 This is a little flight sim made in Bevy.
 
-![](Screenshot.png)
+![](screenshots/1.png)
+![](screenshots/2.png)
 
 [Discord server](https://discord.gg/epMBz5m2Ad)
 
