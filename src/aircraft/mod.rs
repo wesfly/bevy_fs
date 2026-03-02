@@ -32,11 +32,11 @@ pub enum AircraftTypes {
 
 #[derive(Resource)]
 pub struct AircraftState {
+    pub aircraft_type: AircraftTypes,
     pub engine_on: bool,
     pub anti_col_lts_on: bool,
     pub pos_lts_on: bool,
     pub strobe_lts_on: bool,
-    pub aircraft_type: AircraftTypes,
 }
 
 #[derive(Component)]
@@ -241,7 +241,68 @@ pub fn update_rotors(
     }
 }
 
-pub fn spawn(
+pub fn spawn_aeroplane(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
+    settings: Res<Settings>,
+    mut state: ResMut<AircraftState>,
+) {
+    let path = match state.aircraft_type {
+        AircraftTypes::Aeroplane => "aeroplane.glb",
+        AircraftTypes::Helicopter => "helicopter.glb",
+    };
+
+    // This aircraft can't start from the ground yet so it's turned on by default
+    state.engine_on = true;
+    state.pos_lts_on = true;
+    state.anti_col_lts_on = true;
+    state.strobe_lts_on = true;
+
+    let (spawn_pos, spawn_vel) = (Vec3::new(0., 2000., 0.), Vec3::new(0.0, 0.0, -100.0));
+
+    // Aircraft model
+    let aircraft = commands
+        .spawn((
+            SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(path))),
+            Aircraft,
+            RigidBody::Dynamic,
+            ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh),
+            Transform::from_translation(spawn_pos),
+            Mass(10_000.0),
+            LinearVelocity(spawn_vel),
+        ))
+        .observe(load)
+        .id();
+
+    let mut camera = commands.spawn((
+        Camera3d::default(),
+        Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
+        AtmosphereEnvironmentMapLight::default(),
+        AtmosphereSettings::default(),
+        Exposure::SUNLIGHT,
+        Tonemapping::AgX,
+        Bloom::NATURAL,
+        Projection::from(PerspectiveProjection {
+            fov: 50.0_f32.to_radians(),
+            ..default()
+        }),
+        Hdr,
+        crate::camera::Camera,
+        ChildOf(aircraft),
+    ));
+
+    // TODO make this a plugin
+    if let Some(sse) = crate::sse_config(&settings) {
+        camera.insert(sse);
+    }
+
+    if let Some(mb) = motion_blur(&settings) {
+        camera.insert(mb);
+    }
+}
+
+pub fn spawn_helicopter(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
@@ -253,10 +314,7 @@ pub fn spawn(
         AircraftTypes::Helicopter => "helicopter.glb",
     };
 
-    let (spawn_pos, spawn_vel) = match settings.aircraft {
-        AircraftTypes::Helicopter => (Vec3::new(0.0, 12.0, 0.0), Vec3::new(0.0, 0.0, 0.0)),
-        AircraftTypes::Aeroplane => (Vec3::new(0., 2000., 0.), Vec3::new(0.0, 0.0, -100.0)),
-    };
+    let (spawn_pos, spawn_vel) = (Vec3::new(0.0, 12.0, 0.0), Vec3::new(0.0, 0.0, 0.0));
 
     // Aircraft model
     let aircraft = commands

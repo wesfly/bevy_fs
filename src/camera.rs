@@ -1,4 +1,7 @@
-use crate::{Settings, aircraft::Aircraft, input::Keymap};
+use crate::{
+    aircraft::{Aircraft, AircraftState},
+    input::Keymap,
+};
 use bevy::{
     input::mouse::{AccumulatedMouseMotion, MouseScrollUnit, MouseWheel},
     prelude::*,
@@ -29,9 +32,9 @@ pub struct CameraSettings {
 }
 
 impl CameraSettings {
-    pub fn init(settings: &Settings) -> Self {
+    pub fn init(state: &AircraftState) -> Self {
         // Limiting pitch stops some unexpected rotation past 90° up or down.
-        let cockpit_pos = match settings.aircraft {
+        let cockpit_pos = match state.aircraft_type {
             crate::aircraft::AircraftTypes::Aeroplane => Vec3 {
                 x: 0.0,
                 y: 1.2,

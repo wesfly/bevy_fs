@@ -47,7 +47,6 @@ pub enum GameState {
 
 #[derive(Resource, Deserialize)]
 pub struct Settings {
-    aircraft: AircraftTypes,
     gamepad: input::Gamepad,
     motion_blur_enabled: bool,
     shadow_distance: f32,
@@ -80,8 +79,12 @@ impl FromWorld for RunOnceSystemList {
             world.register_system(terrain::spawn_terrain),
         );
         my_item_systems.0.insert(
-            "setup_aircraft".into(),
-            world.register_system(aircraft::spawn),
+            "setup_aeroplane".into(),
+            world.register_system(aircraft::spawn_aeroplane),
+        );
+        my_item_systems.0.insert(
+            "setup_helicopter".into(),
+            world.register_system(aircraft::spawn_helicopter),
         );
 
         my_item_systems
@@ -91,21 +94,12 @@ impl FromWorld for RunOnceSystemList {
 fn main() {
     let settings = Settings::fetch();
 
-    let aircraft_state = match settings.aircraft {
-        AircraftTypes::Aeroplane => AircraftState {
-            engine_on: true,
-            anti_col_lts_on: true,
-            pos_lts_on: true,
-            strobe_lts_on: true,
-            aircraft_type: AircraftTypes::Aeroplane,
-        },
-        AircraftTypes::Helicopter => AircraftState {
-            engine_on: false,
-            anti_col_lts_on: false,
-            pos_lts_on: false,
-            strobe_lts_on: false,
-            aircraft_type: AircraftTypes::Helicopter,
-        },
+    let state = AircraftState {
+        engine_on: false,
+        anti_col_lts_on: false,
+        pos_lts_on: false,
+        strobe_lts_on: false,
+        aircraft_type: AircraftTypes::Helicopter,
     };
 
     let mut app = App::new();
@@ -122,7 +116,7 @@ fn main() {
             throttle: 0.0,
         })
         .insert_resource(GameState::Menu)
-        .insert_resource(CameraSettings::init(&settings))
+        .insert_resource(CameraSettings::init(&state))
         .insert_resource(input::Keymap::default())
         .insert_resource(Settings::fetch())
         .insert_resource(LightsTimers {
@@ -133,7 +127,7 @@ fn main() {
         })
         .init_resource::<RunOnceSystemList>()
         .insert_resource(ClearColor(Color::BLACK))
-        .insert_resource(aircraft_state)
+        .insert_resource(state)
         .insert_resource(TerrainData(Vec::new()))
         // Systems
         .add_systems(

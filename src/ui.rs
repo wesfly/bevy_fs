@@ -1,4 +1,7 @@
-use crate::{GameState, InputAxis, RunOnceSystemList, aircraft::Aircraft};
+use crate::{
+    GameState, InputAxis, RunOnceSystemList,
+    aircraft::{Aircraft, AircraftState},
+};
 use avian3d::prelude::LinearVelocity;
 use bevy::{input_focus::InputFocus, prelude::*};
 
@@ -13,6 +16,12 @@ struct ThrottleUI;
 
 #[derive(Component)]
 struct VelocityUI;
+
+#[derive(Component)]
+enum SpawnButton {
+    Aeroplane,
+    Helicopter,
+}
 
 pub struct UI;
 impl Plugin for UI {
@@ -67,11 +76,12 @@ fn setup_ui(mut commands: Commands) {
 
     commands.spawn((
         Button,
+        SpawnButton::Aeroplane,
         Node {
             position_type: PositionType::Absolute,
             top: px(110.0),
             left: px(10.0),
-            width: px(150),
+            width: px(300),
             height: px(65),
             border: UiRect::all(px(5)),
             // horizontally center child text
@@ -83,11 +93,30 @@ fn setup_ui(mut commands: Commands) {
         BorderColor::all(Color::WHITE),
         BackgroundColor(Color::BLACK),
         children![(
-            Text::new("Spawn"),
-            TextFont {
-                font_size: 33.0,
-                ..default()
-            },
+            Text::new("Spawn Aeroplane"),
+            TextColor(Color::srgb(0.9, 0.9, 0.9)),
+        )],
+    ));
+    commands.spawn((
+        Button,
+        SpawnButton::Helicopter,
+        Node {
+            position_type: PositionType::Absolute,
+            top: px(200.0),
+            left: px(10.0),
+            width: px(300),
+            height: px(65),
+            border: UiRect::all(px(5)),
+            // horizontally center child text
+            justify_content: JustifyContent::Center,
+            // vertically center child text
+            align_items: AlignItems::Center,
+            ..default()
+        },
+        BorderColor::all(Color::WHITE),
+        BackgroundColor(Color::BLACK),
+        children![(
+            Text::new("Spawn Helicopter"),
             TextColor(Color::srgb(0.9, 0.9, 0.9)),
         )],
     ));
@@ -98,6 +127,7 @@ fn button_system(
     system: Res<RunOnceSystemList>,
     mut game_state: ResMut<GameState>,
     mut input_focus: ResMut<InputFocus>,
+    mut state: ResMut<AircraftState>,
     mut interaction_query: Query<
         (
             Entity,
@@ -105,39 +135,48 @@ fn button_system(
             &mut BackgroundColor,
             &mut BorderColor,
             &mut Button,
-            &Children,
+            &SpawnButton,
         ),
         Changed<Interaction>,
     >,
-    mut text_query: Query<&mut Text>,
 ) {
-    for (entity, interaction, mut color, mut border_color, mut button, children) in
+    for (entity, interaction, mut color, mut border_color, mut button, spawn_button) in
         interaction_query.iter_mut()
     {
-        let mut text = text_query.get_mut(children[0]).unwrap();
-
         match *interaction {
             Interaction::Pressed => {
                 input_focus.set(entity);
-                *color = BackgroundColor::DEFAULT;
+                *color = Color::srgb(0.15, 0.15, 0.15).into();
                 button.set_changed();
                 if *game_state == GameState::Menu {
                     *game_state = GameState::Running;
+                    match spawn_button {
+                        SpawnButton::Aeroplane => {
+                            state.aircraft_type = crate::aircraft::AircraftTypes::Aeroplane;
+
+                            commands.run_system(system.0["setup_aeroplane"]);
+                        }
+                        SpawnButton::Helicopter => {
+                            state.aircraft_type = crate::aircraft::AircraftTypes::Helicopter;
+
+                            commands.run_system(system.0["setup_helicopter"]);
+                        }
+                    }
                     commands.run_system(system.0["setup_scene"]);
                     commands.run_system(system.0["setup_terrain"]);
-                    commands.run_system(system.0["setup_aircraft"]);
                 } else {
                     info!("Scene already spawned")
                 }
             }
             Interaction::Hovered => {
                 input_focus.set(entity);
+                *color = Color::srgb(0.15, 0.15, 0.15).into();
                 *border_color = BorderColor::all(Color::WHITE);
                 button.set_changed();
             }
             Interaction::None => {
                 input_focus.clear();
-                **text = "Spawn".to_string();
+                // **text = "Spawn".to_string();
                 *color = Color::srgb(0.15, 0.15, 0.15).into();
                 *border_color = BorderColor::all(Color::BLACK);
             }

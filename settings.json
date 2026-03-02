@@ -1,5 +1,4 @@
 {
-  "aircraft": "Aeroplane",
   "gamepad": {
     "enabled": true,
     "hotas": true
