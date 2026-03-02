@@ -1,7 +1,5 @@
 // Thanks to Hermitao for making a prototype flight model (https://gist.github.com/Hermitao/0a908f8af19b11132e3bdb5ba4ef99f0)
 
-use std::ops::Deref;
-
 use avian3d::prelude::{Forces, ReadRigidBodyForces, WriteRigidBodyForces, forces::ForcesItem};
 use bevy::prelude::*;
 
@@ -32,7 +30,7 @@ pub fn mechanics(
         }
         AircraftTypes::Aeroplane => {
             if state.engine_on {
-                steering(*transform, &mut *force, input.deref(), gizmos);
+                steering(*transform, &mut *force, &*input, gizmos);
 
                 let forward = transform.forward();
 
