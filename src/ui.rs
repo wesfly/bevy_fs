@@ -90,10 +90,11 @@ fn setup_ui(mut commands: Commands) {
         Menu,
         Node {
             position_type: PositionType::Absolute,
-            top: px(110.0),
-            left: px(10.0),
-            width: px(300),
-            height: px(65),
+            top: px(200.0),
+            right: px(10.0),
+            width: Val::Percent(40.0),
+            height: percent(40.0),
+            padding: UiRect::all(px(10.0)),
             border: UiRect::all(px(5)),
             // horizontally center child text
             justify_content: JustifyContent::Center,
@@ -116,8 +117,9 @@ fn setup_ui(mut commands: Commands) {
             position_type: PositionType::Absolute,
             top: px(200.0),
             left: px(10.0),
-            width: px(300),
-            height: px(65),
+            width: Val::Percent(40.0),
+            height: percent(40.0),
+            padding: UiRect::all(px(10.0)),
             border: UiRect::all(px(5)),
             // horizontally center child text
             justify_content: JustifyContent::Center,
