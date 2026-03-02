@@ -1,6 +1,8 @@
 // Thanks to Hermitao for making a prototype flight model (https://gist.github.com/Hermitao/0a908f8af19b11132e3bdb5ba4ef99f0)
 
-use avian3d::prelude::{Forces, ReadRigidBodyForces, WriteRigidBodyForces};
+use std::ops::Deref;
+
+use avian3d::prelude::{Forces, ReadRigidBodyForces, WriteRigidBodyForces, forces::ForcesItem};
 use bevy::prelude::*;
 
 use crate::{
@@ -15,6 +17,7 @@ pub fn mechanics(
     mut force: Single<Forces, With<Aircraft>>,
     input: Res<InputAxis>,
     state: Res<AircraftState>,
+    gizmos: Gizmos,
 ) {
     match state.aircraft_type {
         AircraftTypes::Helicopter => {
@@ -29,8 +32,7 @@ pub fn mechanics(
         }
         AircraftTypes::Aeroplane => {
             if state.engine_on {
-                let input_torque = Vec3::new(input.pitch, input.yaw, input.roll);
-                force.apply_local_torque(input_torque * 500.5);
+                steering(*transform, &mut *force, input.deref(), gizmos);
 
                 let forward = transform.forward();
 
@@ -59,8 +61,7 @@ pub fn mechanics(
                 force.apply_force(drag);
 
                 // Stabilisation (idk)
-                let stability_thingy = stabilise();
-                force.apply_local_angular_acceleration(stability_thingy);
+                stabilise();
 
                 // L = Cl * p * (v^2/2) * A
                 // Lift = coefficient * density * (airspeed^2 / 2) * wing area
@@ -71,6 +72,89 @@ pub fn mechanics(
             }
         }
     }
+}
+
+fn steering(
+    transform: &GlobalTransform,
+    force: &mut ForcesItem,
+    input: &InputAxis,
+    mut gizmos: Gizmos,
+) {
+    let pitch_point = transform.translation()
+        + transform.rotation()
+            * Vec3 {
+                x: 0.0,
+                y: 0.0,
+                z: 10.0,
+            };
+    let yaw_point = transform.translation()
+        + transform.rotation()
+            * Vec3 {
+                x: 0.0,
+                y: 2.0,
+                z: 7.0,
+            };
+
+    let roll_port_point = transform.translation()
+        + transform.rotation()
+            * Vec3 {
+                x: -6.0,
+                y: 0.0,
+                z: 2.0,
+            };
+    let roll_port_force = Vec3 {
+        x: 0.0,
+        y: -input.roll * 20.,
+        z: 0.0,
+    };
+    force.apply_force_at_point(transform.rotation() * roll_port_force, roll_port_point);
+
+    let roll_starboard_point = transform.translation()
+        + transform.rotation()
+            * Vec3 {
+                x: 6.0,
+                y: 0.0,
+                z: 2.0,
+            };
+    let roll_starboard_force = Vec3 {
+        x: 0.0,
+        y: input.roll * 20.,
+        z: 0.0,
+    };
+    force.apply_force_at_point(
+        transform.rotation() * roll_starboard_force,
+        roll_starboard_point,
+    );
+
+    let pitch_force = Vec3 {
+        x: 0.0,
+        y: -input.pitch * 50.0,
+        z: 0.0,
+    };
+    force.apply_force_at_point(transform.rotation() * pitch_force, pitch_point);
+
+    let yaw_force = Vec3 {
+        x: input.yaw * 50.0,
+        y: 0.0,
+        z: 0.0,
+    };
+    force.apply_force_at_point(transform.rotation() * yaw_force, yaw_point);
+
+    gizmos.arrow(
+        yaw_point,
+        yaw_point + transform.rotation() * yaw_force * 0.1,
+        Color::linear_rgb(0.0, 0.0, 1.0),
+    );
+    gizmos.arrow(
+        roll_port_point,
+        roll_port_point + transform.rotation() * roll_port_force * 0.1,
+        Color::BLACK,
+    );
+    gizmos.arrow(
+        roll_starboard_point,
+        roll_starboard_point + transform.rotation() * roll_starboard_force * 0.1,
+        Color::linear_rgb(1.0, 0.0, 0.0),
+    );
 }
 
 fn rho() -> f32 {
