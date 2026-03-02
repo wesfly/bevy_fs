@@ -23,11 +23,20 @@ enum SpawnButton {
     Helicopter,
 }
 
+#[derive(Component)]
+struct Menu;
+
+#[derive(Message)]
+struct UIMessage {
+    despawn: bool,
+}
+
 pub struct UI;
 impl Plugin for UI {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_ui)
             .init_resource::<InputFocus>()
+            .add_message::<UIMessage>()
             .add_systems(
                 Update,
                 (
@@ -35,6 +44,7 @@ impl Plugin for UI {
                     update_velocity,
                     update_throttle,
                     button_system,
+                    delete_menu,
                 ),
             );
     }
@@ -77,6 +87,7 @@ fn setup_ui(mut commands: Commands) {
     commands.spawn((
         Button,
         SpawnButton::Aeroplane,
+        Menu,
         Node {
             position_type: PositionType::Absolute,
             top: px(110.0),
@@ -100,6 +111,7 @@ fn setup_ui(mut commands: Commands) {
     commands.spawn((
         Button,
         SpawnButton::Helicopter,
+        Menu,
         Node {
             position_type: PositionType::Absolute,
             top: px(200.0),
@@ -128,6 +140,7 @@ fn button_system(
     mut game_state: ResMut<GameState>,
     mut input_focus: ResMut<InputFocus>,
     mut state: ResMut<AircraftState>,
+    mut messages: MessageWriter<UIMessage>,
     mut interaction_query: Query<
         (
             Entity,
@@ -143,12 +156,13 @@ fn button_system(
     for (entity, interaction, mut color, mut border_color, mut button, spawn_button) in
         interaction_query.iter_mut()
     {
-        match *interaction {
-            Interaction::Pressed => {
-                input_focus.set(entity);
-                *color = Color::srgb(0.15, 0.15, 0.15).into();
-                button.set_changed();
-                if *game_state == GameState::Menu {
+        if *game_state == GameState::Menu {
+            match *interaction {
+                Interaction::Pressed => {
+                    input_focus.set(entity);
+                    *color = Color::srgb(0.15, 0.15, 0.15).into();
+                    button.set_changed();
+
                     *game_state = GameState::Running;
                     match spawn_button {
                         SpawnButton::Aeroplane => {
@@ -164,21 +178,34 @@ fn button_system(
                     }
                     commands.run_system(system.0["setup_scene"]);
                     commands.run_system(system.0["setup_terrain"]);
-                } else {
-                    info!("Scene already spawned")
+                }
+                Interaction::Hovered => {
+                    input_focus.set(entity);
+                    *color = Color::srgb(0.15, 0.15, 0.15).into();
+                    *border_color = BorderColor::all(Color::WHITE);
+                    button.set_changed();
+                }
+                Interaction::None => {
+                    input_focus.clear();
+                    *color = Color::srgb(0.15, 0.15, 0.15).into();
+                    *border_color = BorderColor::all(Color::BLACK);
                 }
             }
-            Interaction::Hovered => {
-                input_focus.set(entity);
-                *color = Color::srgb(0.15, 0.15, 0.15).into();
-                *border_color = BorderColor::all(Color::WHITE);
-                button.set_changed();
-            }
-            Interaction::None => {
-                input_focus.clear();
-                // **text = "Spawn".to_string();
-                *color = Color::srgb(0.15, 0.15, 0.15).into();
-                *border_color = BorderColor::all(Color::BLACK);
+        } else {
+            messages.write(UIMessage { despawn: true });
+        }
+    }
+}
+
+fn delete_menu(
+    mut messages: MessageReader<UIMessage>,
+    mut commands: Commands,
+    menu_query: Query<Entity, With<Menu>>,
+) {
+    for message in messages.read() {
+        if message.despawn {
+            for entity in menu_query {
+                commands.entity(entity).despawn();
             }
         }
     }
