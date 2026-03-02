@@ -45,7 +45,7 @@ pub enum GameState {
     Menu,
 }
 
-#[derive(Resource, Deserialize, Clone)]
+#[derive(Resource, Deserialize)]
 pub struct Settings {
     aircraft: AircraftTypes,
     gamepad: input::Gamepad,
@@ -91,6 +91,23 @@ impl FromWorld for RunOnceSystemList {
 fn main() {
     let settings = Settings::fetch();
 
+    let aircraft_state = match settings.aircraft {
+        AircraftTypes::Aeroplane => AircraftState {
+            engine_on: true,
+            anti_col_lts_on: true,
+            pos_lts_on: true,
+            strobe_lts_on: true,
+            aircraft_type: AircraftTypes::Aeroplane,
+        },
+        AircraftTypes::Helicopter => AircraftState {
+            engine_on: false,
+            anti_col_lts_on: false,
+            pos_lts_on: false,
+            strobe_lts_on: false,
+            aircraft_type: AircraftTypes::Helicopter,
+        },
+    };
+
     let mut app = App::new();
     app.add_plugins(DefaultPlugins)
         .add_plugins(PhysicsPlugins::default())
@@ -116,13 +133,7 @@ fn main() {
         })
         .init_resource::<RunOnceSystemList>()
         .insert_resource(ClearColor(Color::BLACK))
-        .insert_resource(AircraftState {
-            engine_on: true,
-            anti_col_lts_on: true,
-            pos_lts_on: true,
-            strobe_lts_on: true,
-            aircraft_type: settings.aircraft.clone(),
-        })
+        .insert_resource(aircraft_state)
         .insert_resource(TerrainData(Vec::new()))
         // Systems
         .add_systems(

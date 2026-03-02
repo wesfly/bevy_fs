@@ -23,7 +23,7 @@ pub const STROBE_ON_DURATION: f32 = 0.1;
 pub const ACOL_OFF_DURATION: f32 = 1.2;
 pub const ACOL_ON_DURATION: f32 = 0.1;
 
-#[derive(Resource, Default, Deserialize, Clone)]
+#[derive(Resource, Default, Deserialize)]
 pub enum AircraftTypes {
     Helicopter,
     #[default]
@@ -253,6 +253,11 @@ pub fn spawn(
         AircraftTypes::Helicopter => "helicopter.glb",
     };
 
+    let (spawn_pos, spawn_vel) = match settings.aircraft {
+        AircraftTypes::Helicopter => (Vec3::new(0.0, 12.0, 0.0), Vec3::new(0.0, 0.0, 0.0)),
+        AircraftTypes::Aeroplane => (Vec3::new(0., 2000., 0.), Vec3::new(0.0, 0.0, -100.0)),
+    };
+
     // Aircraft model
     let aircraft = commands
         .spawn((
@@ -260,13 +265,9 @@ pub fn spawn(
             Aircraft,
             RigidBody::Dynamic,
             ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh),
-            Transform::from_xyz(0., 2000., 0.),
+            Transform::from_translation(spawn_pos),
             Mass(10_000.0),
-            LinearVelocity(Vec3 {
-                x: 0.0,
-                y: 0.0,
-                z: -100.0,
-            }),
+            LinearVelocity(spawn_vel),
         ))
         .observe(load)
         .id();
