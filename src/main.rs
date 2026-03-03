@@ -39,12 +39,6 @@ use bevy::{
 use serde::Deserialize;
 use std::{collections::HashMap, fs};
 
-#[derive(Resource, PartialEq)]
-pub enum GameState {
-    Running,
-    Menu,
-}
-
 #[derive(Resource, Deserialize)]
 pub struct Settings {
     gamepad: input::Gamepad,
@@ -83,8 +77,12 @@ impl FromWorld for RunOnceSystemList {
             world.register_system(aircraft::spawn_aeroplane),
         );
         my_item_systems.0.insert(
-            "setup_helicopter".into(),
+            "spawn_helicopter".into(),
             world.register_system(aircraft::spawn_helicopter),
+        );
+        my_item_systems.0.insert(
+            "spawn_ui_hud".into(),
+            world.register_system(ui::setup_ui_hud),
         );
 
         my_item_systems
@@ -115,7 +113,6 @@ fn main() {
             roll: 0.0,
             throttle: 0.0,
         })
-        .insert_resource(GameState::Menu)
         .insert_resource(CameraSettings::init(&state))
         .insert_resource(input::Keymap::default())
         .insert_resource(Settings::fetch())
