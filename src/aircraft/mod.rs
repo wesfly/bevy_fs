@@ -248,10 +248,7 @@ pub fn spawn_aeroplane(
     settings: Res<Settings>,
     mut state: ResMut<AircraftState>,
 ) {
-    let path = match state.aircraft_type {
-        AircraftTypes::Aeroplane => "aeroplane.glb",
-        AircraftTypes::Helicopter => "helicopter.glb",
-    };
+    let path = "aeroplane.glb";
 
     // This aircraft can't start from the ground yet so it's turned on by default
     state.engine_on = true;
@@ -307,12 +304,8 @@ pub fn spawn_helicopter(
     asset_server: Res<AssetServer>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     settings: Res<Settings>,
-    state: Res<AircraftState>,
 ) {
-    let path = match state.aircraft_type {
-        AircraftTypes::Aeroplane => "aeroplane.glb",
-        AircraftTypes::Helicopter => "helicopter.glb",
-    };
+    let path = "helicopter.glb";
 
     let (spawn_pos, spawn_vel) = (Vec3::new(0.0, 12.0, 0.0), Vec3::new(0.0, 0.0, 0.0));
 
