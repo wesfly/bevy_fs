@@ -26,9 +26,27 @@ enum SpawnButton {
 #[derive(Component)]
 struct Menu;
 
+impl Menu {
+    fn menu(
+        mut messages: MessageReader<UIMessage>,
+        mut commands: Commands,
+        menu_query: Query<Entity, With<Menu>>,
+    ) {
+        for message in messages.read() {
+            match message {
+                UIMessage::DespawnMenu => {
+                    for entity in menu_query {
+                        commands.entity(entity).despawn();
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[derive(Message)]
-struct UIMessage {
-    despawn: bool,
+enum UIMessage {
+    DespawnMenu,
 }
 
 pub struct UI;
@@ -44,7 +62,7 @@ impl Plugin for UI {
                     update_velocity,
                     update_throttle,
                     button_system,
-                    delete_menu,
+                    Menu::menu,
                 ),
             );
     }
@@ -194,21 +212,7 @@ fn button_system(
                 }
             }
         } else {
-            messages.write(UIMessage { despawn: true });
-        }
-    }
-}
-
-fn delete_menu(
-    mut messages: MessageReader<UIMessage>,
-    mut commands: Commands,
-    menu_query: Query<Entity, With<Menu>>,
-) {
-    for message in messages.read() {
-        if message.despawn {
-            for entity in menu_query {
-                commands.entity(entity).despawn();
-            }
+            messages.write(UIMessage::DespawnMenu);
         }
     }
 }
