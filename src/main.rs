@@ -18,8 +18,8 @@ mod ui;
 
 use crate::{
     aircraft::{
-        ACOL_OFF_DURATION, AircraftState, AircraftTypes, LightsTimers, STROBE_OFF_DURATION,
-        update_light_cycle, update_lights, update_mesh_lights, update_rotors,
+        ACOL_OFF_DURATION, AircraftState, LightsTimers, STROBE_OFF_DURATION, update_light_cycle,
+        update_lights, update_mesh_lights, update_rotors,
     },
     camera::{CameraSettings, camera_controller},
     input::InputAxis,
@@ -92,14 +92,6 @@ impl FromWorld for RunOnceSystemList {
 fn main() {
     let settings = Settings::fetch();
 
-    let state = AircraftState {
-        engine_on: false,
-        anti_col_lts_on: false,
-        pos_lts_on: false,
-        strobe_lts_on: false,
-        aircraft_type: AircraftTypes::Helicopter,
-    };
-
     let mut app = App::new();
     app.add_plugins(DefaultPlugins)
         .add_plugins(PhysicsPlugins::default())
@@ -113,7 +105,7 @@ fn main() {
             roll: 0.0,
             throttle: 0.0,
         })
-        .insert_resource(CameraSettings::init(&state))
+        .insert_resource(CameraSettings::default())
         .insert_resource(input::Keymap::default())
         .insert_resource(Settings::fetch())
         .insert_resource(LightsTimers {
@@ -124,7 +116,7 @@ fn main() {
         })
         .init_resource::<RunOnceSystemList>()
         .insert_resource(ClearColor(Color::BLACK))
-        .insert_resource(state)
+        .insert_resource(AircraftState::default())
         .insert_resource(TerrainData(Vec::new()))
         // Systems
         .add_systems(

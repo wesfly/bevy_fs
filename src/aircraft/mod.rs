@@ -39,6 +39,18 @@ pub struct AircraftState {
     pub strobe_lts_on: bool,
 }
 
+impl Default for AircraftState {
+    fn default() -> Self {
+        AircraftState {
+            aircraft_type: AircraftTypes::Helicopter,
+            engine_on: false,
+            anti_col_lts_on: false,
+            pos_lts_on: false,
+            strobe_lts_on: false,
+        }
+    }
+}
+
 #[derive(Component)]
 pub struct Aircraft;
 
@@ -250,7 +262,7 @@ pub fn spawn_aeroplane(
 ) {
     let path = "aeroplane.glb";
 
-    // This aircraft can't start from the ground yet so it's turned on by default
+    state.aircraft_type = AircraftTypes::Aeroplane;
     state.engine_on = true;
     state.pos_lts_on = true;
     state.anti_col_lts_on = true;
@@ -304,7 +316,10 @@ pub fn spawn_helicopter(
     asset_server: Res<AssetServer>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     settings: Res<Settings>,
+    mut state: ResMut<AircraftState>,
 ) {
+    state.aircraft_type = AircraftTypes::Helicopter;
+
     let path = "helicopter.glb";
 
     let (spawn_pos, spawn_vel) = (Vec3::new(0.0, 12.0, 0.0), Vec3::new(0.0, 0.0, 0.0));

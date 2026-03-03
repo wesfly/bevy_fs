@@ -31,20 +31,13 @@ pub struct CameraSettings {
     pub view: CameraView,
 }
 
-impl CameraSettings {
-    pub fn init(state: &AircraftState) -> Self {
+impl Default for CameraSettings {
+    fn default() -> Self {
         // Limiting pitch stops some unexpected rotation past 90° up or down.
-        let cockpit_pos = match state.aircraft_type {
-            crate::aircraft::AircraftTypes::Aeroplane => Vec3 {
-                x: 0.0,
-                y: 1.2,
-                z: -3.27,
-            },
-            crate::aircraft::AircraftTypes::Helicopter => Vec3 {
-                x: 0.38,
-                y: 1.2,
-                z: -2.6,
-            },
+        let cockpit_pos = Vec3 {
+            x: 0.0,
+            y: 1.2,
+            z: -3.27,
         };
         let pitch_limit = FRAC_PI_2 - 0.01;
         Self {
@@ -75,7 +68,8 @@ impl CameraSettings {
 
 pub fn camera_controller(
     mut camera: Single<&mut Transform, (With<Camera>, Without<Aircraft>)>,
-    camera_settings: Res<CameraSettings>,
+    mut camera_settings: ResMut<CameraSettings>,
+    state: Res<AircraftState>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     mouse_motion: Res<AccumulatedMouseMotion>,
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
@@ -83,6 +77,18 @@ pub fn camera_controller(
     mut projection: Single<&mut Projection, With<Camera>>,
     mut scroll_events: MessageReader<MouseWheel>,
 ) {
+    camera_settings.cockpit_default_position = match state.aircraft_type {
+        crate::aircraft::AircraftTypes::Helicopter => Vec3 {
+            x: 0.38,
+            y: 1.2,
+            z: -2.6,
+        },
+        crate::aircraft::AircraftTypes::Aeroplane => Vec3 {
+            x: 0.0,
+            y: 1.2,
+            z: -3.27,
+        },
+    };
     let delta = mouse_motion.delta;
 
     let delta_pitch = -delta.y * camera_settings.pitch_speed;

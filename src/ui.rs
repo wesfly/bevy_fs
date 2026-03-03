@@ -1,7 +1,4 @@
-use crate::{
-    InputAxis, RunOnceSystemList,
-    aircraft::{Aircraft, AircraftState},
-};
+use crate::{InputAxis, RunOnceSystemList, aircraft::Aircraft};
 use avian3d::prelude::LinearVelocity;
 use bevy::{input_focus::InputFocus, prelude::*};
 
@@ -32,17 +29,11 @@ impl Menu {
     }
 
     fn spawn(mut commands: Commands) {
-        commands.spawn((
+        let aeroplane_button = (
             Button,
             SpawnButton::Aeroplane,
             Menu,
             Node {
-                position_type: PositionType::Absolute,
-                top: px(200.0),
-                right: px(10.0),
-                width: percent(40.0),
-                height: percent(40.0),
-                padding: UiRect::all(px(10.0)),
                 border: UiRect::all(px(5)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
@@ -54,18 +45,12 @@ impl Menu {
                 Text::new("Spawn Aeroplane"),
                 TextColor(Color::srgb(0.9, 0.9, 0.9)),
             )],
-        ));
-        commands.spawn((
+        );
+        let helicopter_button = (
             Button,
             SpawnButton::Helicopter,
             Menu,
             Node {
-                position_type: PositionType::Absolute,
-                top: px(200.0),
-                left: px(10.0),
-                width: percent(40.0),
-                height: percent(40.0),
-                padding: UiRect::all(px(10.0)),
                 border: UiRect::all(px(5)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
@@ -77,6 +62,22 @@ impl Menu {
                 Text::new("Spawn Helicopter"),
                 TextColor(Color::srgb(0.9, 0.9, 0.9)),
             )],
+        );
+        commands.spawn((
+            Menu,
+            Node {
+                // fill the entire window
+                width: percent(100),
+                height: percent(100),
+                padding: px(12.0).all(),
+                row_gap: px(12.0),
+                column_gap: px(12.0),
+                display: Display::Grid,
+                grid_template_columns: RepeatedGridTrack::fr(2, 1.),
+                ..default()
+            },
+            BackgroundColor(Color::BLACK),
+            children![aeroplane_button, helicopter_button],
         ));
     }
 }
@@ -84,6 +85,10 @@ impl Menu {
 #[derive(Message)]
 enum UIMessage {
     DespawnMenu,
+    SpawnUIHud,
+    SpawnScenery,
+    SpawnHelicopter,
+    SpawnAeroplane,
 }
 
 pub struct UI;
@@ -131,10 +136,7 @@ pub fn setup_ui_hud(mut commands: Commands) {
 }
 
 fn button_system(
-    mut commands: Commands,
-    system: Res<RunOnceSystemList>,
     mut input_focus: ResMut<InputFocus>,
-    mut state: ResMut<AircraftState>,
     mut messages: MessageWriter<UIMessage>,
     mut interaction_query: Query<
         (
@@ -159,20 +161,16 @@ fn button_system(
 
                 match spawn_button {
                     SpawnButton::Aeroplane => {
-                        state.aircraft_type = crate::aircraft::AircraftTypes::Aeroplane;
-
-                        commands.run_system(system.0["setup_aeroplane"]);
+                        messages.write(UIMessage::SpawnAeroplane);
                     }
                     SpawnButton::Helicopter => {
-                        state.aircraft_type = crate::aircraft::AircraftTypes::Helicopter;
-
-                        commands.run_system(system.0["spawn_helicopter"]);
+                        messages.write(UIMessage::SpawnHelicopter);
                     }
                 }
-                commands.run_system(system.0["setup_scene"]);
-                commands.run_system(system.0["setup_terrain"]);
 
+                messages.write(UIMessage::SpawnScenery);
                 messages.write(UIMessage::DespawnMenu);
+                messages.write(UIMessage::SpawnUIHud);
             }
             Interaction::Hovered => {
                 input_focus.set(entity);
@@ -194,12 +192,21 @@ fn ui_main_loop(
     mut messages: MessageReader<UIMessage>,
     menu_query: Query<Entity, With<Menu>>,
     systems: Res<RunOnceSystemList>,
+    system: Res<RunOnceSystemList>,
 ) {
     for message in messages.read() {
         match message {
-            UIMessage::DespawnMenu => {
-                Menu::menu(&mut commands, menu_query);
-                commands.run_system(systems.0["spawn_ui_hud"]);
+            UIMessage::DespawnMenu => Menu::menu(&mut commands, menu_query),
+            UIMessage::SpawnUIHud => commands.run_system(systems.0["spawn_ui_hud"]),
+            UIMessage::SpawnScenery => {
+                commands.run_system(system.0["setup_scene"]);
+                commands.run_system(system.0["setup_terrain"]);
+            }
+            UIMessage::SpawnHelicopter => {
+                commands.run_system(system.0["spawn_helicopter"]);
+            }
+            UIMessage::SpawnAeroplane => {
+                commands.run_system(system.0["setup_aeroplane"]);
             }
         }
     }
