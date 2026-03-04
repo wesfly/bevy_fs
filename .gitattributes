@@ -1,10 +1,8 @@
+assets/aeroplane.glb filter=lfs diff=lfs merge=lfs -text
+assets/helicopter.glb filter=lfs diff=lfs merge=lfs -text
+assets/hospital.glb filter=lfs diff=lfs merge=lfs -text
 assets/bevy_fs_logo.png filter=lfs diff=lfs merge=lfs -text
 assets/FerrisACRegistration.png filter=lfs diff=lfs merge=lfs -text
-assets/aircraft.glb filter=lfs diff=lfs merge=lfs -text
-assets/landscape.glb filter=lfs diff=lfs merge=lfs -text
 assets/textures/water_normals.png filter=lfs diff=lfs merge=lfs -text
 art/bevy_fs_logo.svg filter=lfs diff=lfs merge=lfs -text
 art/FerrisACRegistration.svg filter=lfs diff=lfs merge=lfs -text
-*.glb filter=lfs diff=lfs merge=lfs -text
-*.png filter=lfs diff=lfs merge=lfs -text
-*.svg filter=lfs diff=lfs merge=lfs -text
