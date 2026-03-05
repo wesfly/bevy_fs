@@ -2,9 +2,6 @@
 I made a little flight simulator here. Check out the README for further information.
 If you have fixes or want to contribute, just make a pull request.
 
-I don't exactly know where these InheritedVisibility warnings are coming from (they're probably from the aircraft and its hitbox), I'm just
-ignoring them.
-
 TODO: Add big_space someday
 */
 
