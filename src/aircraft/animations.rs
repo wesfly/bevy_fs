@@ -34,13 +34,15 @@ pub fn update_control_surfaces(
     let cos = transform.forward().dot(velocity_dir);
     let aoa = -sin.atan2(cos).to_degrees();
 
+    let canards_angle = aoa.clamp(-50.0, 50.0);
+
     for (mut transform, ctrl_surface) in ctrl_surfaces {
         match ctrl_surface {
             ControlSurfaces::CanardPort => {
-                transform.rotation = Quat::from_rotation_x(aoa * 1.0 / 90.0)
+                transform.rotation = Quat::from_rotation_x(canards_angle.to_radians())
             }
             ControlSurfaces::CanardStarboard => {
-                transform.rotation = Quat::from_rotation_x(aoa * 1.0 / 90.0)
+                transform.rotation = Quat::from_rotation_x(canards_angle.to_radians())
             }
             ControlSurfaces::Rudder => todo!(),
             ControlSurfaces::Elevator => todo!(),
