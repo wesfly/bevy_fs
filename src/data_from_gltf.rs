@@ -77,6 +77,19 @@ struct ShadingFromGltf {
     not_shadow_caster: bool,
 }
 
+#[derive(Debug, Deserialize, Component)]
+pub enum ControlSurfaces {
+    CanardPort,
+    CanardStarboard,
+    Rudder,
+    Elevator,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ControlSurface {
+    control_surface: ControlSurfaces,
+}
+
 pub fn load(
     trigger: On<SceneInstanceReady>,
     mut commands: Commands,
@@ -103,6 +116,15 @@ pub fn load(
             if let Ok(rotor_data) = serde_json::from_str::<Rotor>(&gltf_mesh_extras.value) {
                 dbg!(&rotor_data);
                 commands.entity(entity).insert(rotor_data.rotor);
+            };
+
+            if let Ok(control_sfc_data) =
+                serde_json::from_str::<ControlSurface>(&gltf_mesh_extras.value)
+            {
+                dbg!(&control_sfc_data);
+                commands
+                    .entity(entity)
+                    .insert(control_sfc_data.control_surface);
             };
 
             if let Ok(shading_data) =

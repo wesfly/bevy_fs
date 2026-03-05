@@ -15,8 +15,9 @@ mod ui;
 
 use crate::{
     aircraft::{
-        ACOL_OFF_DURATION, AircraftState, LightsTimers, STROBE_OFF_DURATION, update_light_cycle,
-        update_lights, update_mesh_lights, update_rotors,
+        ACOL_OFF_DURATION, AircraftState, LightsTimers, STROBE_OFF_DURATION,
+        animations::{update_control_surfaces, update_rotors},
+        update_light_cycle, update_lights, update_mesh_lights,
     },
     camera::{CameraSettings, camera_controller},
     input::InputAxis,
@@ -131,6 +132,7 @@ fn main() {
                 camera_controller,
                 update_light_cycle,
                 update_rotors,
+                update_control_surfaces,
                 (update_mesh_lights, update_lights).after(update_light_cycle),
             ),
         );

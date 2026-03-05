@@ -1,8 +1,9 @@
+pub mod animations;
 pub mod mechanics;
 
 use crate::{
     Settings,
-    data_from_gltf::{InterfaceOperation, InterfaceType, Lights, RotorTypes, load},
+    data_from_gltf::{InterfaceOperation, InterfaceType, Lights, load},
     motion_blur,
 };
 use avian3d::prelude::*;
@@ -235,21 +236,6 @@ pub fn update_lights(
             point_light.intensity = 10000.0;
         } else {
             point_light.intensity = 0.0
-        }
-    }
-}
-
-pub fn update_rotors(
-    query: Query<(&mut Transform, &RotorTypes)>,
-    state: Res<AircraftState>,
-    time: Res<Time>,
-) {
-    if state.engine_on {
-        for (mut rotor, rotor_type) in query {
-            match rotor_type {
-                RotorTypes::Main => rotor.rotate_local_y(100.0 * time.delta_secs()),
-                RotorTypes::Rear => rotor.rotate_local_z(100.0 * time.delta_secs()),
-            }
         }
     }
 }
