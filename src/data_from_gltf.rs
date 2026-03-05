@@ -21,6 +21,7 @@ Shading:
 not_shadow_caster: bool
 */
 
+use avian3d::prelude::Mass;
 use bevy::{gltf::GltfMeshExtras, light::NotShadowCaster, prelude::*, scene::SceneInstanceReady};
 use serde::{Deserialize, Serialize};
 
@@ -83,6 +84,10 @@ pub enum ControlSurfaces {
     CanardStarboard,
     Rudder,
     Elevator,
+    FlapPort,
+    FlapStarboard,
+    AileronPort,
+    AileronStarboard,
 }
 
 #[derive(Debug, Deserialize)]
@@ -124,7 +129,7 @@ pub fn load(
                 dbg!(&ctrl_surface_data);
                 commands
                     .entity(entity)
-                    .insert(ctrl_surface_data.control_surface);
+                    .insert((ctrl_surface_data.control_surface, Mass::from(0.0)));
             };
 
             if let Ok(shading_data) =
