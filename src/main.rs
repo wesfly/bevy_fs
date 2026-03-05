@@ -9,8 +9,8 @@ mod aircraft;
 mod camera;
 mod data_from_gltf;
 mod input;
+mod scenery;
 mod sse;
-mod terrain;
 mod ui;
 
 use crate::{
@@ -20,16 +20,14 @@ use crate::{
     },
     camera::{CameraSettings, camera_controller},
     input::InputAxis,
-    sse::{insert_sse_resources, sse_config},
-    terrain::{Terrain, TerrainData},
-    ui::{MenuCamera, UI},
+    scenery::terrain::{Terrain, TerrainData},
+    sse::insert_sse_resources,
+    ui::UI,
 };
 use avian3d::prelude::*;
 use bevy::{
     dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig},
     ecs::system::SystemId,
-    light::{CascadeShadowConfigBuilder, light_consts::lux},
-    pbr::ExtendedMaterial,
     post_process::motion_blur::MotionBlur,
     prelude::*,
 };
@@ -62,12 +60,13 @@ pub struct RunOnceSystemList(HashMap<String, SystemId>);
 impl FromWorld for RunOnceSystemList {
     fn from_world(world: &mut World) -> Self {
         let mut my_item_systems = RunOnceSystemList(HashMap::new());
-        my_item_systems
-            .0
-            .insert("setup_scene".into(), world.register_system(setup_scene));
+        my_item_systems.0.insert(
+            "setup_scene".into(),
+            world.register_system(scenery::setup_scene),
+        );
         my_item_systems.0.insert(
             "setup_terrain".into(),
-            world.register_system(terrain::spawn_terrain),
+            world.register_system(scenery::terrain::spawn_terrain),
         );
         my_item_systems.0.insert(
             "setup_aeroplane".into(),
@@ -144,45 +143,6 @@ fn main() {
     });
 
     app.run();
-}
-
-fn setup_scene(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    settings: Res<Settings>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, sse::Water>>>>,
-    camera: Single<Entity, With<MenuCamera>>,
-) {
-    commands.entity(*camera).despawn();
-
-    if let Some(material) = water_materials {
-        sse::spawn_water(&mut commands, &asset_server, &mut meshes, material);
-    }
-
-    commands.spawn((
-        SceneRoot(asset_server.load("hospital.glb#Scene0")),
-        RigidBody::Static,
-        ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
-        Transform::from_xyz(0.0, 0.0, 0.0),
-    ));
-
-    let cascade = CascadeShadowConfigBuilder {
-        maximum_distance: settings.shadow_distance,
-        ..Default::default()
-    }
-    .build();
-
-    let sun_position = settings.sun_position;
-    commands.spawn((
-        DirectionalLight {
-            shadows_enabled: true,
-            illuminance: lux::RAW_SUNLIGHT,
-            ..default()
-        },
-        Transform::from_translation(sun_position).looking_at(Vec3::ZERO, Vec3::Y),
-        cascade,
-    ));
 }
 
 fn motion_blur(settings: &Res<Settings>) -> Option<MotionBlur> {

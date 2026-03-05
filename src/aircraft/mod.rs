@@ -302,7 +302,7 @@ pub fn spawn_aeroplane(
     ));
 
     // TODO make this a plugin
-    if let Some(sse) = crate::sse_config(&settings) {
+    if let Some(sse) = crate::sse::sse_config(&settings) {
         camera.insert(sse);
     }
 
@@ -356,7 +356,7 @@ pub fn spawn_helicopter(
     ));
 
     // TODO make this a plugin
-    if let Some(sse) = crate::sse_config(&settings) {
+    if let Some(sse) = crate::sse::sse_config(&settings) {
         camera.insert(sse);
     }
 
