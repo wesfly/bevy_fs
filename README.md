@@ -43,6 +43,7 @@ Terrain data will be stored in terrain.json after the first fetch (the game wind
 It's worth taking a look at the `settings.json` file and updating the settings according to your setup.
 Gamepad is enabled by default, you might want to disable it if you don't have one.
 
+- `F3` to take a screenshot (output: `screenshots/user`)
 - `RMB + drag` to orbit camera
 - `C` to switch the camera view
 - Mouse wheel to zoom camera
