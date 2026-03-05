@@ -1,4 +1,4 @@
-# bevy-fs
+# bevy_fs
 
 This is a little flight sim made in Bevy.
 
@@ -17,7 +17,7 @@ This is a little flight sim made in Bevy.
 - Water with screen space reflections
 - A settings file (settings.json)
 
-## Installation
+## Running `bevy_fs`
 
 First you need to install Rust from [here](https://rust-lang.org/tools/install/), if you haven't already, and `git-lfs` by installing it with your package manager and then running `git lfs install`.
 
