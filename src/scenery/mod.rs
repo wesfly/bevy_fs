@@ -5,22 +5,27 @@ use bevy::{
     prelude::*,
 };
 
-use crate::{Settings, sse, ui::MenuCamera};
+use crate::{
+    Settings,
+    scenery::water::{Water, spawn_water},
+    ui::MenuCamera,
+};
 
 pub mod terrain;
+pub mod water;
 
 pub fn setup_scene(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     settings: Res<Settings>,
     mut meshes: ResMut<Assets<Mesh>>,
-    water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, sse::Water>>>>,
+    water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, Water>>>>,
     camera: Single<Entity, With<MenuCamera>>,
 ) {
     commands.entity(*camera).despawn();
 
     if let Some(material) = water_materials {
-        sse::spawn_water(&mut commands, &asset_server, &mut meshes, material);
+        spawn_water(&mut commands, &asset_server, &mut meshes, material);
     }
 
     commands.spawn((
