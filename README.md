@@ -36,7 +36,7 @@ If you now bring the throttle to 100%, you should start flying immediatly.
 
 ## Terrain
 
-Terrain data will be stored in terrain.json after the first fetch. If you want a different location or resolution, you need to delete it and refetch it.
+Terrain data will be stored in terrain.json after the first fetch (the game window will be unresponsive while fetching). If you want a different location or resolution, you need to delete it and refetch it.
 
 ## Controls
 
