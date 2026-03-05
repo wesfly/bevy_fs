@@ -31,6 +31,8 @@ use bevy::{
     ecs::system::SystemId,
     post_process::motion_blur::MotionBlur,
     prelude::*,
+    render::view::screenshot::{Capturing, Screenshot, save_to_disk},
+    window::{CursorIcon, SystemCursorIcon},
 };
 use serde::Deserialize;
 use std::{collections::HashMap, fs};
@@ -135,7 +137,8 @@ fn main() {
                 update_control_surfaces,
                 (update_mesh_lights, update_lights).after(update_light_cycle),
             ),
-        );
+        )
+        .add_systems(FixedUpdate, (screenshot, screenshot_saving));
 
     app.run();
 }
@@ -148,5 +151,34 @@ fn motion_blur(settings: &Res<Settings>) -> Option<MotionBlur> {
         })
     } else {
         None
+    }
+}
+
+fn screenshot(mut commands: Commands, input: Res<ButtonInput<KeyCode>>) {
+    if input.just_pressed(KeyCode::F3) {
+        let now = chrono::Local::now();
+        let path = format!("./screenshots/user/screenshot-{:?}.png", now);
+        info!("{now:?}");
+        commands
+            .spawn(Screenshot::primary_window())
+            .observe(save_to_disk(path));
+    }
+}
+
+fn screenshot_saving(
+    mut commands: Commands,
+    screenshot_saving: Query<Entity, With<Capturing>>,
+    window: Single<Entity, With<Window>>,
+) {
+    match screenshot_saving.iter().count() {
+        0 => {
+            commands.entity(*window).remove::<CursorIcon>();
+        }
+        x if x > 0 => {
+            commands
+                .entity(*window)
+                .insert(CursorIcon::from(SystemCursorIcon::Progress));
+        }
+        _ => {}
     }
 }

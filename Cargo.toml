@@ -12,6 +12,7 @@ bevy = { version = "0.18.1", default-features = false, features = [
     "mesh_picking",
     "3d",
 ] }
+chrono = "0.4.44"
 reqwest = { version = "0.13.1", features = ["blocking"] }
 serde = "1.0.228"
 serde_json = "1.0.149"
