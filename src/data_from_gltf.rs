@@ -118,13 +118,13 @@ pub fn load(
                 commands.entity(entity).insert(rotor_data.rotor);
             };
 
-            if let Ok(control_sfc_data) =
+            if let Ok(ctrl_surface_data) =
                 serde_json::from_str::<ControlSurface>(&gltf_mesh_extras.value)
             {
-                dbg!(&control_sfc_data);
+                dbg!(&ctrl_surface_data);
                 commands
                     .entity(entity)
-                    .insert(control_sfc_data.control_surface);
+                    .insert(ctrl_surface_data.control_surface);
             };
 
             if let Ok(shading_data) =
