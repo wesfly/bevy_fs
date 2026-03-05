@@ -215,7 +215,7 @@ fn rho() -> f32 {
 }
 
 fn thrust(input: &InputAxis, forward: &Dir3) -> Vec3 {
-    let thrust_factor = 150_000.0;
+    let thrust_factor = 15_000.0;
     let thrust = forward.as_vec3() * thrust_factor * input.throttle;
 
     thrust
