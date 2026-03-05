@@ -180,23 +180,31 @@ fn draw_steering_gizmos(
     roll_starboard_force: Vec3,
 ) {
     gizmos.arrow(
-        physics_cfg.pitch_point,
-        physics_cfg.pitch_point + transform.rotation() * pitch_force * 0.1,
+        transform.translation() + transform.rotation() * physics_cfg.pitch_point,
+        transform.translation()
+            + transform.rotation() * physics_cfg.pitch_point
+            + transform.rotation() * pitch_force * 0.1,
         Color::linear_rgb(1.0, 0.0, 0.0),
     );
     gizmos.arrow(
-        physics_cfg.yaw_point,
-        physics_cfg.yaw_point + transform.rotation() * yaw_force * 0.1,
+        transform.translation() + transform.rotation() * physics_cfg.yaw_point,
+        transform.translation()
+            + transform.rotation() * physics_cfg.yaw_point
+            + transform.rotation() * yaw_force * 0.1,
         Color::linear_rgb(0.0, 1.0, 0.0),
     );
     gizmos.arrow(
-        physics_cfg.roll_port_point,
-        physics_cfg.roll_port_point + transform.rotation() * roll_port_force * 0.1,
+        transform.translation() + transform.rotation() * physics_cfg.roll_port_point,
+        transform.translation()
+            + transform.rotation() * physics_cfg.roll_port_point
+            + transform.rotation() * roll_port_force * 0.1,
         Color::linear_rgb(0.0, 0.0, 1.0),
     );
     gizmos.arrow(
-        physics_cfg.roll_starboard_point,
-        physics_cfg.roll_starboard_point + transform.rotation() * roll_starboard_force * 0.1,
+        transform.translation() + transform.rotation() * physics_cfg.roll_starboard_point,
+        transform.translation()
+            + transform.rotation() * physics_cfg.roll_starboard_point
+            + transform.rotation() * roll_starboard_force * 0.1,
         Color::linear_rgb(0.0, 0.0, 1.0),
     );
 }
