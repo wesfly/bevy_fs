@@ -2,6 +2,7 @@ use crate::{
     AircraftState,
     aircraft::Aircraft,
     data_from_gltf::{ControlSurfaces, RotorTypes},
+    input::InputAxis,
 };
 use avian3d::prelude::LinearVelocity;
 use bevy::prelude::*;
@@ -24,6 +25,7 @@ pub fn update_rotors(
 pub fn update_control_surfaces(
     ctrl_surfaces: Query<(&mut Transform, &ControlSurfaces), Without<Aircraft>>,
     aircraft: Single<(&Transform, &LinearVelocity), With<Aircraft>>,
+    input: Res<InputAxis>,
 ) {
     let velocity_dir = aircraft.1.to_vec3a().to_vec3();
     let transform = aircraft.0;
@@ -34,18 +36,53 @@ pub fn update_control_surfaces(
     let cos = transform.forward().dot(velocity_dir);
     let aoa = -sin.atan2(cos).to_degrees();
 
-    let canards_angle = aoa.clamp(-50.0, 50.0);
+    let canards_angle = aoa.clamp(-50.0, 50.0).to_radians();
+
+    let aileron_angle = (input.roll * 40.0).to_radians();
+
+    let elevator_angle = (-input.pitch * 40.0).to_radians();
+
+    let lerp_speed = 0.05;
 
     for (mut transform, ctrl_surface) in ctrl_surfaces {
         match ctrl_surface {
             ControlSurfaces::CanardPort => {
-                transform.rotation = Quat::from_rotation_x(canards_angle.to_radians())
+                transform.rotation = transform
+                    .rotation
+                    .lerp(Quat::from_rotation_x(canards_angle), lerp_speed);
             }
             ControlSurfaces::CanardStarboard => {
-                transform.rotation = Quat::from_rotation_x(canards_angle.to_radians())
+                transform.rotation = transform
+                    .rotation
+                    .lerp(Quat::from_rotation_x(canards_angle), lerp_speed);
             }
-            ControlSurfaces::Rudder => todo!(),
+            ControlSurfaces::Rudder => {
+                transform.rotation = transform.rotation.lerp(
+                    Quat::from_rotation_y((-input.yaw * 30.0).to_radians()),
+                    lerp_speed,
+                )
+            }
             ControlSurfaces::Elevator => todo!(),
+            ControlSurfaces::FlapPort => {
+                transform.rotation = transform
+                    .rotation
+                    .lerp(Quat::from_rotation_x(elevator_angle), lerp_speed)
+            }
+            ControlSurfaces::FlapStarboard => {
+                transform.rotation = transform
+                    .rotation
+                    .lerp(Quat::from_rotation_x(elevator_angle), lerp_speed)
+            }
+            ControlSurfaces::AileronPort => {
+                transform.rotation = transform
+                    .rotation
+                    .lerp(Quat::from_rotation_x(aileron_angle), lerp_speed)
+            }
+            ControlSurfaces::AileronStarboard => {
+                transform.rotation = transform
+                    .rotation
+                    .lerp(Quat::from_rotation_x(-aileron_angle), lerp_speed)
+            }
         }
     }
 }
