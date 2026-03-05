@@ -297,6 +297,9 @@ pub fn spawn_aeroplane(
             fov: 50.0_f32.to_radians(),
             ..default()
         }),
+        Fxaa::default(),
+        Msaa::Off,
+        ScreenSpaceReflections::default(),
         Hdr,
         crate::camera::Camera,
         ChildOf(aircraft),
