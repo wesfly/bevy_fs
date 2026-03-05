@@ -92,6 +92,16 @@ fn main() {
         .add_plugins(MeshPickingPlugin)
         .add_plugins(UI)
         .add_plugins(SSE)
+        .add_plugins(FpsOverlayPlugin {
+            config: FpsOverlayConfig {
+                frame_time_graph_config: FrameTimeGraphConfig {
+                    enabled: true,
+                    min_fps: 40.0,
+                    target_fps: 100.0,
+                },
+                ..default()
+            },
+        })
         // Resources
         .insert_resource(InputAxis {
             pitch: 0.0,
@@ -124,17 +134,6 @@ fn main() {
                 (update_mesh_lights, update_lights).after(update_light_cycle),
             ),
         );
-
-    app.add_plugins(FpsOverlayPlugin {
-        config: FpsOverlayConfig {
-            frame_time_graph_config: FrameTimeGraphConfig {
-                enabled: true,
-                min_fps: 40.0,
-                target_fps: 100.0,
-            },
-            ..default()
-        },
-    });
 
     app.run();
 }
