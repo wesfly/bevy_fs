@@ -7,10 +7,11 @@ use crate::{
 };
 use avian3d::prelude::*;
 use bevy::{
+    anti_alias::fxaa::Fxaa,
     camera::Exposure,
     core_pipeline::tonemapping::Tonemapping,
     light::AtmosphereEnvironmentMapLight,
-    pbr::{Atmosphere, AtmosphereSettings, ScatteringMedium},
+    pbr::{Atmosphere, AtmosphereSettings, ScatteringMedium, ScreenSpaceReflections},
     post_process::bloom::Bloom,
     prelude::*,
     render::view::Hdr,
@@ -301,11 +302,6 @@ pub fn spawn_aeroplane(
         ChildOf(aircraft),
     ));
 
-    // TODO make this a plugin
-    if let Some(sse) = crate::sse::sse_config(&settings) {
-        camera.insert(sse);
-    }
-
     if let Some(mb) = motion_blur(&settings) {
         camera.insert(mb);
     }
@@ -353,12 +349,11 @@ pub fn spawn_helicopter(
         Hdr,
         crate::camera::Camera,
         ChildOf(aircraft),
+        // SSR
+        ScreenSpaceReflections::default(),
+        Msaa::Off,
+        Fxaa::default(),
     ));
-
-    // TODO make this a plugin
-    if let Some(sse) = crate::sse::sse_config(&settings) {
-        camera.insert(sse);
-    }
 
     if let Some(mb) = motion_blur(&settings) {
         camera.insert(mb);

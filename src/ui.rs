@@ -101,40 +101,6 @@ impl Plugin for UI {
     }
 }
 
-pub fn setup_ui_hud(mut commands: Commands) {
-    commands.spawn((
-        Node {
-            position_type: PositionType::Absolute,
-            bottom: px(10.0),
-            left: px(10.0),
-            ..default()
-        },
-        Text::new("Altitude"),
-        UIHudComponent::Altitude,
-    ));
-    commands.spawn((
-        Node {
-            position_type: PositionType::Absolute,
-            bottom: px(10.0),
-            right: px(10.0),
-            ..default()
-        },
-        Text::new("Throttle"),
-        UIHudComponent::Throttle,
-    ));
-
-    commands.spawn((
-        Node {
-            position_type: PositionType::Absolute,
-            bottom: px(50.0),
-            right: px(10.0),
-            ..default()
-        },
-        Text::new("Velocity"),
-        UIHudComponent::Velocity,
-    ));
-}
-
 fn button_system(
     mut input_focus: ResMut<InputFocus>,
     mut messages: MessageWriter<UIMessage>,
@@ -214,6 +180,40 @@ fn ui_main_loop(
 
 fn ui_main_setup(mut commands: Commands) {
     commands.spawn((Camera3d::default(), MenuCamera));
+}
+
+pub fn setup_ui_hud(mut commands: Commands) {
+    commands.spawn((
+        Node {
+            position_type: PositionType::Absolute,
+            bottom: px(10.0),
+            left: px(10.0),
+            ..default()
+        },
+        Text::new("Altitude"),
+        UIHudComponent::Altitude,
+    ));
+    commands.spawn((
+        Node {
+            position_type: PositionType::Absolute,
+            bottom: px(10.0),
+            right: px(10.0),
+            ..default()
+        },
+        Text::new("Throttle"),
+        UIHudComponent::Throttle,
+    ));
+
+    commands.spawn((
+        Node {
+            position_type: PositionType::Absolute,
+            bottom: px(50.0),
+            right: px(10.0),
+            ..default()
+        },
+        Text::new("Velocity"),
+        UIHudComponent::Velocity,
+    ));
 }
 
 fn update_ui_hud(

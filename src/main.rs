@@ -21,7 +21,7 @@ use crate::{
     camera::{CameraSettings, camera_controller},
     input::InputAxis,
     scenery::terrain::{Terrain, TerrainData},
-    sse::insert_sse_resources,
+    sse::SSE,
     ui::UI,
 };
 use avian3d::prelude::*;
@@ -39,7 +39,6 @@ pub struct Settings {
     gamepad: input::Gamepad,
     motion_blur_enabled: bool,
     shadow_distance: f32,
-    screen_space_effects: bool,
     terrain: Terrain,
     sun_position: Vec3,
 }
@@ -86,14 +85,13 @@ impl FromWorld for RunOnceSystemList {
 }
 
 fn main() {
-    let settings = Settings::fetch();
-
     let mut app = App::new();
     app.add_plugins(DefaultPlugins)
         .add_plugins(PhysicsPlugins::default())
         // .add_plugins(PhysicsDebugPlugin)
         .add_plugins(MeshPickingPlugin)
         .add_plugins(UI)
+        .add_plugins(SSE)
         // Resources
         .insert_resource(InputAxis {
             pitch: 0.0,
@@ -126,10 +124,6 @@ fn main() {
                 (update_mesh_lights, update_lights).after(update_light_cycle),
             ),
         );
-
-    if settings.screen_space_effects {
-        insert_sse_resources(&mut app);
-    }
 
     app.add_plugins(FpsOverlayPlugin {
         config: FpsOverlayConfig {
