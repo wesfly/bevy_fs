@@ -72,55 +72,69 @@ pub fn mechanics(
     }
 }
 
+struct AircraftPhysicsConfig {
+    pitch_point: Vec3,
+    yaw_point: Vec3,
+    roll_port_point: Vec3,
+    roll_starboard_point: Vec3,
+}
+
 fn steering(
     transform: &GlobalTransform,
     force: &mut ForcesItem,
     input: &InputAxis,
-    mut gizmos: Gizmos,
+    gizmos: Gizmos,
 ) {
-    let pitch_point = transform.translation()
-        + transform.rotation()
-            * Vec3 {
-                x: 0.0,
-                y: 0.0,
-                z: 10.0,
-            };
-    let yaw_point = transform.translation()
-        + transform.rotation()
-            * Vec3 {
-                x: 0.0,
-                y: 2.0,
-                z: 7.0,
-            };
+    let airspeed = transform.forward().dot(force.linear_velocity());
+    let factor = 0.01;
 
-    let roll_port_point = transform.translation()
-        + transform.rotation()
-            * Vec3 {
-                x: -6.0,
-                y: 0.0,
-                z: 2.0,
-            };
+    let physics_cfg = AircraftPhysicsConfig {
+        pitch_point: Vec3 {
+            x: 0.0,
+            y: 0.0,
+            z: 10.0,
+        },
+        yaw_point: Vec3 {
+            x: 0.0,
+            y: 2.0,
+            z: 7.0,
+        },
+        roll_port_point: Vec3 {
+            x: -6.0,
+            y: 0.0,
+            z: 2.0,
+        },
+        roll_starboard_point: Vec3 {
+            x: 6.0,
+            y: 0.0,
+            z: 2.0,
+        },
+    };
+
+    let pitch_point = transform.translation() + transform.rotation() * physics_cfg.pitch_point;
+    let yaw_point = transform.translation() + transform.rotation() * physics_cfg.yaw_point;
+
+    let roll_port_point =
+        transform.translation() + transform.rotation() * physics_cfg.roll_port_point;
     let roll_port_force = Vec3 {
         x: 0.0,
         y: -input.roll * 20.,
         z: 0.0,
     };
-    force.apply_force_at_point(transform.rotation() * roll_port_force, roll_port_point);
+    force.apply_force_at_point(
+        transform.rotation() * roll_port_force * airspeed * factor,
+        roll_port_point,
+    );
 
-    let roll_starboard_point = transform.translation()
-        + transform.rotation()
-            * Vec3 {
-                x: 6.0,
-                y: 0.0,
-                z: 2.0,
-            };
+    let roll_starboard_point =
+        transform.translation() + transform.rotation() * physics_cfg.roll_starboard_point;
     let roll_starboard_force = Vec3 {
         x: 0.0,
         y: input.roll * 20.,
         z: 0.0,
     };
     force.apply_force_at_point(
-        transform.rotation() * roll_starboard_force,
+        transform.rotation() * roll_starboard_force * airspeed * factor,
         roll_starboard_point,
     );
 
@@ -129,29 +143,61 @@ fn steering(
         y: -input.pitch * 50.0,
         z: 0.0,
     };
-    force.apply_force_at_point(transform.rotation() * pitch_force, pitch_point);
+    force.apply_force_at_point(
+        transform.rotation() * pitch_force * airspeed * factor,
+        pitch_point,
+    );
 
     let yaw_force = Vec3 {
         x: input.yaw * 50.0,
         y: 0.0,
         z: 0.0,
     };
-    force.apply_force_at_point(transform.rotation() * yaw_force, yaw_point);
-
-    gizmos.arrow(
+    force.apply_force_at_point(
+        transform.rotation() * yaw_force * airspeed * factor,
         yaw_point,
-        yaw_point + transform.rotation() * yaw_force * 0.1,
+    );
+
+    #[cfg(debug_assertions)]
+    draw_steering_gizmos(
+        gizmos,
+        &transform,
+        physics_cfg,
+        pitch_force,
+        yaw_force,
+        roll_port_force,
+        roll_starboard_force,
+    );
+}
+
+fn draw_steering_gizmos(
+    mut gizmos: Gizmos,
+    transform: &GlobalTransform,
+    physics_cfg: AircraftPhysicsConfig,
+    pitch_force: Vec3,
+    yaw_force: Vec3,
+    roll_port_force: Vec3,
+    roll_starboard_force: Vec3,
+) {
+    gizmos.arrow(
+        physics_cfg.pitch_point,
+        physics_cfg.pitch_point + transform.rotation() * pitch_force * 0.1,
+        Color::linear_rgb(1.0, 0.0, 0.0),
+    );
+    gizmos.arrow(
+        physics_cfg.yaw_point,
+        physics_cfg.yaw_point + transform.rotation() * yaw_force * 0.1,
+        Color::linear_rgb(0.0, 1.0, 0.0),
+    );
+    gizmos.arrow(
+        physics_cfg.roll_port_point,
+        physics_cfg.roll_port_point + transform.rotation() * roll_port_force * 0.1,
         Color::linear_rgb(0.0, 0.0, 1.0),
     );
     gizmos.arrow(
-        roll_port_point,
-        roll_port_point + transform.rotation() * roll_port_force * 0.1,
-        Color::BLACK,
-    );
-    gizmos.arrow(
-        roll_starboard_point,
-        roll_starboard_point + transform.rotation() * roll_starboard_force * 0.1,
-        Color::linear_rgb(1.0, 0.0, 0.0),
+        physics_cfg.roll_starboard_point,
+        physics_cfg.roll_starboard_point + transform.rotation() * roll_starboard_force * 0.1,
+        Color::linear_rgb(0.0, 0.0, 1.0),
     );
 }
 
