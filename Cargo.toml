@@ -7,7 +7,7 @@ readme = "README.md"
 
 [dependencies]
 avian3d = "0.6.0-rc.1"
-bevy = { version = "0.18.0", default-features = false, features = [
+bevy = { version = "0.18.1", default-features = false, features = [
     "bevy_dev_tools",
     "mesh_picking",
     "3d",
