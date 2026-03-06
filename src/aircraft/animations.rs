@@ -36,7 +36,12 @@ pub fn update_control_surfaces(
     let cos = transform.forward().dot(velocity_dir);
     let aoa = -sin.atan2(cos).to_degrees();
 
-    let canards_angle = aoa.clamp(-50.0, 50.0).to_radians();
+    let canards_angle;
+    if velocity_dir.length() <= 1.0 {
+        canards_angle = 0.0
+    } else {
+        canards_angle = aoa.clamp(-50.0, 50.0).to_radians()
+    }
 
     let aileron_angle = (input.roll * 40.0).to_radians();
 
