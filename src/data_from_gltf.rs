@@ -21,7 +21,7 @@ Shading:
 not_shadow_caster: bool
 */
 
-use avian3d::prelude::Mass;
+use avian3d::prelude::{ColliderDisabled, Mass};
 use bevy::{gltf::GltfMeshExtras, light::NotShadowCaster, prelude::*, scene::SceneInstanceReady};
 use serde::{Deserialize, Serialize};
 
@@ -127,9 +127,11 @@ pub fn load(
                 serde_json::from_str::<ControlSurface>(&gltf_mesh_extras.value)
             {
                 dbg!(&ctrl_surface_data);
-                commands
-                    .entity(entity)
-                    .insert((ctrl_surface_data.control_surface, Mass::from(0.0)));
+                commands.entity(entity).insert((
+                    ctrl_surface_data.control_surface,
+                    Mass::from(0.0),
+                    ColliderDisabled,
+                ));
             };
 
             if let Ok(shading_data) =
