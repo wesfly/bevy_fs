@@ -47,15 +47,20 @@ pub fn mechanics(
                 let cos = forward.dot(velocity_dir);
                 let aoa = -sin.atan2(cos).to_degrees();
 
+                // smth wrong with this
                 let lift_coeff = match aoa {
-                    d if d < 15.0 => d / 15.0 * 1.0 + 0.5,
+                    d if d < 15.0 => d / 15.0 * 5.0 + 0.5,
                     d if d < 20.0 => 1.2 * (1.0 - (d - 15.0) / 5.0),
                     _ => 0.2, // stalled
                 };
+                dbg!(lift_coeff);
 
-                let parasitic_drag = velocity.powf(2.0) * 0.8 * forward.cross(velocity_dir);
+                let parasitic_drag = velocity.powf(2.0) + 0.8 * forward.cross(velocity_dir);
+                dbg!(parasitic_drag);
+
                 let drag = (-velocity_dir * induced_drag(lift_coeff, rho, speed))
                     + (-velocity_dir * parasitic_drag);
+                dbg!(drag);
                 force.apply_force(drag);
 
                 // Stabilisation (idk)
@@ -118,7 +123,7 @@ fn steering(
         transform.translation() + transform.rotation() * physics_cfg.roll_port_point;
     let roll_port_force = Vec3 {
         x: 0.0,
-        y: -input.roll * 20.,
+        y: -input.roll * 50.,
         z: 0.0,
     };
     force.apply_force_at_point(
@@ -130,7 +135,7 @@ fn steering(
         transform.translation() + transform.rotation() * physics_cfg.roll_starboard_point;
     let roll_starboard_force = Vec3 {
         x: 0.0,
-        y: input.roll * 20.,
+        y: input.roll * 50.,
         z: 0.0,
     };
     force.apply_force_at_point(
