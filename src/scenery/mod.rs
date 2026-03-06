@@ -1,4 +1,6 @@
-use avian3d::prelude::{ColliderConstructor, ColliderConstructorHierarchy, RigidBody};
+use avian3d::prelude::{
+    ColliderConstructor, ColliderConstructorHierarchy, Friction, RigidBody, SweepMode, SweptCcd,
+};
 use bevy::{
     light::{CascadeShadowConfigBuilder, light_consts::lux},
     pbr::ExtendedMaterial,
@@ -21,12 +23,28 @@ pub fn setup_scene(
     mut meshes: ResMut<Assets<Mesh>>,
     water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, Water>>>>,
     camera: Single<Entity, With<MenuCamera>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     commands.entity(*camera).despawn();
 
     if let Some(material) = water_materials {
         spawn_water(&mut commands, &asset_server, &mut meshes, material);
     }
+
+    // runway
+    commands.spawn((
+        Mesh3d(meshes.add(Cuboid::new(2310.0, 2.0, 60.0))),
+        MeshMaterial3d(materials.add(Color::linear_rgb(0.12, 0.12, 0.12))),
+        ColliderConstructor::ConvexHullFromMesh,
+        RigidBody::Static,
+        SweptCcd::new_with_mode(SweepMode::NonLinear),
+        Friction::new(0.0),
+        Transform {
+            translation: Vec3::new(-3000.0, 60.0, 0.0),
+            rotation: Quat::from_rotation_z(-0.9_f32.to_radians()),
+            ..default()
+        },
+    ));
 
     commands.spawn((
         SceneRoot(asset_server.load("hospital.glb#Scene0")),
