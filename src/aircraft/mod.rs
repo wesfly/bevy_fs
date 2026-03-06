@@ -255,8 +255,6 @@ pub fn spawn_aeroplane(
     state.anti_col_lts_on = true;
     state.strobe_lts_on = true;
 
-    let (spawn_pos, spawn_vel) = (Vec3::new(0., 2000., 0.), Vec3::new(0.0, 0.0, -100.0));
-
     // Aircraft model
     let aircraft = commands
         .spawn((
@@ -264,9 +262,38 @@ pub fn spawn_aeroplane(
             Aircraft,
             RigidBody::Dynamic,
             ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh),
-            Transform::from_translation(spawn_pos),
+            Transform {
+                translation: Vec3 {
+                    x: 0.0,
+                    y: 500.0,
+                    z: 0.0,
+                },
+                rotation: Quat::from_rotation_y(-90.0_f32.to_degrees()),
+                ..default()
+            },
             Mass(10_000.0),
-            LinearVelocity(spawn_vel),
+            SweptCcd::new_with_mode(SweepMode::NonLinear),
+            LinearVelocity(Vec3::new(-100.0, 0.0, 0.0)),
+            children![
+                (
+                    Collider::capsule(0.5, 2.0),
+                    Transform::from_xyz(5.0, -1.0, 10.0),
+                    Friction::new(0.0),
+                    Mass(0.0),
+                ),
+                (
+                    Collider::capsule(0.5, 2.0),
+                    Transform::from_xyz(-5.0, -1.0, 10.0),
+                    Friction::new(0.0),
+                    Mass(0.0),
+                ),
+                (
+                    Collider::capsule(0.5, 2.0),
+                    Transform::from_xyz(0.0, -1.0, -10.0),
+                    Friction::new(0.0),
+                    Mass(0.0),
+                )
+            ],
         ))
         .observe(load)
         .id();
