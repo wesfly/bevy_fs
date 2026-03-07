@@ -15,7 +15,6 @@ pub fn mechanics(
     mut force: Single<Forces, With<Aircraft>>,
     input: Res<InputAxis>,
     state: Res<AircraftState>,
-    gizmos: Gizmos,
 ) {
     match state.aircraft_type {
         AircraftTypes::Helicopter => {
@@ -30,7 +29,7 @@ pub fn mechanics(
         }
         AircraftTypes::Aeroplane => {
             if state.engine_on {
-                steering(*transform, &mut *force, &*input, gizmos);
+                steering(*transform, &mut *force, &*input);
 
                 let forward = transform.forward();
 
@@ -53,14 +52,14 @@ pub fn mechanics(
                     d if d < 20.0 => 1.2 * (1.0 - (d - 15.0) / 5.0),
                     _ => 0.2, // stalled
                 };
-                dbg!(lift_coeff);
+                // dbg!(lift_coeff);
 
                 let parasitic_drag = velocity.powf(2.0) + 0.8 * forward.cross(velocity_dir);
-                dbg!(parasitic_drag);
+                // dbg!(parasitic_drag);
 
                 let drag = (-velocity_dir * induced_drag(lift_coeff, rho, speed))
                     + (-velocity_dir * parasitic_drag);
-                dbg!(drag);
+                // dbg!(drag);
                 force.apply_force(drag);
 
                 // Stabilisation (idk)
@@ -84,12 +83,7 @@ struct AircraftPhysicsConfig {
     roll_starboard_point: Vec3,
 }
 
-fn steering(
-    transform: &GlobalTransform,
-    force: &mut ForcesItem,
-    input: &InputAxis,
-    gizmos: Gizmos,
-) {
+fn steering(transform: &GlobalTransform, force: &mut ForcesItem, input: &InputAxis) {
     let airspeed = transform.forward().dot(force.linear_velocity());
     let factor = 0.01;
 
@@ -161,56 +155,6 @@ fn steering(
     force.apply_force_at_point(
         transform.rotation() * yaw_force * airspeed * factor,
         yaw_point,
-    );
-
-    #[cfg(debug_assertions)]
-    draw_steering_gizmos(
-        gizmos,
-        &transform,
-        physics_cfg,
-        pitch_force,
-        yaw_force,
-        roll_port_force,
-        roll_starboard_force,
-    );
-}
-
-fn draw_steering_gizmos(
-    mut gizmos: Gizmos,
-    transform: &GlobalTransform,
-    physics_cfg: AircraftPhysicsConfig,
-    pitch_force: Vec3,
-    yaw_force: Vec3,
-    roll_port_force: Vec3,
-    roll_starboard_force: Vec3,
-) {
-    gizmos.arrow(
-        transform.translation() + transform.rotation() * physics_cfg.pitch_point,
-        transform.translation()
-            + transform.rotation() * physics_cfg.pitch_point
-            + transform.rotation() * pitch_force * 0.1,
-        Color::linear_rgb(1.0, 0.0, 0.0),
-    );
-    gizmos.arrow(
-        transform.translation() + transform.rotation() * physics_cfg.yaw_point,
-        transform.translation()
-            + transform.rotation() * physics_cfg.yaw_point
-            + transform.rotation() * yaw_force * 0.1,
-        Color::linear_rgb(0.0, 1.0, 0.0),
-    );
-    gizmos.arrow(
-        transform.translation() + transform.rotation() * physics_cfg.roll_port_point,
-        transform.translation()
-            + transform.rotation() * physics_cfg.roll_port_point
-            + transform.rotation() * roll_port_force * 0.1,
-        Color::linear_rgb(0.0, 0.0, 1.0),
-    );
-    gizmos.arrow(
-        transform.translation() + transform.rotation() * physics_cfg.roll_starboard_point,
-        transform.translation()
-            + transform.rotation() * physics_cfg.roll_starboard_point
-            + transform.rotation() * roll_starboard_force * 0.1,
-        Color::linear_rgb(0.0, 0.0, 1.0),
     );
 }
 
