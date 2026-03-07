@@ -6,7 +6,7 @@ license-file = "LICENSE.md"
 readme = "README.md"
 
 [dependencies]
-avian3d = "0.6.0-rc.1"
+avian3d = "0.6.0-rc"
 bevy = { version = "0.18.1", default-features = false, features = [
     "bevy_dev_tools",
     "mesh_picking",
