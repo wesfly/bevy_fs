@@ -256,7 +256,7 @@ pub fn spawn_aeroplane(
     state.strobe_lts_on = true;
 
     // Aircraft model
-    let aircraft = commands
+    commands
         .spawn((
             SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(path))),
             Aircraft,
@@ -277,13 +277,13 @@ pub fn spawn_aeroplane(
             children![
                 (
                     Collider::capsule(0.5, 2.0),
-                    Transform::from_xyz(5.0, -1.0, 10.0),
+                    Transform::from_xyz(5.0, -1.0, 5.0),
                     Friction::new(0.0),
                     Mass(0.0),
                 ),
                 (
                     Collider::capsule(0.5, 2.0),
-                    Transform::from_xyz(-5.0, -1.0, 10.0),
+                    Transform::from_xyz(-5.0, -1.0, 5.0),
                     Friction::new(0.0),
                     Mass(0.0),
                 ),
@@ -295,8 +295,7 @@ pub fn spawn_aeroplane(
                 )
             ],
         ))
-        .observe(load)
-        .id();
+        .observe(load);
 
     let mut camera = commands.spawn((
         Camera3d::default(),
@@ -315,7 +314,6 @@ pub fn spawn_aeroplane(
         ScreenSpaceReflections::default(),
         Hdr,
         crate::camera::Camera,
-        ChildOf(aircraft),
     ));
 
     if let Some(mb) = motion_blur(&settings) {
@@ -337,7 +335,7 @@ pub fn spawn_helicopter(
     let (spawn_pos, spawn_vel) = (Vec3::new(0.0, 12.0, 0.0), Vec3::new(0.0, 0.0, 0.0));
 
     // Aircraft model
-    let aircraft = commands
+    commands
         .spawn((
             SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(path))),
             Aircraft,
@@ -347,8 +345,7 @@ pub fn spawn_helicopter(
             Mass(10_000.0),
             LinearVelocity(spawn_vel),
         ))
-        .observe(load)
-        .id();
+        .observe(load);
 
     let mut camera = commands.spawn((
         Camera3d::default(),
@@ -364,7 +361,6 @@ pub fn spawn_helicopter(
         }),
         Hdr,
         crate::camera::Camera,
-        ChildOf(aircraft),
         // SSR
         ScreenSpaceReflections::default(),
         Msaa::Off,

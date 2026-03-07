@@ -66,16 +66,21 @@ impl Default for CameraSettings {
     }
 }
 
+#[derive(Resource)]
+pub struct CameraPosition(pub Transform);
+
 pub fn camera_controller(
     mut camera: Single<&mut Transform, (With<Camera>, Without<Aircraft>)>,
     mut camera_settings: ResMut<CameraSettings>,
     state: Res<AircraftState>,
+    aircraft: Single<&Transform, With<Aircraft>>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     mouse_motion: Res<AccumulatedMouseMotion>,
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
     keymap: Res<Keymap>,
     mut projection: Single<&mut Projection, With<Camera>>,
     mut scroll_events: MessageReader<MouseWheel>,
+    mut camera_pos: ResMut<CameraPosition>,
 ) {
     camera_settings.cockpit_default_position = match state.aircraft_type {
         crate::aircraft::AircraftTypes::Helicopter => Vec3 {
@@ -94,42 +99,49 @@ pub fn camera_controller(
     let delta_pitch = -delta.y * camera_settings.pitch_speed;
     let delta_yaw = -delta.x * camera_settings.yaw_speed;
 
-    // Obtain the existing pitch, yaw, and roll values from the transform.
-    let (yaw, pitch, roll) = camera.rotation.to_euler(EulerRot::YXZ);
+    let (yaw, pitch, roll) = camera_pos.0.rotation.to_euler(EulerRot::YXZ);
 
-    let pitch = (pitch + delta_pitch).clamp(
-        camera_settings.pitch_range.start,
-        camera_settings.pitch_range.end,
-    );
+    let (mut pitch, mut yaw) = match mouse_buttons.pressed(MouseButton::Right) {
+        true => (
+            (pitch + delta_pitch).clamp(
+                camera_settings.pitch_range.start,
+                camera_settings.pitch_range.end,
+            ),
+            (yaw + delta_yaw),
+        ),
+        false => (pitch, yaw),
+    };
 
-    let yaw = yaw + delta_yaw;
+    dbg!(aircraft.rotation);
+    dbg!(pitch, yaw, roll);
 
     match camera_settings.view {
         CameraView::Cockpit => {
-            if mouse_buttons.pressed(MouseButton::Right) {
-                camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
-            }
-            camera.translation = camera_settings.cockpit_default_position;
-        }
-        CameraView::Tail => {
-            if mouse_buttons.pressed(MouseButton::Right) {
-                camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
-            }
-            camera.translation = camera_settings.tail_default_position;
+            camera.translation =
+                aircraft.translation + aircraft.rotation * camera_settings.cockpit_default_position;
+            camera.rotation = aircraft.rotation * camera_pos.0.rotation;
         }
         CameraView::Follow => {
-            let target = camera_settings.follow_default_lookat;
-            if mouse_buttons.pressed(MouseButton::Right) {
-                camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
-            }
+            let target =
+                aircraft.rotation * camera_settings.follow_default_lookat + aircraft.translation;
+            camera.rotation = aircraft.rotation * camera_pos.0.rotation;
             camera.translation = target - camera.forward() * camera_settings.orbit_distance;
 
             if keyboard_input.just_pressed(keymap.reset_camera) {
-                camera.translation = camera_settings.follow_default_position;
-                camera.look_at(target, Vec3::Y);
+                camera.translation = aircraft.translation
+                    + aircraft.rotation * camera_settings.follow_default_position;
+                pitch = 0.0;
+                yaw = 0.0;
             }
         }
+        CameraView::Tail => {
+            camera.translation =
+                aircraft.translation + aircraft.rotation * camera_settings.tail_default_position;
+            camera.rotation = aircraft.rotation * camera_pos.0.rotation;
+        }
     }
+
+    camera_pos.0.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
 
     let Projection::Perspective(perspective) = projection.as_mut() else {
         return;

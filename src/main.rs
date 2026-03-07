@@ -19,7 +19,7 @@ use crate::{
         animations::{update_control_surfaces, update_rotors},
         update_light_cycle, update_lights, update_mesh_lights,
     },
-    camera::{CameraSettings, camera_controller},
+    camera::{CameraPosition, CameraSettings, camera_controller},
     input::InputAxis,
     scenery::terrain::{Terrain, TerrainData},
     sse::SSE,
@@ -125,13 +125,16 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AircraftState::default())
         .insert_resource(TerrainData(Vec::new()))
+        .insert_resource(CameraPosition(Transform {
+            translation: Vec3::ZERO,
+            ..default()
+        }))
         // Systems
         .add_systems(
             Update,
             (
                 input::input_system,
-                aircraft::mechanics::mechanics,
-                camera_controller,
+                (aircraft::mechanics::mechanics, camera_controller).chain(),
                 update_light_cycle,
                 update_rotors,
                 update_control_surfaces,
