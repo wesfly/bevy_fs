@@ -47,10 +47,10 @@ pub fn mechanics(
                 let aoa = -sin.atan2(cos).to_degrees();
 
                 // smth wrong with this
-                let lift_coeff = match aoa {
-                    d if d < 15.0 => d / 15.0 * 5.0 + 0.5,
-                    d if d < 20.0 => 1.2 * (1.0 - (d - 15.0) / 5.0),
-                    _ => 0.2, // stalled
+                let lift_coeff = match aoa.to_radians() {
+                    d if d < 0.3 => d / 15.0_f32.to_radians() * 5.0 + 0.5,
+                    d if d < 0.5 => 1.2 * (1.0 - (d - 15.0) / 5.0),
+                    _ => 0.02, // stalled
                 };
                 // dbg!(lift_coeff);
 
