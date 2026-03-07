@@ -41,7 +41,7 @@ impl Default for CameraSettings {
         };
         let pitch_limit = FRAC_PI_2 - 0.01;
         Self {
-            orbit_distance: 20.0,
+            orbit_distance: 25.0,
             pitch_speed: 0.001,
             pitch_range: -pitch_limit..pitch_limit,
             yaw_speed: 0.001,
@@ -52,7 +52,7 @@ impl Default for CameraSettings {
             },
             follow_default_lookat: Vec3 {
                 x: 0.0,
-                y: 0.5,
+                y: 2.5,
                 z: 0.0,
             },
             cockpit_default_position: cockpit_pos,
@@ -112,9 +112,6 @@ pub fn camera_controller(
         false => (pitch, yaw),
     };
 
-    dbg!(aircraft.rotation);
-    dbg!(pitch, yaw, roll);
-
     match camera_settings.view {
         CameraView::Cockpit => {
             camera.translation =
@@ -122,9 +119,20 @@ pub fn camera_controller(
             camera.rotation = aircraft.rotation * camera_pos.0.rotation;
         }
         CameraView::Follow => {
-            let target =
-                aircraft.rotation * camera_settings.follow_default_lookat + aircraft.translation;
-            camera.rotation = aircraft.rotation * camera_pos.0.rotation;
+            let target = camera_settings.follow_default_lookat + aircraft.translation;
+
+            let forward = aircraft.rotation * Vec3::Z;
+            let flat_forward = Vec3::new(forward.x, 0.0, forward.z).normalize();
+
+            // Ignoring roll to create a MSFS-like camera
+            let no_roll = Quat::from_euler(
+                EulerRot::YXZ,
+                flat_forward.x.atan2(flat_forward.z), // yaw
+                0.0, //-forward.y.asin(),                    // pitch
+                0.0, // roll
+            );
+            camera.rotation = no_roll * camera_pos.0.rotation;
+
             camera.translation = target - camera.forward() * camera_settings.orbit_distance;
 
             if keyboard_input.just_pressed(keymap.reset_camera) {
