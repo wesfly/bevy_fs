@@ -1,4 +1,5 @@
 pub mod animations;
+pub mod landing_gear;
 pub mod mechanics;
 
 use crate::{
@@ -39,6 +40,7 @@ pub struct AircraftState {
     pub anti_col_lts_on: bool,
     pub pos_lts_on: bool,
     pub strobe_lts_on: bool,
+    pub landing_gear_deployed: bool,
 }
 
 impl Default for AircraftState {
@@ -49,6 +51,7 @@ impl Default for AircraftState {
             anti_col_lts_on: false,
             pos_lts_on: false,
             strobe_lts_on: false,
+            landing_gear_deployed: false,
         }
     }
 }
@@ -276,22 +279,25 @@ pub fn spawn_aeroplane(
             LinearVelocity(Vec3::new(-100.0, 0.0, 0.0)),
             children![
                 (
-                    Collider::capsule(0.5, 2.0),
-                    Transform::from_xyz(5.0, -1.0, 5.0),
+                    Collider::capsule(0.5, 1.0),
+                    Transform::from_xyz(1.2, -0.5, 2.0),
                     Friction::new(0.0),
                     Mass(0.0),
+                    Name::new("rear left"),
                 ),
                 (
-                    Collider::capsule(0.5, 2.0),
-                    Transform::from_xyz(-5.0, -1.0, 5.0),
+                    Collider::capsule(0.5, 1.0),
+                    Transform::from_xyz(-1.2, -0.5, 2.0),
                     Friction::new(0.0),
                     Mass(0.0),
+                    Name::new("rear right"),
                 ),
                 (
-                    Collider::capsule(0.5, 2.0),
-                    Transform::from_xyz(0.0, -1.0, -10.0),
+                    Collider::capsule(0.5, 1.0),
+                    Transform::from_xyz(0.0, -0.56, -2.8),
                     Friction::new(0.0),
                     Mass(0.0),
+                    Name::new("nosewheel"),
                 )
             ],
         ))

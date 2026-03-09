@@ -1,4 +1,6 @@
-use crate::{CameraSettings, Settings, camera::CameraView};
+use crate::{
+    CameraSettings, Settings, aircraft::landing_gear::LandingGearCommand, camera::CameraView,
+};
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -28,6 +30,7 @@ pub struct Keymap {
     throttle_up: KeyCode,
     throttle_down: KeyCode,
     change_camera: KeyCode,
+    toggle_gear: KeyCode,
 }
 
 impl Default for Keymap {
@@ -43,6 +46,7 @@ impl Default for Keymap {
             throttle_up: KeyCode::PageUp,
             throttle_down: KeyCode::PageDown,
             change_camera: KeyCode::KeyC,
+            toggle_gear: KeyCode::KeyG,
         }
     }
 }
@@ -56,15 +60,9 @@ pub fn input_system(
     gp: Option<Single<&bevy::prelude::Gamepad>>,
     mut camera_settings: ResMut<CameraSettings>,
     time: Res<Time>,
+    mut ldg_gear_messages: MessageWriter<LandingGearCommand>,
 ) {
     let delta = time.delta_secs();
-
-    let mut gamepad_input = InputAxis {
-        pitch: 0.,
-        roll: 0.,
-        yaw: 0.,
-        throttle: 0.,
-    };
 
     if keyboard_input.just_pressed(keymap.change_camera) {
         match camera_settings.view {
@@ -73,6 +71,19 @@ pub fn input_system(
             CameraView::Tail => camera_settings.view = CameraView::Follow,
         }
     }
+
+    if keyboard_input.just_pressed(keymap.toggle_gear) {
+        ldg_gear_messages.write(LandingGearCommand(
+            crate::aircraft::landing_gear::LandingGearCommands::Toggle,
+        ));
+    }
+
+    let mut gamepad_input = InputAxis {
+        pitch: 0.,
+        roll: 0.,
+        yaw: 0.,
+        throttle: 0.,
+    };
 
     if settings.gamepad.enabled {
         let gamepad = gp.expect("gamepad.enabled set to true but no gamepad detected.");

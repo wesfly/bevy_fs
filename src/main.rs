@@ -17,6 +17,7 @@ use crate::{
     aircraft::{
         ACOL_OFF_DURATION, AircraftState, LightsTimers, STROBE_OFF_DURATION,
         animations::{update_control_surfaces, update_rotors},
+        landing_gear::{self, LandingGearCommand, LandingGearStatus},
         update_light_cycle, update_lights, update_mesh_lights,
     },
     camera::{CameraPosition, CameraSettings, camera_controller},
@@ -125,19 +126,22 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AircraftState::default())
         .insert_resource(TerrainData(Vec::new()))
+        .insert_resource(LandingGearStatus::Retracted)
         .insert_resource(CameraPosition(Transform {
             translation: Vec3::ZERO,
             ..default()
         }))
+        // Messages
+        .add_message::<LandingGearCommand>()
         // Systems
         .add_systems(
             Update,
             (
                 input::input_system,
-                (aircraft::mechanics::mechanics, camera_controller).chain(),
                 update_light_cycle,
                 update_rotors,
                 update_control_surfaces,
+                camera_controller,
                 (update_mesh_lights, update_lights).after(update_light_cycle),
             ),
         )
@@ -145,8 +149,9 @@ fn main() {
             FixedUpdate,
             (
                 screenshot,
+                landing_gear::LandingGear::operate_landing_gear,
                 screenshot_saving,
-                (aircraft::mechanics::mechanics, camera_controller).chain(),
+                aircraft::mechanics::mechanics,
             ),
         );
 

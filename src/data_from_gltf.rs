@@ -21,9 +21,14 @@ Shading:
 not_shadow_caster: bool
 */
 
-use avian3d::prelude::{ColliderDisabled, Mass};
+use avian3d::prelude::{ColliderDisabled, Mass, RigidBodyDisabled};
 use bevy::{gltf::GltfMeshExtras, light::NotShadowCaster, prelude::*, scene::SceneInstanceReady};
 use serde::{Deserialize, Serialize};
+
+use crate::aircraft::landing_gear::{
+    LandingGearElement,
+    LandingGearElements, //, LandingGearStatus
+};
 
 #[derive(Debug, Component, Serialize, Deserialize)]
 pub enum InterfaceType {
@@ -95,6 +100,11 @@ pub struct ControlSurface {
     control_surface: ControlSurfaces,
 }
 
+#[derive(Debug, Deserialize)]
+struct LandingGearElementFromGltf {
+    ldg_gear_element: LandingGearElements,
+}
+
 pub fn load(
     trigger: On<SceneInstanceReady>,
     mut commands: Commands,
@@ -121,6 +131,20 @@ pub fn load(
             if let Ok(rotor_data) = serde_json::from_str::<Rotor>(&gltf_mesh_extras.value) {
                 dbg!(&rotor_data);
                 commands.entity(entity).insert(rotor_data.rotor);
+            };
+
+            if let Ok(ldg_gear_data) =
+                serde_json::from_str::<LandingGearElementFromGltf>(&gltf_mesh_extras.value)
+            {
+                dbg!(&ldg_gear_data);
+                commands.entity(entity).insert((
+                    LandingGearElement {
+                        ldg_gear_element: ldg_gear_data.ldg_gear_element,
+                        // status: Some(LandingGearStatus::Retracted),
+                    },
+                    RigidBodyDisabled,
+                    ColliderDisabled,
+                ));
             };
 
             if let Ok(ctrl_surface_data) =

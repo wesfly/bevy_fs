@@ -57,9 +57,9 @@ impl Default for CameraSettings {
             },
             cockpit_default_position: cockpit_pos,
             tail_default_position: Vec3 {
-                x: 0.5,
-                y: 3.0,
-                z: 8.0,
+                x: 0.0,
+                y: 4.0,
+                z: 7.0,
             },
             view: CameraView::Follow,
         }
