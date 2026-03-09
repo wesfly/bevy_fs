@@ -22,7 +22,8 @@ not_shadow_caster: bool
 */
 
 use crate::aircraft::{
-    Button, ControlSurface, InterfaceType, Rotor,
+    ControlSurface, Rotor,
+    buttons::{Button, InterfaceType},
     landing_gear::{
         LandingGearElement,
         LandingGearElements, //, LandingGearStatus
@@ -119,7 +120,7 @@ pub fn load(
                         commands
                             .entity(entity)
                             .insert(bundle)
-                            .observe(crate::aircraft::button_listener);
+                            .observe(crate::aircraft::buttons::button_listener);
                     }
                     _ => {
                         warn!("not handled yet")
