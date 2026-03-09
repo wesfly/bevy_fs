@@ -25,9 +25,12 @@ use avian3d::prelude::{ColliderDisabled, Mass, RigidBodyDisabled};
 use bevy::{gltf::GltfMeshExtras, light::NotShadowCaster, prelude::*, scene::SceneInstanceReady};
 use serde::{Deserialize, Serialize};
 
-use crate::aircraft::landing_gear::{
-    LandingGearElement,
-    LandingGearElements, //, LandingGearStatus
+use crate::aircraft::{
+    landing_gear::{
+        LandingGearElement,
+        LandingGearElements, //, LandingGearStatus
+    },
+    lights::Light,
 };
 
 #[derive(Debug, Component, Serialize, Deserialize)]
@@ -52,21 +55,6 @@ pub struct Button {
     pub interface_type: InterfaceType,
     pub operation: Option<InterfaceOperation>,
     pub inverse: Option<bool>,
-}
-
-#[derive(Deserialize, Debug, Component)]
-pub enum Lights {
-    AntiCol,
-    Strobe,
-    PositionPort,
-    PositionStarboard,
-    PositionRear,
-    Formation,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Light {
-    light: Lights,
 }
 
 #[derive(Debug, Deserialize, Component)]

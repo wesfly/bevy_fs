@@ -15,10 +15,13 @@ mod ui;
 
 use crate::{
     aircraft::{
-        ACOL_OFF_DURATION, AircraftState, LightsTimers, STROBE_OFF_DURATION,
+        AircraftState,
         animations::{update_control_surfaces, update_rotors},
         landing_gear::{self, LandingGearCommand, LandingGearStatus},
-        update_light_cycle, update_lights, update_mesh_lights,
+        lights::{
+            ACOL_OFF_DURATION, LightsTimers, STROBE_OFF_DURATION, update_light_cycle,
+            update_lights, update_mesh_lights,
+        },
     },
     camera::{CameraPosition, CameraSettings, camera_controller},
     input::InputAxis,
@@ -136,19 +139,15 @@ fn main() {
         // Systems
         .add_systems(
             Update,
-            (
-                input::input_system,
-                update_light_cycle,
-                update_rotors,
-                update_control_surfaces,
-                camera_controller,
-                (update_mesh_lights, update_lights).after(update_light_cycle),
-            ),
+            (update_rotors, update_control_surfaces, camera_controller),
         )
         .add_systems(
             FixedUpdate,
             (
                 screenshot,
+                input::input_system,
+                update_light_cycle,
+                (update_mesh_lights, update_lights).after(update_light_cycle),
                 landing_gear::LandingGear::operate_landing_gear,
                 screenshot_saving,
                 aircraft::mechanics::mechanics,
