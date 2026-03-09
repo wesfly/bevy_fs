@@ -3,11 +3,7 @@ pub mod landing_gear;
 pub mod lights;
 pub mod mechanics;
 
-use crate::{
-    Settings,
-    data_from_gltf::{InterfaceOperation, InterfaceType, load},
-    motion_blur,
-};
+use crate::{Settings, data_from_gltf::load, motion_blur};
 use avian3d::prelude::*;
 use bevy::{
     anti_alias::fxaa::Fxaa,
@@ -20,6 +16,57 @@ use bevy::{
     render::view::Hdr,
 };
 use serde::Deserialize;
+
+#[derive(Debug, Component, Deserialize)]
+pub enum InterfaceType {
+    Switch,
+    Button,
+    Lever,
+}
+
+#[derive(Component, Debug, Deserialize)]
+pub enum InterfaceOperation {
+    AntiColLt,
+    Engine,
+    PositionLt,
+    StrobeLt,
+    FormationLt,
+    APU,
+}
+
+#[derive(Debug, Component, Deserialize)]
+pub struct Button {
+    pub interface_type: InterfaceType,
+    pub operation: Option<InterfaceOperation>,
+    pub inverse: Option<bool>,
+}
+
+#[derive(Debug, Deserialize, Component)]
+pub enum RotorTypes {
+    Main,
+    Rear,
+}
+#[derive(Debug, Deserialize)]
+pub struct Rotor {
+    pub rotor: RotorTypes,
+}
+
+#[derive(Debug, Deserialize, Component)]
+pub enum ControlSurfaces {
+    CanardPort,
+    CanardStarboard,
+    Rudder,
+    Elevator,
+    FlapPort,
+    FlapStarboard,
+    AileronPort,
+    AileronStarboard,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ControlSurface {
+    pub control_surface: ControlSurfaces,
+}
 
 #[derive(Resource, Default, Deserialize)]
 pub enum AircraftTypes {
@@ -58,8 +105,8 @@ pub struct Aircraft;
 
 pub fn button_listener(
     press: On<Pointer<Press>>,
-    function_comps: Query<&crate::data_from_gltf::Button>,
-    mut transform: Query<&mut Transform, With<crate::data_from_gltf::Button>>,
+    function_comps: Query<&Button>,
+    mut transform: Query<&mut Transform, With<Button>>,
     mut state: ResMut<AircraftState>,
 ) {
     if press.button == PointerButton::Primary {

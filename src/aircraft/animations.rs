@@ -1,9 +1,5 @@
-use crate::{
-    AircraftState,
-    aircraft::Aircraft,
-    data_from_gltf::{ControlSurfaces, RotorTypes},
-    input::InputAxis,
-};
+use crate::aircraft::{Aircraft, AircraftState, ControlSurfaces, RotorTypes};
+use crate::input::InputAxis;
 use avian3d::prelude::LinearVelocity;
 use bevy::prelude::*;
 

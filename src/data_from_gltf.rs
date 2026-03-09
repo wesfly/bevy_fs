@@ -21,72 +21,21 @@ Shading:
 not_shadow_caster: bool
 */
 
-use avian3d::prelude::{ColliderDisabled, Mass, RigidBodyDisabled};
-use bevy::{gltf::GltfMeshExtras, light::NotShadowCaster, prelude::*, scene::SceneInstanceReady};
-use serde::{Deserialize, Serialize};
-
 use crate::aircraft::{
+    Button, ControlSurface, InterfaceType, Rotor,
     landing_gear::{
         LandingGearElement,
         LandingGearElements, //, LandingGearStatus
     },
     lights::Light,
 };
-
-#[derive(Debug, Component, Serialize, Deserialize)]
-pub enum InterfaceType {
-    Switch,
-    Button,
-    Lever,
-}
-
-#[derive(Component, Debug, Serialize, Deserialize)]
-pub enum InterfaceOperation {
-    AntiColLt,
-    Engine,
-    PositionLt,
-    StrobeLt,
-    FormationLt,
-    APU,
-}
-
-#[derive(Debug, Component, Serialize, Deserialize)]
-pub struct Button {
-    pub interface_type: InterfaceType,
-    pub operation: Option<InterfaceOperation>,
-    pub inverse: Option<bool>,
-}
-
-#[derive(Debug, Deserialize, Component)]
-pub enum RotorTypes {
-    Main,
-    Rear,
-}
-#[derive(Debug, Deserialize)]
-pub struct Rotor {
-    rotor: RotorTypes,
-}
+use avian3d::prelude::{ColliderDisabled, Mass, RigidBodyDisabled};
+use bevy::{gltf::GltfMeshExtras, light::NotShadowCaster, prelude::*, scene::SceneInstanceReady};
+use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 struct ShadingFromGltf {
     not_shadow_caster: bool,
-}
-
-#[derive(Debug, Deserialize, Component)]
-pub enum ControlSurfaces {
-    CanardPort,
-    CanardStarboard,
-    Rudder,
-    Elevator,
-    FlapPort,
-    FlapStarboard,
-    AileronPort,
-    AileronStarboard,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ControlSurface {
-    control_surface: ControlSurfaces,
 }
 
 #[derive(Debug, Deserialize)]
