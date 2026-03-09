@@ -51,7 +51,7 @@ pub fn mechanics(
                     d if d < 27.0 => 1.2 * (1.0 - (d - 23.0) / 5.0),
                     _ => 0.2,
                 };
-                dbg!(lift_coeff);
+                // dbg!(lift_coeff);
 
                 let parasitic_drag = velocity.powf(2.0) + 0.8 * forward.cross(velocity_dir);
                 // dbg!(parasitic_drag);
