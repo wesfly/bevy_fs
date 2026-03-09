@@ -212,9 +212,9 @@ pub fn update_mesh_lights(
                 }
                 Lights::Formation => {
                     if state.form_lts_on {
-                        *red = 0.;
+                        *red = 10.;
                         *green = 20.;
-                        *blue = 10.
+                        *blue = 0.
                     } else {
                         *red = 0.;
                         *green = 0.;
