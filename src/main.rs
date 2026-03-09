@@ -141,7 +141,14 @@ fn main() {
                 (update_mesh_lights, update_lights).after(update_light_cycle),
             ),
         )
-        .add_systems(FixedUpdate, (screenshot, screenshot_saving));
+        .add_systems(
+            FixedUpdate,
+            (
+                screenshot,
+                screenshot_saving,
+                (aircraft::mechanics::mechanics, camera_controller).chain(),
+            ),
+        );
 
     app.run();
 }

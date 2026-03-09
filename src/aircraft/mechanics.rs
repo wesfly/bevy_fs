@@ -19,7 +19,7 @@ pub fn mechanics(
     match state.aircraft_type {
         AircraftTypes::Helicopter => {
             if state.engine_on {
-                let thrust_factor = 85_000.;
+                let thrust_factor = 120_000.;
                 let thrust = transform.up() * thrust_factor * input.throttle;
                 let torque = Vec3::new(input.pitch, input.yaw, input.roll);
 
