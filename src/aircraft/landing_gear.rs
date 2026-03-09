@@ -102,6 +102,9 @@ impl LandingGear {
         }
     }
 
+    // TODO: there is a one-frame error because the gear elements are only stopped
+    // when it's above a certain threshold, but it doesn't snap back to where it should be
+
     pub fn deploy_landing_gear(
         query: Query<(&mut Transform, &LandingGearElement)>,
         mut state: ResMut<AircraftState>,

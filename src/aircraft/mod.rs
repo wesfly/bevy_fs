@@ -250,7 +250,7 @@ pub fn spawn_aeroplane(
     settings: Res<Settings>,
     mut state: ResMut<AircraftState>,
 ) {
-    let path = "aeroplane.glb";
+    let path = "models/aeroplane/aeroplane.gltf";
 
     state.aircraft_type = AircraftTypes::Aeroplane;
     state.engine_on = true;
@@ -336,7 +336,7 @@ pub fn spawn_helicopter(
 ) {
     state.aircraft_type = AircraftTypes::Helicopter;
 
-    let path = "helicopter.glb";
+    let path = "models/helicopter/helicopter.gltf";
 
     let (spawn_pos, spawn_vel) = (Vec3::new(0.0, 12.0, 0.0), Vec3::new(0.0, 0.0, 0.0));
 
