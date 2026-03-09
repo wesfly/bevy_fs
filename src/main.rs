@@ -26,7 +26,7 @@ use crate::{
     camera::{CameraPosition, CameraSettings, camera_controller},
     input::InputAxis,
     scenery::terrain::{Terrain, TerrainData},
-    sse::SSE,
+    sse::Sse,
     ui::UI,
 };
 use avian3d::prelude::*;
@@ -98,7 +98,7 @@ fn main() {
         // .add_plugins(PhysicsDebugPlugin)
         .add_plugins(MeshPickingPlugin)
         .add_plugins(UI)
-        .add_plugins(SSE)
+        .add_plugins(Sse)
         .add_plugins(FpsOverlayPlugin {
             config: FpsOverlayConfig {
                 frame_time_graph_config: FrameTimeGraphConfig {

@@ -9,7 +9,7 @@ pub enum InterfaceOperation {
     PositionLt,
     StrobeLt,
     FormationLt,
-    APU,
+    Apu,
 }
 
 #[derive(Debug, Component, Deserialize)]
