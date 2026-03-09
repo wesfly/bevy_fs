@@ -40,6 +40,7 @@ pub struct AircraftState {
     pub anti_col_lts_on: bool,
     pub pos_lts_on: bool,
     pub strobe_lts_on: bool,
+    pub form_lts_on: bool,
     pub landing_gear_deployed: bool,
 }
 
@@ -51,6 +52,7 @@ impl Default for AircraftState {
             anti_col_lts_on: false,
             pos_lts_on: false,
             strobe_lts_on: false,
+            form_lts_on: false,
             landing_gear_deployed: false,
         }
     }
@@ -208,6 +210,17 @@ pub fn update_mesh_lights(
                         *blue = 0.
                     }
                 }
+                Lights::Formation => {
+                    if state.form_lts_on {
+                        *red = 0.;
+                        *green = 20.;
+                        *blue = 10.
+                    } else {
+                        *red = 0.;
+                        *green = 0.;
+                        *blue = 0.
+                    }
+                }
             }
         }
     }
@@ -223,16 +236,15 @@ pub fn update_lights(
             Lights::PositionPort => (Color::linear_rgb(1.0, 0.0, 0.0), state.pos_lts_on),
             Lights::PositionStarboard => (Color::linear_rgb(0.0, 1.0, 0.0), state.pos_lts_on),
             Lights::PositionRear => (Color::linear_rgb(1.0, 1.0, 1.0), state.pos_lts_on),
-
             Lights::AntiCol => (
                 Color::linear_rgb(1.0, 0.0, 0.0),
                 (state.anti_col_lts_on && timer.acol_on_cycle),
             ),
-
             Lights::Strobe => (
                 Color::linear_rgb(1.0, 1.0, 1.0),
                 (state.strobe_lts_on && timer.strobe_on_cycle),
             ),
+            Lights::Formation => (Color::linear_rgb(0.5, 1.0, 1.0), state.form_lts_on),
         };
 
         point_light.color = colour;
@@ -259,6 +271,7 @@ pub fn spawn_aeroplane(
     state.pos_lts_on = true;
     state.anti_col_lts_on = true;
     state.strobe_lts_on = true;
+    state.form_lts_on = true;
 
     // Aircraft model
     commands

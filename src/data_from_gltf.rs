@@ -61,6 +61,7 @@ pub enum Lights {
     PositionPort,
     PositionStarboard,
     PositionRear,
+    Formation,
 }
 
 #[derive(Debug, Deserialize)]
