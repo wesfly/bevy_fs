@@ -29,7 +29,7 @@ pub fn mechanics(
         }
         AircraftTypes::Aeroplane => {
             if state.engine_on {
-                steering(*transform, &mut *force, &*input);
+                steering(*transform, &mut force, &input);
 
                 let forward = transform.forward();
 
@@ -165,9 +165,8 @@ fn rho() -> f32 {
 
 fn thrust(input: &InputAxis, forward: &Dir3) -> Vec3 {
     let thrust_factor = 150_000.0;
-    let thrust = forward.as_vec3() * thrust_factor * input.throttle;
 
-    thrust
+    forward.as_vec3() * thrust_factor * input.throttle
 }
 
 fn induced_drag(lift_coeff: f32, rho: f32, speed: f32) -> f32 {
@@ -175,9 +174,8 @@ fn induced_drag(lift_coeff: f32, rho: f32, speed: f32) -> f32 {
     let induced_drag_coeff =
         zero_lift_induced_drag_coeff + lift_coeff.powi(2) / std::f32::consts::PI * ASPECT_RATIO;
     let wingspan: f32 = 15.0;
-    let induced_drag = 0.5 * rho * speed.powi(2) * induced_drag_coeff * wingspan.powi(2);
 
-    induced_drag
+    0.5 * rho * speed.powi(2) * induced_drag_coeff * wingspan.powi(2)
 }
 
 fn stabilise() -> Vec3 {
@@ -186,6 +184,6 @@ fn stabilise() -> Vec3 {
 
 fn lift(lift_coeff: f32, airspeed: f32, wing_area: f32, up: Dir3, rho: f32) -> Vec3 {
     let lift_force = lift_coeff * rho * (airspeed.powi(2) * 0.5) * wing_area;
-    let lift_vector = lift_force * up;
-    lift_vector
+
+    lift_force * up
 }

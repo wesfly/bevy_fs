@@ -35,30 +35,24 @@ pub enum LandingGearCommands {
 pub struct LandingGearCommand(pub LandingGearCommands);
 
 #[derive(Resource, Deserialize, Debug)]
+#[derive(Default)]
 pub enum LandingGearStatus {
     Deploying,
     Deployed,
     Retracting,
+    #[default]
     Retracted,
 }
 
-impl Default for LandingGearStatus {
-    fn default() -> Self {
-        Self::Retracted
-    }
-}
 
+#[derive(Default)]
 pub enum LdgGearPhase {
+    #[default]
     Phase1,
     Phase2,
     Phase3,
 }
 
-impl Default for LdgGearPhase {
-    fn default() -> Self {
-        Self::Phase1
-    }
-}
 
 const LDG_GEAR_DEPLOY_SPD: f32 = 20.0_f32.to_radians();
 const DOOR_DEPLOY_ANGLE: f32 = 80.0_f32.to_radians();

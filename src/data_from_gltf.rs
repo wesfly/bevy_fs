@@ -160,11 +160,10 @@ pub fn load(
 
             if let Ok(shading_data) =
                 serde_json::from_str::<ShadingFromGltf>(&gltf_mesh_extras.value)
+                && shading_data.not_shadow_caster
             {
-                if shading_data.not_shadow_caster {
-                    dbg!(&shading_data);
-                    commands.entity(entity).insert(NotShadowCaster);
-                }
+                dbg!(&shading_data);
+                commands.entity(entity).insert(NotShadowCaster);
             };
 
             if let Ok(button_data) = serde_json::from_str::<Button>(&gltf_mesh_extras.value) {
@@ -191,11 +190,11 @@ pub fn load(
             };
         };
 
-        if let Ok(gltf_other_extras) = other_extras.get(entity) {
-            if let Ok(light_data) = serde_json::from_str::<Light>(&gltf_other_extras.value) {
-                dbg!(&light_data);
-                commands.entity(entity).insert(light_data.light);
-            };
+        if let Ok(gltf_other_extras) = other_extras.get(entity)
+            && let Ok(light_data) = serde_json::from_str::<Light>(&gltf_other_extras.value)
+        {
+            dbg!(&light_data);
+            commands.entity(entity).insert(light_data.light);
         };
     }
 }
