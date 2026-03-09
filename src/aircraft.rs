@@ -156,16 +156,15 @@ pub fn update_mesh_lights(
     state: Res<AircraftState>,
     timer: ResMut<LightsTimers>,
 ) {
-    #[allow(irrefutable_let_patterns)] // Acting like I know what I'm doing
     for material_handle in material_handles.iter() {
-        if let Some(material) = materials.get_mut(material_handle.0)
-            && let LinearRgba {
+        if let Some(material) = materials.get_mut(material_handle.0) {
+            let LinearRgba {
                 ref mut red,
                 ref mut green,
                 ref mut blue,
                 alpha: _,
-            } = material.emissive
-        {
+            } = material.emissive;
+
             match material_handle.1 {
                 Lights::AntiCol => {
                     if state.anti_col_lts_on && timer.acol_on_cycle {
