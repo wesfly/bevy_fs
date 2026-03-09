@@ -60,7 +60,7 @@ impl Default for LdgGearPhase {
     }
 }
 
-const LDG_GEAR_DEPLOY_SPD: f32 = 200.0_f32.to_radians();
+const LDG_GEAR_DEPLOY_SPD: f32 = 20.0_f32.to_radians();
 const DOOR_DEPLOY_ANGLE: f32 = 80.0_f32.to_radians();
 
 pub struct LandingGear;
