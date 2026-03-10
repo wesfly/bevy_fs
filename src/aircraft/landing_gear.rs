@@ -320,7 +320,7 @@ impl LandingGear {
                         }
 
                         LandingGearElements::StarboardLdgGear => {
-                            if transform.rotation.to_euler(EulerRot::XYZ).0 <= -2.0_f32.to_radians()
+                            if transform.rotation.to_euler(EulerRot::XYZ).0 <= 10.0_f32.to_radians()
                             {
                                 transform.rotate_local_x(-ldg_gear_speed * delta)
                             } else {
@@ -329,7 +329,7 @@ impl LandingGear {
                         }
 
                         LandingGearElements::PortLdgGear => {
-                            if transform.rotation.to_euler(EulerRot::XYZ).0 <= -2.0_f32.to_radians()
+                            if transform.rotation.to_euler(EulerRot::XYZ).0 <= 10.0_f32.to_radians()
                             {
                                 transform.rotate_local_x(-ldg_gear_speed * delta)
                             } else {
