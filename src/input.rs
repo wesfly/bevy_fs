@@ -78,6 +78,23 @@ pub fn input_system(
         ));
     }
 
+    if settings.gamepad.enabled {
+        if let Some(gamepad) = gp {
+            handle_gamepad_input(&mut input, settings, delta, gamepad);
+        } else {
+            handle_keyboard_input(keys, keymap, input, delta);
+        }
+    } else {
+        handle_keyboard_input(keys, keymap, input, delta);
+    }
+}
+
+fn handle_gamepad_input(
+    input: &mut ResMut<'_, InputAxis>,
+    settings: Res<'_, Settings>,
+    delta: f32,
+    gamepad: Single<'_, '_, &bevy::input::gamepad::Gamepad>,
+) {
     let mut gamepad_input = InputAxis {
         pitch: 0.,
         roll: 0.,
@@ -85,91 +102,93 @@ pub fn input_system(
         throttle: 0.,
     };
 
-    if settings.gamepad.enabled {
-        let gamepad = gp.expect("gamepad.enabled set to true but no gamepad detected.");
-
-        if settings.gamepad.hotas {
-            if let (Some(x), Some(y)) = (
-                gamepad.get(GamepadAxis::LeftStickX),
-                gamepad.get(GamepadAxis::LeftStickY),
-            ) {
-                gamepad_input.pitch = -y * delta * 100.0;
-                gamepad_input.roll = -x * delta * 100.0;
-            }
-
-            if gamepad.just_pressed(GamepadButton::DPadDown) {
-                gamepad_input.throttle = -0.1;
-            }
-            if gamepad.just_pressed(GamepadButton::DPadUp) {
-                gamepad_input.throttle = 0.1;
-            }
-
-            if gamepad.pressed(GamepadButton::DPadLeft) {
-                gamepad_input.yaw = 1.0;
-            }
-            if gamepad.pressed(GamepadButton::DPadRight) {
-                gamepad_input.yaw = -1.0;
-            }
-        } else {
-            if let (Some(x), Some(y)) = (
-                gamepad.get(GamepadAxis::RightStickX),
-                gamepad.get(GamepadAxis::RightStickY),
-            ) {
-                gamepad_input.pitch = -y * delta * 100.0;
-                gamepad_input.roll = -x * delta * 100.0;
-            }
-            if let (Some(x), Some(y)) = (
-                gamepad.get(GamepadAxis::LeftStickX),
-                gamepad.get(GamepadAxis::LeftStickY),
-            ) {
-                gamepad_input.throttle += y * delta;
-                gamepad_input.yaw = -x * delta * 100.0;
-            }
+    if settings.gamepad.hotas {
+        if let (Some(x), Some(y)) = (
+            gamepad.get(GamepadAxis::LeftStickX),
+            gamepad.get(GamepadAxis::LeftStickY),
+        ) {
+            gamepad_input.pitch = -y * delta * 100.0;
+            gamepad_input.roll = -x * delta * 100.0;
         }
 
-        input.pitch = gamepad_input.pitch;
-        input.roll = gamepad_input.roll;
-        input.yaw = gamepad_input.yaw;
-        input.throttle += gamepad_input.throttle;
-        input.throttle = input.throttle.clamp(0., 1.);
+        if gamepad.just_pressed(GamepadButton::DPadDown) {
+            gamepad_input.throttle = -0.1;
+        }
+        if gamepad.just_pressed(GamepadButton::DPadUp) {
+            gamepad_input.throttle = 0.1;
+        }
+
+        if gamepad.pressed(GamepadButton::DPadLeft) {
+            gamepad_input.yaw = 1.0;
+        }
+        if gamepad.pressed(GamepadButton::DPadRight) {
+            gamepad_input.yaw = -1.0;
+        }
     } else {
-        let mut button_input = InputAxis {
-            pitch: 0.,
-            roll: 0.,
-            yaw: 0.,
-            throttle: 0.,
-        };
-        if keys.pressed(keymap.up) {
-            button_input.pitch = -1.0
+        if let (Some(x), Some(y)) = (
+            gamepad.get(GamepadAxis::RightStickX),
+            gamepad.get(GamepadAxis::RightStickY),
+        ) {
+            gamepad_input.pitch = -y * delta * 100.0;
+            gamepad_input.roll = -x * delta * 100.0;
         }
-        if keys.pressed(keymap.down) {
-            button_input.pitch = 1.0
+        if let (Some(x), Some(y)) = (
+            gamepad.get(GamepadAxis::LeftStickX),
+            gamepad.get(GamepadAxis::LeftStickY),
+        ) {
+            gamepad_input.throttle += y * delta;
+            gamepad_input.yaw = -x * delta * 100.0;
         }
-        if keys.pressed(keymap.roll_left) {
-            button_input.roll = 1.0
-        }
-        if keys.pressed(keymap.roll_right) {
-            button_input.roll = -1.0
-        }
-
-        if keys.pressed(keymap.rudder_left) {
-            button_input.yaw = 1.0
-        }
-        if keys.pressed(keymap.rudder_right) {
-            button_input.yaw = -1.0
-        }
-
-        if keys.just_pressed(keymap.throttle_up) {
-            button_input.throttle = 0.1
-        }
-        if keys.just_pressed(keymap.throttle_down) {
-            button_input.throttle = -0.1
-        }
-
-        input.pitch = button_input.pitch;
-        input.roll = button_input.roll;
-        input.yaw = button_input.yaw;
-        input.throttle += button_input.throttle * delta * 100.0;
-        input.throttle = input.throttle.clamp(0.0, 1.0);
     }
+    input.pitch = gamepad_input.pitch;
+    input.roll = gamepad_input.roll;
+    input.yaw = gamepad_input.yaw;
+    input.throttle += gamepad_input.throttle;
+    input.throttle = input.throttle.clamp(0., 1.);
+}
+
+fn handle_keyboard_input(
+    keys: Res<ButtonInput<KeyCode>>,
+    keymap: Res<Keymap>,
+    mut input: ResMut<InputAxis>,
+    delta: f32,
+) {
+    let mut button_input = InputAxis {
+        pitch: 0.,
+        roll: 0.,
+        yaw: 0.,
+        throttle: 0.,
+    };
+    if keys.pressed(keymap.up) {
+        button_input.pitch = -1.0
+    }
+    if keys.pressed(keymap.down) {
+        button_input.pitch = 1.0
+    }
+    if keys.pressed(keymap.roll_left) {
+        button_input.roll = 1.0
+    }
+    if keys.pressed(keymap.roll_right) {
+        button_input.roll = -1.0
+    }
+
+    if keys.pressed(keymap.rudder_left) {
+        button_input.yaw = 1.0
+    }
+    if keys.pressed(keymap.rudder_right) {
+        button_input.yaw = -1.0
+    }
+
+    if keys.just_pressed(keymap.throttle_up) {
+        button_input.throttle = 0.1
+    }
+    if keys.just_pressed(keymap.throttle_down) {
+        button_input.throttle = -0.1
+    }
+
+    input.pitch = button_input.pitch;
+    input.roll = button_input.roll;
+    input.yaw = button_input.yaw;
+    input.throttle += button_input.throttle * delta * 100.0;
+    input.throttle = input.throttle.clamp(0.0, 1.0);
 }
