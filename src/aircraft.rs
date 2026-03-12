@@ -200,7 +200,7 @@ pub fn spawn_helicopter(
         Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
         AtmosphereEnvironmentMapLight::default(),
         AtmosphereSettings::default(),
-        Exposure::OVERCAST,
+        Exposure::SUNLIGHT,
         Tonemapping::AgX,
         Bloom::NATURAL,
         Projection::from(PerspectiveProjection {
