@@ -16,6 +16,7 @@ pub enum Lights {
     PositionStarboard,
     PositionRear,
     Formation,
+    Landing,
 }
 
 #[derive(Debug, Deserialize)]
@@ -131,6 +132,17 @@ pub fn update_mesh_lights(
                         *blue = 0.
                     }
                 }
+                Lights::Landing => {
+                    if state.ldg_lts_on && state.landing_gear_deployed {
+                        *red = 500.;
+                        *green = 500.;
+                        *blue = 500.
+                    } else {
+                        *red = 0.;
+                        *green = 0.;
+                        *blue = 0.
+                    }
+                }
             }
         }
     }
@@ -139,9 +151,10 @@ pub fn update_mesh_lights(
 pub fn update_lights(
     state: Res<AircraftState>,
     timer: ResMut<LightsTimers>,
-    query: Query<(&mut PointLight, &Lights)>,
+    point_light_query: Query<(&mut PointLight, &Lights)>,
+    spot_light_query: Query<(&mut SpotLight, &Lights)>,
 ) {
-    for (mut point_light, light) in query {
+    for (mut point_light, light) in point_light_query {
         let (colour, on) = match light {
             Lights::PositionPort => (Color::linear_rgb(1.0, 0.0, 0.0), state.pos_lts_on),
             Lights::PositionStarboard => (Color::linear_rgb(0.0, 1.0, 0.0), state.pos_lts_on),
@@ -154,7 +167,8 @@ pub fn update_lights(
                 Color::linear_rgb(1.0, 1.0, 1.0),
                 (state.strobe_lts_on && timer.strobe_on_cycle),
             ),
-            Lights::Formation => (Color::linear_rgb(0.5, 1.0, 1.0), state.form_lts_on),
+
+            _ => (Color::linear_rgb(1.0, 1.0, 1.0), false),
         };
 
         point_light.color = colour;
@@ -163,6 +177,23 @@ pub fn update_lights(
             point_light.intensity = 10000.0;
         } else {
             point_light.intensity = 0.0
+        }
+    }
+    for (mut spot_light, light) in spot_light_query {
+        let (colour, on) = match light {
+            Lights::Landing => (
+                Color::linear_rgb(1.0, 1.0, 1.0),
+                state.ldg_lts_on && state.landing_gear_deployed,
+            ),
+            _ => (Color::BLACK, false),
+        };
+
+        spot_light.color = colour;
+
+        if on {
+            spot_light.intensity = 100000000.0;
+        } else {
+            spot_light.intensity = 0.0
         }
     }
 }

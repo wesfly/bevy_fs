@@ -61,6 +61,7 @@ pub struct AircraftState {
     pub pos_lts_on: bool,
     pub strobe_lts_on: bool,
     pub form_lts_on: bool,
+    pub ldg_lts_on: bool,
     pub landing_gear_deployed: bool,
 }
 
@@ -73,6 +74,7 @@ impl Default for AircraftState {
             pos_lts_on: false,
             strobe_lts_on: false,
             form_lts_on: false,
+            ldg_lts_on: false,
             landing_gear_deployed: false,
         }
     }
@@ -96,6 +98,7 @@ pub fn spawn_aeroplane(
     state.anti_col_lts_on = true;
     state.strobe_lts_on = true;
     state.form_lts_on = true;
+    state.ldg_lts_on = true;
 
     // Aircraft model
     commands
