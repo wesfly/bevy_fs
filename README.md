@@ -48,6 +48,7 @@ Gamepad is enabled by default, you might want to disable it if you don't have on
 - `C` to switch the camera view
 - Mouse wheel to zoom camera
 - `R` to reset camera
+- `G` to raise or lower landing gear
 
 ### Some additional bindings for different configs
 
