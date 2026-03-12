@@ -1,3 +1,8 @@
+use crate::{
+    Settings,
+    scenery::water::{Water, spawn_water},
+    ui::MenuCamera,
+};
 use avian3d::prelude::{
     ColliderConstructor, ColliderConstructorHierarchy, Friction, RigidBody, SweepMode, SweptCcd,
 };
@@ -5,12 +10,6 @@ use bevy::{
     light::{CascadeShadowConfigBuilder, light_consts::lux},
     pbr::ExtendedMaterial,
     prelude::*,
-};
-
-use crate::{
-    Settings,
-    scenery::water::{Water, spawn_water},
-    ui::MenuCamera,
 };
 
 pub mod terrain;
@@ -23,7 +22,6 @@ pub fn setup_scene(
     mut meshes: ResMut<Assets<Mesh>>,
     water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, Water>>>>,
     camera: Single<Entity, With<MenuCamera>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     commands.entity(*camera).despawn();
 
@@ -33,9 +31,8 @@ pub fn setup_scene(
 
     // runway
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(2310.0, 2.0, 60.0))),
-        MeshMaterial3d(materials.add(Color::linear_rgb(0.12, 0.12, 0.12))),
-        ColliderConstructor::ConvexHullFromMesh,
+        SceneRoot(asset_server.load("models/scenery/rwy/rwy.gltf#Scene0")),
+        ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh),
         RigidBody::Static,
         SweptCcd::new_with_mode(SweepMode::NonLinear),
         Friction::new(0.0),
@@ -47,7 +44,7 @@ pub fn setup_scene(
     ));
 
     commands.spawn((
-        SceneRoot(asset_server.load("hospital.glb#Scene0")),
+        SceneRoot(asset_server.load("models/scenery/hospital.glb#Scene0")),
         RigidBody::Static,
         ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
         Transform::from_xyz(0.0, 0.0, 0.0),
