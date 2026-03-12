@@ -19,6 +19,9 @@ rotor: RotorTypes
 -----------------
 Shading:
 not_shadow_caster: bool
+-----------------
+Landing Gear:
+ldg_gear_element: LandingGearElements
 */
 
 use crate::aircraft::{
@@ -55,7 +58,6 @@ pub fn load(
     for entity in children.iter_descendants(trigger.entity.entity()) {
         if let Ok(gltf_mesh_extras) = mesh_extras.get(entity) {
             if let Ok(light_mesh_data) = serde_json::from_str::<Light>(&gltf_mesh_extras.value) {
-                dbg!(&light_mesh_data);
                 let material_emissive = materials.add(StandardMaterial {
                     perceptual_roughness: 0.1,
                     specular_transmission: 1.0,
@@ -68,14 +70,12 @@ pub fn load(
             };
 
             if let Ok(rotor_data) = serde_json::from_str::<Rotor>(&gltf_mesh_extras.value) {
-                dbg!(&rotor_data);
                 commands.entity(entity).insert(rotor_data.rotor);
             };
 
             if let Ok(ldg_gear_data) =
                 serde_json::from_str::<LandingGearElementFromGltf>(&gltf_mesh_extras.value)
             {
-                dbg!(&ldg_gear_data);
                 commands.entity(entity).insert((
                     LandingGearElement {
                         ldg_gear_element: ldg_gear_data.ldg_gear_element,
@@ -89,7 +89,6 @@ pub fn load(
             if let Ok(ctrl_surface_data) =
                 serde_json::from_str::<ControlSurface>(&gltf_mesh_extras.value)
             {
-                dbg!(&ctrl_surface_data);
                 commands.entity(entity).insert((
                     ctrl_surface_data.control_surface,
                     Mass::from(0.0),
@@ -101,12 +100,10 @@ pub fn load(
                 serde_json::from_str::<ShadingFromGltf>(&gltf_mesh_extras.value)
                 && shading_data.not_shadow_caster
             {
-                dbg!(&shading_data);
                 commands.entity(entity).insert(NotShadowCaster);
             };
 
             if let Ok(button_data) = serde_json::from_str::<Button>(&gltf_mesh_extras.value) {
-                dbg!(&button_data);
                 match button_data.interface_type {
                     InterfaceType::Button | InterfaceType::Switch => {
                         let bundle = (
@@ -132,7 +129,6 @@ pub fn load(
         if let Ok(gltf_other_extras) = other_extras.get(entity)
             && let Ok(light_data) = serde_json::from_str::<Light>(&gltf_other_extras.value)
         {
-            dbg!(&light_data);
             commands.entity(entity).insert(light_data.light);
         };
     }
