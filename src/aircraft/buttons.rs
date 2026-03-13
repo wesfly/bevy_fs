@@ -52,6 +52,10 @@ pub fn button_listener(
                 bool = Some(state.strobe_lts_on);
                 state.strobe_lts_on = !state.strobe_lts_on
             }
+            InterfaceOperation::FormationLt => {
+                bool = Some(state.form_lts_on);
+                state.form_lts_on = !state.form_lts_on
+            }
             _ => bool = None,
         }
 
