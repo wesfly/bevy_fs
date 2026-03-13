@@ -2,7 +2,7 @@ use super::AircraftState;
 use bevy::prelude::*;
 use serde::Deserialize;
 
-#[derive(Component, Debug, Deserialize)]
+#[derive(Component, Debug, Deserialize, PartialEq)]
 pub enum InterfaceOperation {
     AntiColLt,
     Engine,
@@ -12,14 +12,14 @@ pub enum InterfaceOperation {
     Apu,
 }
 
-#[derive(Debug, Component, Deserialize)]
+#[derive(Debug, Component, Deserialize, PartialEq)]
 pub enum InterfaceType {
     Switch,
     Button,
     Lever,
 }
 
-#[derive(Debug, Component, Deserialize)]
+#[derive(Debug, Component, Deserialize, PartialEq)]
 pub struct Button {
     pub interface_type: InterfaceType,
     pub operation: Option<InterfaceOperation>,
@@ -28,12 +28,12 @@ pub struct Button {
 
 pub fn button_listener(
     press: On<Pointer<Press>>,
-    function_comps: Query<&Button>,
-    mut transform: Query<&mut Transform, With<Button>>,
+    button_operations: Query<&Button>,
+    query_tf_button: Query<(&mut Transform, &Button)>,
     mut state: ResMut<AircraftState>,
 ) {
     if press.button == PointerButton::Primary {
-        let button = function_comps.get(press.entity.entity()).unwrap();
+        let button = button_operations.get(press.entity.entity()).unwrap();
         let bool;
         match button.operation.as_ref().unwrap() {
             InterfaceOperation::Engine => {
@@ -69,10 +69,11 @@ pub fn button_listener(
                 true => -SWITCH_ANGLE_LIMIT,
                 false => SWITCH_ANGLE_LIMIT,
             };
-            transform
-                .get_mut(press.entity.entity())
-                .unwrap()
-                .rotate_local_x(angle.to_radians());
+            for (mut transform, button_ype) in query_tf_button {
+                if button == button_ype {
+                    transform.rotate_local_x(angle.to_radians());
+                }
+            }
         }
     }
 }
