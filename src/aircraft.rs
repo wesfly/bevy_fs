@@ -109,8 +109,8 @@ pub fn spawn_aeroplane(
             ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh),
             Transform {
                 translation: Vec3 {
-                    x: 0.0,
-                    y: 500.0,
+                    x: -2100.0,
+                    y: 52.0,
                     z: 0.0,
                 },
                 rotation: Quat::from_rotation_y(90.0_f32.to_radians()),
@@ -118,7 +118,6 @@ pub fn spawn_aeroplane(
             },
             Mass(10_000.0),
             SweptCcd::new_with_mode(SweepMode::NonLinear),
-            LinearVelocity(Vec3::new(-100.0, 0.0, 0.0)),
             children![
                 (
                     Collider::capsule(0.5, 1.0),
