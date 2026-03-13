@@ -51,7 +51,7 @@ pub enum LdgGearPhase {
     Phase3,
 }
 
-const LDG_GEAR_DEPLOY_SPD: f32 = 20.0_f32.to_radians();
+const LDG_GEAR_DEPLOY_SPD: f32 = 40.0_f32.to_radians();
 const DOOR_DEPLOY_ANGLE: f32 = 80.0_f32.to_radians();
 
 pub struct LandingGear;
@@ -75,7 +75,7 @@ impl LandingGear {
                         LandingGearStatus::Retracted => LandingGearStatus::Deploying,
                     };
                     *phase = LdgGearPhase::Phase1;
-                    info!("Toggled ldg");
+                    info!("Toggled landing gear");
                 }
             }
         }
@@ -117,7 +117,7 @@ impl LandingGear {
             match *phase {
                 LdgGearPhase::Phase1 => {
                     if ready_vec.is_empty() {
-                        ready_vec.append(&mut vec![false, false, false, false]);
+                        ready_vec.append(&mut vec![false, false, false]);
                     } else {
                         let all_true = &ready_vec.iter().all(|&x| x);
                         if *all_true {
@@ -127,32 +127,27 @@ impl LandingGear {
                         }
                     }
                     match element.ldg_gear_element {
-                        LandingGearElements::FrontLdgGearDoorFrontLeft => {
-                            if transform.rotation.to_euler(EulerRot::XYZ).1 <= DOOR_DEPLOY_ANGLE {
-                                transform.rotate_local_y(ldg_gear_speed * delta);
+                        LandingGearElements::FrontLdgGearDoorFrontRight => {
+                            if transform.rotation.to_euler(EulerRot::XYZ).2
+                                <= DOOR_DEPLOY_ANGLE + 20.0_f32.to_radians()
+                            {
+                                transform.rotate_local_z(ldg_gear_speed * delta);
                             } else {
                                 ready_vec[0] = true;
-                            }
-                        }
-                        LandingGearElements::FrontLdgGearDoorFrontRight => {
-                            if -transform.rotation.to_euler(EulerRot::XYZ).1 <= DOOR_DEPLOY_ANGLE {
-                                transform.rotate_local_y(-ldg_gear_speed * delta);
-                            } else {
-                                ready_vec[1] = true;
                             }
                         }
                         LandingGearElements::FrontLdgGearDoorAftLeft => {
                             if transform.rotation.to_euler(EulerRot::XYZ).1 <= DOOR_DEPLOY_ANGLE {
                                 transform.rotate_local_y(ldg_gear_speed * delta);
                             } else {
-                                ready_vec[2] = true;
+                                ready_vec[1] = true;
                             }
                         }
                         LandingGearElements::FrontLdgGearDoorAftRight => {
                             if -transform.rotation.to_euler(EulerRot::XYZ).1 <= DOOR_DEPLOY_ANGLE {
                                 transform.rotate_local_y(-ldg_gear_speed * delta);
                             } else {
-                                ready_vec[3] = true;
+                                ready_vec[2] = true;
                             }
                         }
 
@@ -210,7 +205,7 @@ impl LandingGear {
                 }
                 LdgGearPhase::Phase3 => {
                     if ready_vec.is_empty() {
-                        ready_vec.append(&mut vec![false, false]);
+                        ready_vec.append(&mut vec![false]);
                     } else {
                         let all_true = &ready_vec.iter().all(|&x| x);
                         if *all_true {
@@ -222,18 +217,11 @@ impl LandingGear {
                     }
 
                     match element.ldg_gear_element {
-                        LandingGearElements::FrontLdgGearDoorFrontLeft => {
-                            if -transform.rotation.to_euler(EulerRot::XYZ).1 <= 0.0 {
-                                transform.rotate_local_y(-ldg_gear_speed * delta)
+                        LandingGearElements::FrontLdgGearDoorFrontRight => {
+                            if -transform.rotation.to_euler(EulerRot::XYZ).2 <= 0.0 {
+                                transform.rotate_local_z(-ldg_gear_speed * delta)
                             } else {
                                 ready_vec[0] = true;
-                            }
-                        }
-                        LandingGearElements::FrontLdgGearDoorFrontRight => {
-                            if transform.rotation.to_euler(EulerRot::XYZ).1 <= 0.0 {
-                                transform.rotate_local_y(ldg_gear_speed * delta)
-                            } else {
-                                ready_vec[1] = true;
                             }
                         }
 
@@ -267,7 +255,7 @@ impl LandingGear {
             match *phase {
                 LdgGearPhase::Phase1 => {
                     if ready_vec.is_empty() {
-                        ready_vec.append(&mut vec![false, false]);
+                        ready_vec.append(&mut vec![false]);
                     } else {
                         let all_true = &ready_vec.iter().all(|&x| x);
                         if *all_true {
@@ -277,18 +265,13 @@ impl LandingGear {
                         }
                     }
                     match element.ldg_gear_element {
-                        LandingGearElements::FrontLdgGearDoorFrontLeft => {
-                            if transform.rotation.to_euler(EulerRot::XYZ).1 <= DOOR_DEPLOY_ANGLE {
-                                transform.rotate_local_y(-ldg_gear_speed * delta)
+                        LandingGearElements::FrontLdgGearDoorFrontRight => {
+                            if transform.rotation.to_euler(EulerRot::XYZ).2
+                                <= DOOR_DEPLOY_ANGLE + 20.0_f32.to_radians()
+                            {
+                                transform.rotate_local_z(-ldg_gear_speed * delta)
                             } else {
                                 ready_vec[0] = true;
-                            }
-                        }
-                        LandingGearElements::FrontLdgGearDoorFrontRight => {
-                            if -transform.rotation.to_euler(EulerRot::XYZ).1 <= DOOR_DEPLOY_ANGLE {
-                                transform.rotate_local_y(ldg_gear_speed * delta)
-                            } else {
-                                ready_vec[1] = true;
                             }
                         }
 
@@ -342,7 +325,7 @@ impl LandingGear {
 
                 LdgGearPhase::Phase3 => {
                     if ready_vec.is_empty() {
-                        ready_vec.append(&mut vec![false, false, false, false]);
+                        ready_vec.append(&mut vec![false, false, false]);
                     } else {
                         let all_true = &ready_vec.iter().all(|&x| x);
                         if *all_true {
@@ -352,32 +335,25 @@ impl LandingGear {
                         }
                     }
                     match element.ldg_gear_element {
-                        LandingGearElements::FrontLdgGearDoorFrontLeft => {
-                            if -transform.rotation.to_euler(EulerRot::XYZ).1 <= 0.0 {
-                                transform.rotate_local_y(ldg_gear_speed * delta)
+                        LandingGearElements::FrontLdgGearDoorFrontRight => {
+                            if -transform.rotation.to_euler(EulerRot::XYZ).2 <= 0.0 {
+                                transform.rotate_local_z(ldg_gear_speed * delta)
                             } else {
                                 ready_vec[0] = true
-                            }
-                        }
-                        LandingGearElements::FrontLdgGearDoorFrontRight => {
-                            if transform.rotation.to_euler(EulerRot::XYZ).1 <= 0.0 {
-                                transform.rotate_local_y(-ldg_gear_speed * delta)
-                            } else {
-                                ready_vec[1] = true
                             }
                         }
                         LandingGearElements::FrontLdgGearDoorAftLeft => {
                             if -transform.rotation.to_euler(EulerRot::XYZ).1 <= 0.0 {
                                 transform.rotate_local_y(ldg_gear_speed * delta)
                             } else {
-                                ready_vec[2] = true
+                                ready_vec[1] = true
                             }
                         }
                         LandingGearElements::FrontLdgGearDoorAftRight => {
                             if transform.rotation.to_euler(EulerRot::XYZ).1 <= 0.0 {
                                 transform.rotate_local_y(-ldg_gear_speed * delta)
                             } else {
-                                ready_vec[3] = true
+                                ready_vec[2] = true
                             }
                         }
 
