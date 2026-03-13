@@ -113,7 +113,7 @@ pub fn spawn_aeroplane(
                     y: 500.0,
                     z: 0.0,
                 },
-                rotation: Quat::from_rotation_y(-90.0_f32.to_degrees()),
+                rotation: Quat::from_rotation_y(90.0_f32.to_radians()),
                 ..default()
             },
             Mass(10_000.0),
