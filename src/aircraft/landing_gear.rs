@@ -117,7 +117,8 @@ impl LandingGear {
             match *phase {
                 LdgGearPhase::Phase1 => {
                     if ready_vec.is_empty() {
-                        ready_vec.append(&mut vec![false, false, false]);
+                        ready_vec
+                            .append(&mut vec![false, false, false, false, false, false, false]);
                     } else {
                         let all_true = &ready_vec.iter().all(|&x| x);
                         if *all_true {
@@ -151,11 +152,40 @@ impl LandingGear {
                             }
                         }
 
-                        LandingGearElements::StarboardLdgGearDoorFront => {}
-                        LandingGearElements::StarboardLdgGearDoorAft => {}
+                        LandingGearElements::PortLdgGearDoorFront => {
+                            if -transform.rotation.to_euler(EulerRot::XYZ).2
+                                <= DOOR_DEPLOY_ANGLE + 20.0_f32.to_radians()
+                            {
+                                transform.rotate_local_z(-ldg_gear_speed * delta);
+                            } else {
+                                ready_vec[3] = true;
+                            }
+                        }
+                        LandingGearElements::PortLdgGearDoorAft => {
+                            if -transform.rotation.to_euler(EulerRot::XYZ).0 <= DOOR_DEPLOY_ANGLE {
+                                transform.rotate_local_x(-ldg_gear_speed * delta);
+                            } else {
+                                ready_vec[4] = true;
+                            }
+                        }
 
-                        LandingGearElements::PortLdgGearDoorFront => {}
-                        LandingGearElements::PortLdgGearDoorAft => {}
+                        LandingGearElements::StarboardLdgGearDoorFront => {
+                            if transform.rotation.to_euler(EulerRot::XYZ).2
+                                <= DOOR_DEPLOY_ANGLE + 20.0_f32.to_radians()
+                            {
+                                transform.rotate_local_z(ldg_gear_speed * delta);
+                            } else {
+                                ready_vec[5] = true;
+                            }
+                        }
+                        LandingGearElements::StarboardLdgGearDoorAft => {
+                            if -transform.rotation.to_euler(EulerRot::XYZ).0 <= DOOR_DEPLOY_ANGLE {
+                                transform.rotate_local_x(-ldg_gear_speed * delta);
+                            } else {
+                                ready_vec[6] = true;
+                            }
+                        }
+
                         _ => {}
                     }
                 }
@@ -205,7 +235,7 @@ impl LandingGear {
                 }
                 LdgGearPhase::Phase3 => {
                     if ready_vec.is_empty() {
-                        ready_vec.append(&mut vec![false]);
+                        ready_vec.append(&mut vec![false, false, false]);
                     } else {
                         let all_true = &ready_vec.iter().all(|&x| x);
                         if *all_true {
@@ -225,9 +255,21 @@ impl LandingGear {
                             }
                         }
 
-                        LandingGearElements::StarboardLdgGearDoorFront => {}
+                        LandingGearElements::PortLdgGearDoorFront => {
+                            if transform.rotation.to_euler(EulerRot::XYZ).2 <= 0.0 {
+                                transform.rotate_local_z(ldg_gear_speed * delta);
+                            } else {
+                                ready_vec[1] = true;
+                            }
+                        }
 
-                        LandingGearElements::PortLdgGearDoorFront => {}
+                        LandingGearElements::StarboardLdgGearDoorFront => {
+                            if -transform.rotation.to_euler(EulerRot::XYZ).2 <= 0.0 {
+                                transform.rotate_local_z(-ldg_gear_speed * delta);
+                            } else {
+                                ready_vec[2] = true;
+                            }
+                        }
                         _ => {}
                     }
                 }
@@ -255,7 +297,7 @@ impl LandingGear {
             match *phase {
                 LdgGearPhase::Phase1 => {
                     if ready_vec.is_empty() {
-                        ready_vec.append(&mut vec![false]);
+                        ready_vec.append(&mut vec![false, false, false]);
                     } else {
                         let all_true = &ready_vec.iter().all(|&x| x);
                         if *all_true {
@@ -275,8 +317,24 @@ impl LandingGear {
                             }
                         }
 
-                        LandingGearElements::StarboardLdgGearDoorFront => {}
-                        LandingGearElements::PortLdgGearDoorFront => {}
+                        LandingGearElements::StarboardLdgGearDoorFront => {
+                            if transform.rotation.to_euler(EulerRot::XYZ).2
+                                <= DOOR_DEPLOY_ANGLE + 20.0_f32.to_radians()
+                            {
+                                transform.rotate_local_z(-ldg_gear_speed * delta);
+                            } else {
+                                ready_vec[1] = true;
+                            }
+                        }
+                        LandingGearElements::PortLdgGearDoorFront => {
+                            if -transform.rotation.to_euler(EulerRot::XYZ).2
+                                <= DOOR_DEPLOY_ANGLE + 20.0_f32.to_radians()
+                            {
+                                transform.rotate_local_z(ldg_gear_speed * delta);
+                            } else {
+                                ready_vec[2] = true;
+                            }
+                        }
                         _ => {}
                     }
                 }
@@ -325,7 +383,8 @@ impl LandingGear {
 
                 LdgGearPhase::Phase3 => {
                     if ready_vec.is_empty() {
-                        ready_vec.append(&mut vec![false, false, false]);
+                        ready_vec
+                            .append(&mut vec![false, false, false, false, false, false, false]);
                     } else {
                         let all_true = &ready_vec.iter().all(|&x| x);
                         if *all_true {
@@ -357,11 +416,38 @@ impl LandingGear {
                             }
                         }
 
-                        LandingGearElements::StarboardLdgGearDoorFront => {}
-                        LandingGearElements::StarboardLdgGearDoorAft => {}
+                        LandingGearElements::PortLdgGearDoorFront => {
+                            if transform.rotation.to_euler(EulerRot::XYZ).2 <= 0.0 {
+                                transform.rotate_local_z(-ldg_gear_speed * delta);
+                            } else {
+                                ready_vec[3] = true;
+                            }
+                        }
 
-                        LandingGearElements::PortLdgGearDoorFront => {}
-                        LandingGearElements::PortLdgGearDoorAft => {}
+                        LandingGearElements::StarboardLdgGearDoorFront => {
+                            if -transform.rotation.to_euler(EulerRot::XYZ).2 <= 0.0 {
+                                transform.rotate_local_z(ldg_gear_speed * delta);
+                            } else {
+                                ready_vec[4] = true;
+                            }
+                        }
+
+                        LandingGearElements::PortLdgGearDoorAft => {
+                            if transform.rotation.to_euler(EulerRot::XYZ).0 <= 0.0 {
+                                transform.rotate_local_x(-ldg_gear_speed * delta);
+                            } else {
+                                ready_vec[5] = true;
+                            }
+                        }
+
+                        LandingGearElements::StarboardLdgGearDoorAft => {
+                            if transform.rotation.to_euler(EulerRot::XYZ).0 <= 0.0 {
+                                transform.rotate_local_x(-ldg_gear_speed * delta);
+                            } else {
+                                ready_vec[6] = true;
+                            }
+                        }
+
                         _ => {}
                     }
                 }

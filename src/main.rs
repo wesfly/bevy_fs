@@ -172,7 +172,6 @@ fn screenshot(mut commands: Commands, input: Res<ButtonInput<KeyCode>>) {
     if input.just_pressed(KeyCode::F3) {
         let now = chrono::Local::now();
         let path = format!("./screenshots/user/screenshot-{:?}.png", now);
-        info!("{now:?}");
         commands
             .spawn(Screenshot::primary_window())
             .observe(save_to_disk(path));
