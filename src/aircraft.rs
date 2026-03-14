@@ -2,7 +2,9 @@ pub mod animations;
 pub mod buttons;
 pub mod landing_gear;
 pub mod lights;
-pub mod mechanics;
+mod mechanics;
+
+pub use mechanics::mechanics;
 
 use crate::{Settings, data_from_gltf::load, motion_blur};
 use avian3d::prelude::*;

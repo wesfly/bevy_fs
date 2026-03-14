@@ -17,13 +17,10 @@ use crate::{
     aircraft::{
         AircraftState,
         animations::{update_control_surfaces, update_rotors},
-        landing_gear::{self, LandingGearCommand, LandingGearStatus},
-        lights::{
-            ACOL_OFF_DURATION, LightsTimers, STROBE_OFF_DURATION, update_light_cycle,
-            update_lights, update_mesh_lights,
-        },
+        landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
+        lights::{ACOL_OFF_DURATION, Light, LightsTimers, STROBE_OFF_DURATION},
     },
-    camera::{CameraPosition, CameraSettings, camera_controller},
+    camera::{Camera, CameraPosition, CameraSettings},
     input::InputAxis,
     scenery::terrain::{Terrain, TerrainData},
     sse::Sse,
