@@ -136,18 +136,18 @@ fn main() {
         // Systems
         .add_systems(
             Update,
-            (update_rotors, update_control_surfaces, camera_controller),
+            (update_rotors, update_control_surfaces, Camera::controller),
         )
         .add_systems(
             FixedUpdate,
             (
                 screenshot,
                 input::input_system,
-                update_light_cycle,
-                (update_mesh_lights, update_lights).after(update_light_cycle),
-                landing_gear::LandingGear::operate_landing_gear,
+                Light::update_light_cycle,
+                (Light::update_mesh_lights, Light::update_lights).after(Light::update_light_cycle),
+                LandingGear::operate_landing_gear,
                 screenshot_saving,
-                aircraft::mechanics::mechanics,
+                aircraft::mechanics,
             ),
         );
 
