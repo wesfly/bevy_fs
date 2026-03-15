@@ -134,15 +134,13 @@ fn main() {
         // Messages
         .add_message::<LandingGearCommand>()
         // Systems
-        .add_systems(
-            Update,
-            (update_rotors, update_control_surfaces, Camera::controller),
-        )
+        .add_systems(Update, (update_rotors, Camera::controller))
         .add_systems(
             FixedUpdate,
             (
-                screenshot,
                 input::input_system,
+                screenshot,
+                update_control_surfaces,
                 Light::update_light_cycle,
                 (Light::update_mesh_lights, Light::update_lights).after(Light::update_light_cycle),
                 LandingGear::operate_landing_gear,
@@ -150,7 +148,6 @@ fn main() {
                 aircraft::mechanics,
             ),
         );
-
     app.run();
 }
 

@@ -22,13 +22,10 @@ pub enum LandingGearElements {
 #[derive(Debug, Deserialize, Component)]
 pub struct LandingGearElement {
     pub ldg_gear_element: LandingGearElements,
-    // pub status: Option<LandingGearStatus>,
 }
 
 pub enum LandingGearCommands {
     Toggle,
-    // Deploy,
-    // Retract,
 }
 
 #[derive(Message)]

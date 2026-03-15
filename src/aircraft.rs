@@ -109,6 +109,7 @@ pub fn spawn_aeroplane(
             Aircraft,
             RigidBody::Dynamic,
             ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh),
+            CenterOfMass::new(0.0, 0.5, 0.16),
             Transform {
                 translation: Vec3 {
                     x: -2100.0,
