@@ -3,6 +3,7 @@ pub mod buttons;
 pub mod landing_gear;
 pub mod lights;
 mod mechanics;
+pub mod screens;
 
 pub use mechanics::mechanics;
 
