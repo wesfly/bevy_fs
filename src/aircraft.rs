@@ -97,10 +97,7 @@ pub fn spawn_aeroplane(
 
     state.aircraft_type = AircraftTypes::Aeroplane;
     state.engine_on = true;
-    state.pos_lts_on = true;
     state.anti_col_lts_on = true;
-    state.strobe_lts_on = true;
-    state.form_lts_on = true;
     state.ldg_lts_on = true;
 
     // Aircraft model
@@ -111,10 +108,15 @@ pub fn spawn_aeroplane(
             RigidBody::Dynamic,
             ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh),
             CenterOfMass::new(0.0, 0.5, 0.16),
+            LinearVelocity(Vec3 {
+                x: -100.0,
+                y: 0.0,
+                z: 0.0,
+            }),
             Transform {
                 translation: Vec3 {
-                    x: -2100.0,
-                    y: 52.0,
+                    x: -100.0,
+                    y: 120.0,
                     z: 0.0,
                 },
                 rotation: Quat::from_rotation_y(90.0_f32.to_radians()),
@@ -125,21 +127,21 @@ pub fn spawn_aeroplane(
             children![
                 (
                     Collider::capsule(0.5, 1.0),
-                    Transform::from_xyz(1.2, -0.5, 2.0),
+                    Transform::from_xyz(1.2, -0.32, 2.0),
                     Friction::new(0.0),
                     Mass(0.0),
                     Name::new("rear left"),
                 ),
                 (
                     Collider::capsule(0.5, 1.0),
-                    Transform::from_xyz(-1.2, -0.5, 2.0),
+                    Transform::from_xyz(-1.2, -0.32, 2.0),
                     Friction::new(0.0),
                     Mass(0.0),
                     Name::new("rear right"),
                 ),
                 (
                     Collider::capsule(0.5, 1.0),
-                    Transform::from_xyz(0.0, -0.56, -2.8),
+                    Transform::from_xyz(0.0, -0.28, -2.8),
                     Friction::new(0.0),
                     Mass(0.0),
                     Name::new("nosewheel"),
