@@ -19,7 +19,7 @@ pub struct Screen {
     pub screen: Screens,
 }
 
-pub fn spawn_texture_ui_whatever(
+pub fn get_material_handle(
     commands: &mut Commands,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     images: &mut ResMut<Assets<Image>>,

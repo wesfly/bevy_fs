@@ -76,7 +76,7 @@ pub fn load(
             };
 
             if let Ok(screen_data) = serde_json::from_str::<Screen>(&gltf_mesh_extras.value) {
-                let material_handle = aircraft::screens::spawn_texture_ui_whatever(
+                let material_handle = aircraft::screens::get_material_handle(
                     &mut commands,
                     &mut materials,
                     &mut images,
