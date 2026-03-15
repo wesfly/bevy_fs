@@ -32,7 +32,7 @@ pub fn setup_scene(
     // runway
     commands.spawn((
         SceneRoot(asset_server.load("models/scenery/rwy/rwy.gltf#Scene0")),
-        ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh),
+        ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
         RigidBody::Static,
         SweptCcd::new_with_mode(SweepMode::NonLinear),
         Friction::new(1.0),

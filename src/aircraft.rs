@@ -127,21 +127,21 @@ pub fn spawn_aeroplane(
             children![
                 (
                     Collider::capsule(0.5, 1.0),
-                    Transform::from_xyz(1.2, -0.32, 2.0),
+                    Transform::from_xyz(1.2, -0.62, 2.0),
                     Friction::new(0.0),
                     Mass(0.0),
                     Name::new("rear left"),
                 ),
                 (
                     Collider::capsule(0.5, 1.0),
-                    Transform::from_xyz(-1.2, -0.32, 2.0),
+                    Transform::from_xyz(-1.2, -0.62, 2.0),
                     Friction::new(0.0),
                     Mass(0.0),
                     Name::new("rear right"),
                 ),
                 (
                     Collider::capsule(0.5, 1.0),
-                    Transform::from_xyz(0.0, -0.28, -2.8),
+                    Transform::from_xyz(0.0, -0.58, -2.8),
                     Friction::new(0.0),
                     Mass(0.0),
                     Name::new("nosewheel"),
