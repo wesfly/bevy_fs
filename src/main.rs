@@ -21,8 +21,9 @@ mod ui;
 
 use crate::{
     aircraft::{
-        AircraftState,
+        AircraftState, Damage,
         animations::{update_control_surfaces, update_rotors},
+        collision_listener,
         landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
         lights::{ACOL_OFF_DURATION, Light, LightsTimers, STROBE_OFF_DURATION},
     },
@@ -139,6 +140,7 @@ fn main() {
         }))
         // Messages
         .add_message::<LandingGearCommand>()
+        .add_message::<Damage>()
         // Systems
         .add_systems(Update, (update_rotors, Camera::controller))
         .add_systems(
@@ -152,7 +154,9 @@ fn main() {
                 LandingGear::operate_landing_gear,
                 screenshot_saving,
                 aircraft::screens::update_screens,
+                Damage::handler,
                 aircraft::mechanics,
+                collision_listener,
             ),
         );
     app.run();

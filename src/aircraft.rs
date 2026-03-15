@@ -19,6 +19,7 @@ use bevy::{
     prelude::*,
     render::view::Hdr,
 };
+use landing_gear::LandingGear;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Component)]
@@ -83,6 +84,73 @@ impl Default for AircraftState {
     }
 }
 
+#[derive(Message)]
+pub struct Damage(DamageTypes);
+
+pub enum DamageTypes {
+    Critical,
+    // Leak(Vec3),
+}
+
+impl Damage {
+    pub fn handler(
+        mut commands: Commands,
+        mut messages: MessageReader<Self>,
+        mut physics_time: ResMut<Time<Physics>>,
+    ) {
+        for message in messages.read() {
+            match message.0 {
+                DamageTypes::Critical => {
+                    warn!("Critical Damage");
+                    physics_time.pause();
+                    commands.spawn((
+                        Node {
+                            // display: Display::Flex,
+                            position_type: PositionType::Absolute,
+                            width: Val::Percent(100.0),
+                            top: px(50),
+                            align_content: AlignContent::Center,
+                            justify_content: JustifyContent::Center,
+
+                            ..default()
+                        },
+                        children![(
+                            Text::new("Crashed"),
+                            TextFont {
+                                font_size: 64.0,
+                                weight: FontWeight(1000),
+                                ..default()
+                            },
+                            TextColor(Color::hsv(0.0, 1.0, 1.0)),
+                            TextShadow::default()
+                        )],
+                    ));
+                } // DamageTypes::Leak(_) => todo!(),
+            }
+        }
+    }
+}
+
+pub fn collision_listener(
+    mut collision_messages: MessageReader<CollisionStart>,
+    mut damage_messages: MessageWriter<Damage>,
+    query: Query<Entity, With<LandingGear>>,
+    state: Res<AircraftState>,
+) {
+    for message in collision_messages.read() {
+        let main = query.get(message.collider1);
+        match main {
+            Ok(_) => {
+                if !state.landing_gear_deployed {
+                    damage_messages.write(Damage(DamageTypes::Critical));
+                }
+            }
+            Err(_) => todo!(),
+        }
+        info!("{:?}", main);
+    }
+}
+
 #[derive(Component)]
 pub struct Aircraft;
 
@@ -122,6 +190,7 @@ pub fn spawn_aeroplane(
                 rotation: Quat::from_rotation_y(90.0_f32.to_radians()),
                 ..default()
             },
+            CollisionEventsEnabled,
             Mass(10_000.0),
             SweptCcd::new_with_mode(SweepMode::NonLinear),
             children![
@@ -131,6 +200,8 @@ pub fn spawn_aeroplane(
                     Friction::new(0.0),
                     Mass(0.0),
                     Name::new("rear left"),
+                    CollisionEventsEnabled,
+                    LandingGear,
                 ),
                 (
                     Collider::capsule(0.5, 1.0),
@@ -138,6 +209,8 @@ pub fn spawn_aeroplane(
                     Friction::new(0.0),
                     Mass(0.0),
                     Name::new("rear right"),
+                    CollisionEventsEnabled,
+                    LandingGear,
                 ),
                 (
                     Collider::capsule(0.5, 1.0),
@@ -145,6 +218,8 @@ pub fn spawn_aeroplane(
                     Friction::new(0.0),
                     Mass(0.0),
                     Name::new("nosewheel"),
+                    CollisionEventsEnabled,
+                    LandingGear,
                 )
             ],
         ))
