@@ -81,7 +81,7 @@ impl FromWorld for RunOnceSystemList {
         );
         my_item_systems.0.insert(
             "spawn_ui_hud".into(),
-            world.register_system(ui::setup_ui_hud),
+            world.register_system(UI::setup_ui_hud),
         );
 
         my_item_systems
