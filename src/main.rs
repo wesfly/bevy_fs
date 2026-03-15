@@ -3,7 +3,13 @@ I made a little flight simulator here. Check out the README for further informat
 If you have fixes or want to contribute, just make a pull request.
 
 TODO: Add big_space someday
+
+Spatial units are in metres
+Default for speed is m/s
 */
+
+pub const METRES_TO_FEET: f32 = 3.28084;
+pub const M_S_TO_KTS: f32 = 1.943844;
 
 mod aircraft;
 mod camera;

@@ -1,4 +1,4 @@
-use crate::{aircraft::Aircraft, input::InputAxis};
+use crate::{M_S_TO_KTS, METRES_TO_FEET, aircraft::Aircraft, input::InputAxis};
 use avian3d::prelude::LinearVelocity;
 use bevy::{
     asset::RenderAssetUsages,
@@ -133,11 +133,11 @@ pub fn update_screens(
             ScreenUiElement::Airspeed => {
                 *text = Text::new(format!(
                     "{:.2} kts",
-                    (tf.forward().dot(vel.0) * 1.943844) as i32
+                    (tf.forward().dot(vel.0) * M_S_TO_KTS) as i32
                 ))
             }
             ScreenUiElement::Altitude => {
-                *text = Text::new(format!("{:.2} ft", tf.translation.y * 3.28084))
+                *text = Text::new(format!("{:.2} ft", tf.translation.y * METRES_TO_FEET))
             }
         }
     }
