@@ -1,3 +1,5 @@
+use crate::{aircraft::Aircraft, input::InputAxis};
+use avian3d::prelude::LinearVelocity;
 use bevy::{
     asset::RenderAssetUsages,
     camera::RenderTarget,
@@ -19,6 +21,13 @@ pub struct Screen {
     pub screen: Screens,
 }
 
+#[derive(Component)]
+pub enum ScreenUiElement {
+    Throttle,
+    Altitude,
+    Airspeed,
+}
+
 pub fn get_material_handle(
     commands: &mut Commands,
     materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -26,8 +35,8 @@ pub fn get_material_handle(
     screen_data: &Screen,
 ) -> Handle<StandardMaterial> {
     let size = Extent3d {
-        width: 512,
-        height: 512,
+        width: 1024,
+        height: 1024,
         ..default()
     };
 
@@ -55,6 +64,12 @@ pub fn get_material_handle(
             RenderTarget::Image(image_handle.clone().into()),
         ))
         .id();
+
+    let label = match screen_data.screen {
+        Screens::Left => ScreenUiElement::Throttle,
+        Screens::Right => ScreenUiElement::Airspeed,
+        Screens::Centre => ScreenUiElement::Altitude,
+    };
 
     commands
         .spawn((
@@ -85,7 +100,8 @@ pub fn get_material_handle(
                 ))
                 .with_children(|parent| {
                     parent.spawn((
-                        Text::new(format!("{:?}", screen_data.screen)),
+                        label,
+                        Text::new("loading..."),
                         TextFont {
                             font_size: 40.0,
                             ..default()
@@ -98,6 +114,31 @@ pub fn get_material_handle(
     // This material has the texture that has been rendered.
     materials.add(StandardMaterial {
         base_color_texture: Some(image_handle),
+        perceptual_roughness: 0.2,
         ..default()
     })
+}
+
+pub fn update_screens(
+    query: Query<(&mut Text, &ScreenUiElement)>,
+    input_axis: Res<InputAxis>,
+    vel_tf: Single<(&LinearVelocity, &Transform), With<Aircraft>>,
+) {
+    let (vel, tf) = *vel_tf;
+    for (mut text, screen) in query {
+        match screen {
+            ScreenUiElement::Throttle => {
+                *text = Text::new(format!("{:.2}%", input_axis.throttle * 100.0))
+            }
+            ScreenUiElement::Airspeed => {
+                *text = Text::new(format!(
+                    "{:.2} kts",
+                    (tf.forward().dot(vel.0) * 1.943844) as i32
+                ))
+            }
+            ScreenUiElement::Altitude => {
+                *text = Text::new(format!("{:.2} ft", tf.translation.y * 3.28084))
+            }
+        }
+    }
 }

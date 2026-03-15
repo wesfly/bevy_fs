@@ -145,6 +145,7 @@ fn main() {
                 (Light::update_mesh_lights, Light::update_lights).after(Light::update_light_cycle),
                 LandingGear::operate_landing_gear,
                 screenshot_saving,
+                aircraft::screens::update_screens,
                 aircraft::mechanics,
             ),
         );
