@@ -53,8 +53,12 @@ pub fn mechanics(
                 };
                 // dbg!(lift_coeff);
 
-                let parasitic_drag = velocity.powf(2.0) + 0.8 * forward.cross(velocity_dir);
-                // dbg!(parasitic_drag);
+                let parasitic_drag_coeff = match state.landing_gear_deployed {
+                    true => 2.2,
+                    false => 1.8,
+                };
+                let parasitic_drag =
+                    parasitic_drag_coeff * velocity.powf(2.0) + 0.5 * forward.cross(velocity_dir);
 
                 let drag = (-velocity_dir * induced_drag(lift_coeff, rho, speed))
                     + (-velocity_dir * parasitic_drag);
