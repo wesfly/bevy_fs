@@ -142,11 +142,13 @@ fn main() {
         .add_message::<LandingGearCommand>()
         .add_message::<Damage>()
         // Systems
-        .add_systems(Update, (update_rotors, Camera::controller))
+        .add_systems(
+            Update,
+            (update_rotors, Camera::controller, input::input_system),
+        )
         .add_systems(
             FixedUpdate,
             (
-                input::input_system,
                 screenshot,
                 update_control_surfaces,
                 Light::update_light_cycle,

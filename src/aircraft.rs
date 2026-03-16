@@ -101,11 +101,9 @@ impl Damage {
         for message in messages.read() {
             match message.0 {
                 DamageTypes::Critical => {
-                    warn!("Critical Damage");
                     physics_time.pause();
                     commands.spawn((
                         Node {
-                            // display: Display::Flex,
                             position_type: PositionType::Absolute,
                             width: Val::Percent(100.0),
                             top: px(50),
@@ -138,8 +136,8 @@ pub fn collision_listener(
     state: Res<AircraftState>,
 ) {
     for message in collision_messages.read() {
-        let main = query.get(message.collider1);
-        match main {
+        let collider = query.get(message.collider1);
+        match collider {
             Ok(_) => {
                 if !state.landing_gear_deployed {
                     damage_messages.write(Damage(DamageTypes::Critical));
@@ -147,7 +145,6 @@ pub fn collision_listener(
             }
             Err(_) => todo!(),
         }
-        info!("{:?}", main);
     }
 }
 
