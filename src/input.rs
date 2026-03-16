@@ -59,11 +59,8 @@ pub fn input_system(
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
     gp: Option<Single<&bevy::prelude::Gamepad>>,
     mut camera_settings: ResMut<CameraSettings>,
-    time: Res<Time>,
     mut ldg_gear_messages: MessageWriter<LandingGearCommand>,
 ) {
-    let delta = time.delta_secs();
-
     if keyboard_input.just_pressed(keymap.change_camera) {
         match camera_settings.view {
             CameraView::Follow => camera_settings.view = CameraView::Cockpit,
@@ -80,19 +77,18 @@ pub fn input_system(
 
     if settings.gamepad.enabled {
         if let Some(gamepad) = gp {
-            handle_gamepad_input(&mut input, settings, delta, gamepad);
+            handle_gamepad_input(&mut input, settings, gamepad);
         } else {
-            handle_keyboard_input(keys, keymap, input, delta);
+            handle_keyboard_input(keys, keymap, input);
         }
     } else {
-        handle_keyboard_input(keys, keymap, input, delta);
+        handle_keyboard_input(keys, keymap, input);
     }
 }
 
 fn handle_gamepad_input(
     input: &mut ResMut<'_, InputAxis>,
     settings: Res<'_, Settings>,
-    delta: f32,
     gamepad: Single<'_, '_, &bevy::input::gamepad::Gamepad>,
 ) {
     let mut gamepad_input = InputAxis {
@@ -107,8 +103,8 @@ fn handle_gamepad_input(
             gamepad.get(GamepadAxis::LeftStickX),
             gamepad.get(GamepadAxis::LeftStickY),
         ) {
-            gamepad_input.pitch = -y * delta * 100.0;
-            gamepad_input.roll = -x * delta * 100.0;
+            gamepad_input.pitch = -y;
+            gamepad_input.roll = -x;
         }
 
         if gamepad.just_pressed(GamepadButton::DPadDown) {
@@ -129,15 +125,15 @@ fn handle_gamepad_input(
             gamepad.get(GamepadAxis::RightStickX),
             gamepad.get(GamepadAxis::RightStickY),
         ) {
-            gamepad_input.pitch = -y * delta * 100.0;
-            gamepad_input.roll = -x * delta * 100.0;
+            gamepad_input.pitch = -y;
+            gamepad_input.roll = -x;
         }
         if let (Some(x), Some(y)) = (
             gamepad.get(GamepadAxis::LeftStickX),
             gamepad.get(GamepadAxis::LeftStickY),
         ) {
-            gamepad_input.throttle += y * delta;
-            gamepad_input.yaw = -x * delta * 100.0;
+            gamepad_input.throttle += y;
+            gamepad_input.yaw = -x;
         }
     }
     input.pitch = gamepad_input.pitch;
@@ -151,7 +147,6 @@ fn handle_keyboard_input(
     keys: Res<ButtonInput<KeyCode>>,
     keymap: Res<Keymap>,
     mut input: ResMut<InputAxis>,
-    delta: f32,
 ) {
     let mut button_input = InputAxis {
         pitch: 0.,
@@ -189,6 +184,6 @@ fn handle_keyboard_input(
     input.pitch = button_input.pitch;
     input.roll = button_input.roll;
     input.yaw = button_input.yaw;
-    input.throttle += button_input.throttle * delta * 100.0;
+    input.throttle += button_input.throttle;
     input.throttle = input.throttle.clamp(0.0, 1.0);
 }
