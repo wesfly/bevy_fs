@@ -113,7 +113,9 @@ pub fn get_material_handle(
 
     // This material has the texture that has been rendered.
     materials.add(StandardMaterial {
-        base_color_texture: Some(image_handle),
+        emissive_texture: Some(image_handle),
+        emissive: LinearRgba::new(1.0, 1.0, 1.0, 1.0),
+        base_color: Color::BLACK,
         perceptual_roughness: 0.2,
         ..default()
     })
