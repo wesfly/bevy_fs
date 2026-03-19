@@ -4,7 +4,8 @@ use crate::{
     ui::MenuCamera,
 };
 use avian3d::prelude::{
-    ColliderConstructor, ColliderConstructorHierarchy, Friction, RigidBody, SweepMode, SweptCcd,
+    ColliderConstructor, ColliderConstructorHierarchy, Friction, Restitution, RigidBody, SweepMode,
+    SweptCcd,
 };
 use bevy::{
     light::{CascadeShadowConfigBuilder, light_consts::lux},
@@ -34,7 +35,8 @@ pub fn setup_scene(
         SceneRoot(asset_server.load("models/scenery/rwy/rwy.gltf#Scene0")),
         ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
         RigidBody::Static,
-        SweptCcd::new_with_mode(SweepMode::NonLinear),
+        Restitution::new(0.0),
+        SweptCcd::new_with_mode(SweepMode::Linear),
         Friction::new(1.0),
         Transform {
             translation: Vec3::new(-3000.0, 60.0, 0.0),

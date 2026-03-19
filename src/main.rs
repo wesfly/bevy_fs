@@ -156,11 +156,11 @@ fn main() {
                 LandingGear::operate_landing_gear,
                 screenshot_saving,
                 aircraft::screens::update_screens,
-                Damage::handler,
                 aircraft::mechanics,
                 collision_listener,
             ),
-        );
+        )
+        .add_systems(FixedPostUpdate, Damage::handler);
     app.run();
 }
 
