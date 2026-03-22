@@ -29,7 +29,7 @@ use crate::{
     },
     camera::{Camera, CameraPosition, CameraSettings},
     input::InputAxis,
-    scenery::terrain::{Terrain, TerrainData},
+    scenery::terrain::{TerrainPathList, TerrainSettings, poll_terrain},
     sse::Sse,
     ui::UI,
 };
@@ -50,7 +50,7 @@ pub struct Settings {
     gamepad: input::Gamepad,
     motion_blur_enabled: bool,
     shadow_distance: f32,
-    terrain: Terrain,
+    terrain: TerrainSettings,
     sun_position: Vec3,
 }
 
@@ -132,7 +132,7 @@ fn main() {
         .init_resource::<RunOnceSystemList>()
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AircraftState::default())
-        .insert_resource(TerrainData(Vec::new()))
+        .insert_resource(TerrainPathList(vec![]))
         .insert_resource(LandingGearStatus::Retracted)
         .insert_resource(CameraPosition(Transform {
             translation: Vec3::ZERO,
@@ -158,6 +158,7 @@ fn main() {
                 aircraft::screens::update_screens,
                 aircraft::mechanics,
                 collision_listener,
+                poll_terrain,
             ),
         )
         .add_systems(FixedPostUpdate, Damage::handler);

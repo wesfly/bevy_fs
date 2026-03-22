@@ -181,7 +181,7 @@ pub fn spawn_aeroplane(
             Transform {
                 translation: Vec3 {
                     x: -100.0,
-                    y: 120.0,
+                    y: 2200.0,
                     z: 0.0,
                 },
                 rotation: Quat::from_rotation_y(90.0_f32.to_radians()),
