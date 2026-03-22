@@ -7,9 +7,6 @@
   "shadow_distance": 100000.0,
   "sun_position": [-1.0, 1.2, 2.0],
   "terrain": {
-    "collisions": true,
-    "number_of_chunks": 1024,
-    "subdivisions_per_chunk": 8,
-    "coordinates": { "lat": 42.55513, "long": 8.78194 }
+    "coordinates": { "lat": 43.1679, "long": 5.8272 }
   }
 }
