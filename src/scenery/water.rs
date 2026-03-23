@@ -50,7 +50,7 @@ pub fn spawn_water(
     mut water_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, Water>>>,
 ) {
     commands.spawn((
-        Mesh3d(meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(10000.0)))),
+        Mesh3d(meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(20000.0)))),
         Transform::from_xyz(0.0, 0.1, 0.0),
         MeshMaterial3d(water_materials.add(ExtendedMaterial {
             base: StandardMaterial {

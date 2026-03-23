@@ -17,6 +17,8 @@ use tokio::runtime::Runtime;
 #[derive(Deserialize)]
 pub struct TerrainSettings {
     coordinates: Coordinates,
+    max_render_distance: f32,
+    level_of_detail: u8,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -71,9 +73,15 @@ pub fn spawn_terrain(
         for y in 0..chunks_per_side {
             let coords = &settings.terrain.coordinates;
 
-            let mut coords = Coordinates::to_terrarium_coords(&coords, 14);
+            let mut coords =
+                Coordinates::to_terrarium_coords(&coords, settings.terrain.level_of_detail);
+
             coords.y += y as u32;
+            coords.y -= chunks_per_side / 2;
+
             coords.x += x as u32;
+            coords.x -= chunks_per_side / 2;
+
             coord_list.0.push(coords.clone());
             let tokio_handle = TOKIO_RUNTIME.spawn(get_terrain(coords));
 
@@ -89,8 +97,6 @@ pub fn spawn_terrain(
     }
 }
 
-const MESH_SIZE: f32 = 2_000.0;
-
 #[derive(Resource)]
 pub struct TerrainPathList(pub Vec<TerrariumCoords>);
 
@@ -100,14 +106,26 @@ pub fn poll_terrain(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     coords: Res<TerrainPathList>,
+    settings: Res<Settings>,
 ) {
+    let chunk_size = if settings.terrain.level_of_detail != 14 {
+        2_000.0 * ((14 - settings.terrain.level_of_detail) * 2) as f32
+    } else {
+        2_000.0
+    };
+
     for (entity, mut task) in &mut tasks {
         if let Some(_) = future::block_on(future::poll_once(&mut task.0)) {
             let translation = Vec3::new(
-                MESH_SIZE * task.1.0 as f32,
+                chunk_size as f32 * task.1.0 as f32 - chunk_size * 0.5 * 9.0,
                 0.0,
-                MESH_SIZE * task.1.1 as f32,
+                chunk_size as f32 * task.1.1 as f32 - chunk_size * 0.5 * 9.0,
             );
+
+            if translation.length() > settings.terrain.max_render_distance {
+                commands.entity(entity).remove::<SpawnTerrain>();
+                break;
+            }
 
             let coord = &coords.0[task.1.0 * 9 + task.1.1];
 
@@ -141,39 +159,36 @@ pub fn poll_terrain(
             commands.entity(entity).remove::<SpawnTerrain>();
 
             // if all elements of heights are the same
-            match !heights.windows(2).all(|w| w[0] == w[1]) {
-                true => {
-                    let mut terrain = Mesh::from(
-                        Plane3d::default()
-                            .mesh()
-                            .size(MESH_SIZE, MESH_SIZE)
-                            .subdivisions(width - 2),
-                    );
+            if !heights.windows(2).all(|w| w[0] == w[1]) {
+                let mut terrain = Mesh::from(
+                    Plane3d::default()
+                        .mesh()
+                        .size(chunk_size as f32, chunk_size as f32)
+                        .subdivisions(width - 2),
+                );
 
-                    if let bevy::mesh::VertexAttributeValues::Float32x3(positions) =
-                        terrain.try_attribute_mut(Mesh::ATTRIBUTE_POSITION).unwrap()
-                    {
-                        assert_eq!(positions.len(), heights.len());
+                if let bevy::mesh::VertexAttributeValues::Float32x3(positions) =
+                    terrain.try_attribute_mut(Mesh::ATTRIBUTE_POSITION).unwrap()
+                {
+                    assert_eq!(positions.len(), heights.len());
 
-                        for (i, pos) in positions.iter_mut().enumerate() {
-                            pos[1] = heights[i]
-                        }
+                    for (i, pos) in positions.iter_mut().enumerate() {
+                        pos[1] = heights[i]
                     }
-                    terrain.compute_normals();
-                    commands.spawn((
-                        Mesh3d(meshes.add(terrain)),
-                        MeshMaterial3d(materials.add(StandardMaterial {
-                            base_color: bevy::color::palettes::css::GREEN.into(),
-                            perceptual_roughness: 1.0,
-                            ..Default::default()
-                        })),
-                        ColliderConstructor::TrimeshFromMesh,
-                        RigidBody::Static,
-                        Transform::from_translation(translation),
-                    ));
                 }
-                false => {}
-            };
+                terrain.compute_normals();
+                commands.spawn((
+                    Mesh3d(meshes.add(terrain)),
+                    MeshMaterial3d(materials.add(StandardMaterial {
+                        base_color: bevy::color::palettes::css::GREEN.into(),
+                        perceptual_roughness: 1.0,
+                        ..Default::default()
+                    })),
+                    ColliderConstructor::TrimeshFromMesh,
+                    RigidBody::Static,
+                    Transform::from_translation(translation),
+                ));
+            }
         }
     }
 }
