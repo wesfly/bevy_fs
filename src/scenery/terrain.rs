@@ -33,7 +33,7 @@ pub struct TerrariumCoords {
 }
 
 impl Coordinates {
-    fn to_terrarium_coords(coords: &Self, zoom: f32) -> TerrariumCoords {
+    fn to_terrarium_coords(coords: &Self, zoom: u8) -> TerrariumCoords {
         let z = zoom as f64;
         let n = 2.0_f64.powf(z);
 
@@ -66,13 +66,12 @@ pub fn spawn_terrain(
     let thread_pool = AsyncComputeTaskPool::get();
 
     let chunks_per_side: u32 = 9;
-    // let chunks = chunks_per_side.pow(2);
 
     for x in 0..chunks_per_side {
         for y in 0..chunks_per_side {
             let coords = &settings.terrain.coordinates;
 
-            let mut coords = Coordinates::to_terrarium_coords(&coords, 14.0);
+            let mut coords = Coordinates::to_terrarium_coords(&coords, 14);
             coords.y += y as u32;
             coords.x += x as u32;
             coord_list.0.push(coords.clone());
