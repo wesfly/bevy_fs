@@ -4,7 +4,7 @@
     "hotas": true
   },
   "motion_blur_enabled": true,
-  "shadow_distance": 100000.0,
+  "shadow_distance": 10000.0,
   "sun_position": [-1.0, 1.2, 2.0],
   "terrain": {
     "coordinates": { "lat": 43.12103, "long": 6.12908 },
