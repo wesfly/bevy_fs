@@ -31,17 +31,26 @@ Use `cargo run --release` to run the program from the project root folder.
 
 ## Flying
 
+### Helicopter
+
 To start flying, you need to go to the cockpit view and turn on the engine. The switch is located in the center console and is labelled `ENG`.
-If you now bring the throttle to 100%, you should start flying immediatly.
+If you now bring the throttle to 100%, you should start flying.
+
+### Aeroplane
+
+You will start in the air, you just need to throttle up.
+
+## Settings
+
+The settings are located in `settings.json` at the root of this project.
 
 ## Terrain
 
-Terrain data will be stored in terrain.json after the first fetch (the game window will be unresponsive while fetching). If you want a different location or resolution, you need to delete it and refetch it.
+Terrain data will be stored in the `terrain_cache` folder after the first fetch (the game window will be unresponsive while fetching). To change the location or the resolution, change `terrain.coordinates` or `terrain.level_of_detail` in the settings. Note that the maximum level of detail is 14, in some regions even less.
 
 ## Controls
 
-It's worth taking a look at the `settings.json` file and updating the settings according to your setup.
-Gamepad is enabled by default, you might want to disable it if you don't have one.
+You can change input methods in the settings.
 
 - `F3` to take a screenshot (output: `screenshots/user`)
 - `RMB + drag` to orbit camera
