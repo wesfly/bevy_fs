@@ -18,7 +18,7 @@ use tokio::runtime::Runtime;
 pub struct TerrainSettings {
     coordinates: Coordinates,
     max_render_distance: f32,
-    level_of_detail: u8,
+    pub level_of_detail: u8,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
