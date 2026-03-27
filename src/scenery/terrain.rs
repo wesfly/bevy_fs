@@ -127,7 +127,6 @@ pub fn poll_terrain(
 
     for (entity, mut task) in &mut tasks {
         if let Some(_) = future::block_on(future::poll_once(&mut task.0)) {
-            info!("poling1");
             let translation = Vec3::new(
                 chunk_size as f32 * task.1.0 as f32 - chunk_size * 0.5 * 9.0,
                 0.0,
@@ -173,7 +172,10 @@ impl Chunk {
                     )
                     .unwrap();
                 }
-                ChunkMessages::Despawn(entity) => Self::despawn(entity, &mut commands),
+                ChunkMessages::Despawn(entity) => {
+                    Self::despawn(entity, &mut commands);
+                    info!("despawning chunks: {entity}")
+                }
             };
         }
     }
@@ -261,8 +263,7 @@ pub fn update_chunks(
     mut messages: MessageWriter<ChunkMessage>,
 ) {
     for (entity, transform) in &chunks {
-        if transform.translation.distance_squared(camera.translation)
-            > settings.terrain.max_render_distance
+        if transform.translation.distance(camera.translation) > settings.terrain.max_render_distance
         {
             messages.write(ChunkMessage(ChunkMessages::Despawn(entity)));
         }
