@@ -1,5 +1,5 @@
-use crate::Settings;
-use avian3d::prelude::{ColliderConstructor, RigidBody};
+use crate::{Settings, camera::Camera};
+use avian3d::prelude::{Collider, RigidBody};
 use bevy::{
     prelude::*,
     tasks::{AsyncComputeTaskPool, Task, futures_lite::future},
@@ -33,6 +33,9 @@ pub struct TerrariumCoords {
     x: u32,
     y: u32,
 }
+
+#[derive(Component)]
+pub struct Chunk;
 
 impl Coordinates {
     fn to_terrarium_coords(coords: &Self, zoom: u8) -> TerrariumCoords {
@@ -97,16 +100,24 @@ pub fn spawn_terrain(
     }
 }
 
+pub enum ChunkMessages {
+    Spawn(Vec3, TerrariumCoords, f32),
+    Despawn(Entity),
+}
+
+#[derive(Message)]
+pub struct ChunkMessage(ChunkMessages);
+
 #[derive(Resource)]
 pub struct TerrainPathList(pub Vec<TerrariumCoords>);
 
 pub fn poll_terrain(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut SpawnTerrain)>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
     coords: Res<TerrainPathList>,
     settings: Res<Settings>,
+    camera: Single<&Transform, With<Camera>>,
+    mut messages: MessageWriter<ChunkMessage>,
 ) {
     let chunk_size = if settings.terrain.level_of_detail != 14 {
         2_000.0 * ((14 - settings.terrain.level_of_detail) * 2) as f32
@@ -116,79 +127,144 @@ pub fn poll_terrain(
 
     for (entity, mut task) in &mut tasks {
         if let Some(_) = future::block_on(future::poll_once(&mut task.0)) {
+            info!("poling1");
             let translation = Vec3::new(
                 chunk_size as f32 * task.1.0 as f32 - chunk_size * 0.5 * 9.0,
                 0.0,
                 chunk_size as f32 * task.1.1 as f32 - chunk_size * 0.5 * 9.0,
             );
 
-            if translation.length() > settings.terrain.max_render_distance {
+            // Check if terrain should even be spawned
+            if translation.distance(camera.translation) > settings.terrain.max_render_distance {
                 commands.entity(entity).remove::<SpawnTerrain>();
                 break;
             }
 
             let coord = &coords.0[task.1.0 * 9 + task.1.1];
 
-            let path = format!("terrain_cache/{}_{}_{}.webp", coord.z, coord.x, coord.y);
-
-            let webp_bytes = fs::read(&path).expect("file to be fetched");
-            let Ok(img) = image::load_from_memory_with_format(
-                webp_bytes.iter().as_slice(),
-                image::ImageFormat::WebP,
-            ) else {
-                warn!("Failed to decode tile {path}");
-                commands.entity(entity).remove::<SpawnTerrain>();
-
-                break;
-            };
-
-            let rgb_img = img.to_rgb8();
-            let (width, height) = rgb_img.dimensions();
-
-            let mut heights: std::vec::Vec<f32> = Vec::with_capacity((width * height) as usize);
-
-            for pixel in rgb_img.pixels() {
-                let r = pixel[0] as f32;
-                let g = pixel[1] as f32;
-                let b = pixel[2] as f32;
-
-                let h = (r * 256.0 + g + b / 256.0) - 32768.0;
-                heights.push(h);
-            }
+            messages.write(ChunkMessage(ChunkMessages::Spawn(
+                translation,
+                coord.clone(),
+                chunk_size,
+            )));
 
             commands.entity(entity).remove::<SpawnTerrain>();
+        }
+    }
+}
 
-            // if all elements of heights are the same
-            if !heights.windows(2).all(|w| w[0] == w[1]) {
-                let mut terrain = Mesh::from(
-                    Plane3d::default()
-                        .mesh()
-                        .size(chunk_size as f32, chunk_size as f32)
-                        .subdivisions(width - 2),
-                );
-
-                if let bevy::mesh::VertexAttributeValues::Float32x3(positions) =
-                    terrain.try_attribute_mut(Mesh::ATTRIBUTE_POSITION).unwrap()
-                {
-                    assert_eq!(positions.len(), heights.len());
-
-                    for (i, pos) in positions.iter_mut().enumerate() {
-                        pos[1] = heights[i]
-                    }
+impl Chunk {
+    pub fn message_reader(
+        mut messages: MessageReader<ChunkMessage>,
+        mut commands: Commands,
+        mut meshes: ResMut<Assets<Mesh>>,
+        mut materials: ResMut<Assets<StandardMaterial>>,
+    ) {
+        for message in messages.read() {
+            match &message.0 {
+                ChunkMessages::Spawn(translation, coord, chunk_size) => {
+                    Chunk::spawn(
+                        &mut commands,
+                        &mut meshes,
+                        &mut materials,
+                        chunk_size,
+                        translation,
+                        coord,
+                    )
+                    .unwrap();
                 }
-                terrain.compute_normals();
-                commands.spawn((
-                    Mesh3d(meshes.add(terrain)),
-                    MeshMaterial3d(materials.add(StandardMaterial {
-                        base_color: bevy::color::palettes::css::GREEN.into(),
-                        perceptual_roughness: 1.0,
-                        ..Default::default()
-                    })),
-                    ColliderConstructor::TrimeshFromMesh,
-                    RigidBody::Static,
-                    Transform::from_translation(translation),
-                ));
+                ChunkMessages::Despawn(entity) => Self::despawn(entity, &mut commands),
+            };
+        }
+    }
+
+    fn spawn(
+        commands: &mut Commands<'_, '_>,
+        meshes: &mut ResMut<'_, Assets<Mesh>>,
+        materials: &mut ResMut<'_, Assets<StandardMaterial>>,
+        chunk_size: &f32,
+        translation: &Vec3,
+        coord: &TerrariumCoords,
+    ) -> Result<()> {
+        let path = format!("terrain_cache/{}_{}_{}.webp", coord.z, coord.x, coord.y);
+        let Ok(img) = image::load_from_memory_with_format(
+            fs::read(&path)
+                .expect("file to be fetched")
+                .iter()
+                .as_slice(),
+            image::ImageFormat::WebP,
+        ) else {
+            return Err("Failed to decode tile {path}".into());
+        };
+
+        let rgb_img = img.to_rgb8();
+        let (width, height) = rgb_img.dimensions();
+        let mut heights: std::vec::Vec<f32> = Vec::with_capacity((width * height) as usize);
+        for pixel in rgb_img.pixels() {
+            let r = pixel[0] as f32;
+            let g = pixel[1] as f32;
+            let b = pixel[2] as f32;
+
+            let h = (r * 256.0 + g + b / 256.0) - 32768.0;
+            heights.push(h);
+        }
+
+        // unless all elements of heights are the same
+        if !heights.windows(2).all(|w| w[0] == w[1]) {
+            let mut terrain = Mesh::from(
+                Plane3d::default()
+                    .mesh()
+                    .size(*chunk_size as f32, *chunk_size as f32)
+                    .subdivisions(width - 2),
+            );
+
+            if let bevy::mesh::VertexAttributeValues::Float32x3(positions) =
+                terrain.try_attribute_mut(Mesh::ATTRIBUTE_POSITION).unwrap()
+            {
+                assert_eq!(positions.len(), heights.len());
+
+                for (i, pos) in positions.iter_mut().enumerate() {
+                    pos[1] = heights[i]
+                }
             }
+
+            terrain.compute_normals();
+
+            commands.spawn((
+                Collider::trimesh_from_mesh(&terrain).expect("trimesh_from_mesh to work"),
+                RigidBody::Static,
+                Transform::from_translation(*translation),
+                Mesh3d(meshes.add(terrain)),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: bevy::color::palettes::css::GREEN.into(),
+                    perceptual_roughness: 1.0,
+                    ..Default::default()
+                })),
+                Chunk,
+            ));
+        } else {
+            info!("all-zero, skipping chunk");
+        }
+
+        Ok(())
+    }
+
+    fn despawn(entity: &Entity, commands: &mut Commands) {
+        commands.entity(*entity).despawn();
+    }
+}
+
+pub fn update_chunks(
+    chunks: Query<(Entity, &Transform), With<Chunk>>,
+    camera: Single<&Transform, With<Camera>>,
+    settings: Res<Settings>,
+    mut messages: MessageWriter<ChunkMessage>,
+) {
+    for (entity, transform) in &chunks {
+        if transform.translation.distance_squared(camera.translation)
+            > settings.terrain.max_render_distance
+        {
+            messages.write(ChunkMessage(ChunkMessages::Despawn(entity)));
         }
     }
 }

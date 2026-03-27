@@ -29,7 +29,7 @@ use crate::{
     },
     camera::{Camera, CameraPosition, CameraSettings},
     input::InputAxis,
-    scenery::terrain::{TerrainPathList, TerrainSettings, poll_terrain},
+    scenery::terrain::{Chunk, ChunkMessage, TerrainPathList, TerrainSettings, poll_terrain},
     sse::Sse,
     ui::UI,
 };
@@ -100,7 +100,7 @@ fn main() {
     app.add_plugins(DefaultPlugins)
         .add_plugins(PhysicsPlugins::default())
         // .add_plugins(PhysicsDebugPlugin)
-        .add_plugins(MeshPickingPlugin)
+        // .add_plugins(MeshPickingPlugin)
         .add_plugins(UI)
         .add_plugins(Sse)
         .add_plugins(FpsOverlayPlugin {
@@ -141,6 +141,7 @@ fn main() {
         // Messages
         .add_message::<LandingGearCommand>()
         .add_message::<Damage>()
+        .add_message::<ChunkMessage>()
         // Systems
         .add_systems(
             Update,
@@ -159,6 +160,8 @@ fn main() {
                 aircraft::mechanics,
                 collision_listener,
                 poll_terrain,
+                scenery::terrain::update_chunks,
+                Chunk::message_reader,
             ),
         )
         .add_systems(FixedPostUpdate, Damage::handler);
