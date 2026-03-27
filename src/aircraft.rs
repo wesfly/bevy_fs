@@ -151,6 +151,8 @@ pub fn collision_listener(
 #[derive(Component)]
 pub struct Aircraft;
 
+const CAM_EXPOSURE: Exposure = Exposure::OVERCAST;
+
 pub fn spawn_aeroplane(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -227,7 +229,7 @@ pub fn spawn_aeroplane(
         Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
         AtmosphereEnvironmentMapLight::default(),
         AtmosphereSettings::default(),
-        Exposure::SUNLIGHT,
+        CAM_EXPOSURE,
         Tonemapping::AgX,
         Bloom::NATURAL,
         Projection::from(PerspectiveProjection {
@@ -281,7 +283,7 @@ pub fn spawn_helicopter(
         Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
         AtmosphereEnvironmentMapLight::default(),
         AtmosphereSettings::default(),
-        Exposure::SUNLIGHT,
+        CAM_EXPOSURE,
         Tonemapping::AgX,
         Bloom::NATURAL,
         Projection::from(PerspectiveProjection {
