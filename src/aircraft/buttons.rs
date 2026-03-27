@@ -26,56 +26,59 @@ pub struct Button {
     pub inverse: Option<bool>,
 }
 
-pub fn button_listener(
-    press: On<Pointer<Press>>,
-    button_operations: Query<&Button>,
-    query_tf_button: Query<(&mut Transform, &Button)>,
-    mut state: ResMut<AircraftState>,
-) {
-    if press.button == PointerButton::Primary {
-        let button = button_operations.get(press.entity.entity()).unwrap();
-        let bool;
-        match button.operation.as_ref().unwrap() {
-            InterfaceOperation::Engine => {
-                bool = Some(state.engine_on);
-                state.engine_on = !state.engine_on
-            }
-            InterfaceOperation::AntiColLt => {
-                bool = Some(state.anti_col_lts_on);
-                state.anti_col_lts_on = !state.anti_col_lts_on
-            }
-            InterfaceOperation::PositionLt => {
-                bool = Some(state.pos_lts_on);
-                state.pos_lts_on = !state.pos_lts_on
-            }
-            InterfaceOperation::StrobeLt => {
-                bool = Some(state.strobe_lts_on);
-                state.strobe_lts_on = !state.strobe_lts_on
-            }
-            InterfaceOperation::FormationLt => {
-                bool = Some(state.form_lts_on);
-                state.form_lts_on = !state.form_lts_on
-            }
-            _ => bool = None,
-        }
+#[derive(Message)]
+pub struct ButtonMessages {
+    pub button: Button,
+}
 
-        const SWITCH_ANGLE_LIMIT: f32 = 70.0;
-        if let InterfaceType::Switch = button.interface_type
-            && let Some(mut bool) = bool
-        {
-            if let Some(inverse) = button.inverse
-                && inverse
-            {
-                bool = !bool
-            }
-
-            let angle = match bool {
-                true => -SWITCH_ANGLE_LIMIT,
-                false => SWITCH_ANGLE_LIMIT,
+impl Button {
+    pub fn listener(
+        mut query_tf_button: Query<(&mut Transform, &Button)>,
+        mut state: ResMut<AircraftState>,
+        mut messages: MessageReader<ButtonMessages>,
+    ) {
+        for message in messages.read() {
+            let button = &message.button;
+            let (bool, _) = match button.operation.as_ref().unwrap() {
+                InterfaceOperation::Engine => {
+                    (Some(state.engine_on), state.engine_on = !state.engine_on)
+                }
+                InterfaceOperation::AntiColLt => (
+                    Some(state.anti_col_lts_on),
+                    state.anti_col_lts_on = !state.anti_col_lts_on,
+                ),
+                InterfaceOperation::PositionLt => {
+                    (Some(state.pos_lts_on), state.pos_lts_on = !state.pos_lts_on)
+                }
+                InterfaceOperation::StrobeLt => (
+                    Some(state.strobe_lts_on),
+                    state.strobe_lts_on = !state.strobe_lts_on,
+                ),
+                InterfaceOperation::FormationLt => (
+                    Some(state.form_lts_on),
+                    state.form_lts_on = !state.form_lts_on,
+                ),
+                _ => (None, ()),
             };
-            for (mut transform, button_ype) in query_tf_button {
-                if button == button_ype {
-                    transform.rotate_local_x(angle.to_radians());
+
+            const SWITCH_ANGLE_LIMIT: f32 = 70.0;
+            if let InterfaceType::Switch = button.interface_type
+                && let Some(mut bool) = bool
+            {
+                if let Some(inverse) = button.inverse
+                    && inverse
+                {
+                    bool = !bool
+                }
+
+                let angle = match bool {
+                    true => -SWITCH_ANGLE_LIMIT,
+                    false => SWITCH_ANGLE_LIMIT,
+                };
+                for (mut transform, button_ype) in &mut query_tf_button {
+                    if *button == *button_ype {
+                        transform.rotate_local_x(angle.to_radians());
+                    }
                 }
             }
         }

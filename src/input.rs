@@ -1,5 +1,10 @@
 use crate::{
-    CameraSettings, Settings, aircraft::landing_gear::LandingGearCommand, camera::CameraView,
+    CameraSettings, Settings,
+    aircraft::{
+        buttons::{Button, ButtonMessages, InterfaceOperation, InterfaceType},
+        landing_gear::LandingGearCommand,
+    },
+    camera::CameraView,
 };
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -31,6 +36,9 @@ pub struct Keymap {
     throttle_down: KeyCode,
     change_camera: KeyCode,
     toggle_gear: KeyCode,
+    pos_lights: KeyCode,
+    strobe_lights: KeyCode,
+    formation_lights: KeyCode,
 }
 
 impl Default for Keymap {
@@ -47,6 +55,10 @@ impl Default for Keymap {
             throttle_down: KeyCode::PageDown,
             change_camera: KeyCode::KeyC,
             toggle_gear: KeyCode::KeyG,
+
+            pos_lights: KeyCode::Digit1,
+            strobe_lights: KeyCode::Digit2,
+            formation_lights: KeyCode::Digit3,
         }
     }
 }
@@ -60,6 +72,7 @@ pub fn input_system(
     gp: Option<Single<&bevy::prelude::Gamepad>>,
     mut camera_settings: ResMut<CameraSettings>,
     mut ldg_gear_messages: MessageWriter<LandingGearCommand>,
+    mut button_messages: MessageWriter<ButtonMessages>,
 ) {
     if keyboard_input.just_pressed(keymap.change_camera) {
         match camera_settings.view {
@@ -73,6 +86,37 @@ pub fn input_system(
         ldg_gear_messages.write(LandingGearCommand(
             crate::aircraft::landing_gear::LandingGearCommands::Toggle,
         ));
+    }
+
+    {
+        // TODO: why is inverse hardcoded
+        if keyboard_input.just_pressed(keymap.formation_lights) {
+            button_messages.write(ButtonMessages {
+                button: Button {
+                    interface_type: InterfaceType::Switch,
+                    inverse: Some(true),
+                    operation: Some(InterfaceOperation::FormationLt),
+                },
+            });
+        }
+        if keyboard_input.just_pressed(keymap.strobe_lights) {
+            button_messages.write(ButtonMessages {
+                button: Button {
+                    interface_type: InterfaceType::Switch,
+                    inverse: Some(true),
+                    operation: Some(InterfaceOperation::StrobeLt),
+                },
+            });
+        }
+        if keyboard_input.just_pressed(keymap.pos_lights) {
+            button_messages.write(ButtonMessages {
+                button: Button {
+                    interface_type: InterfaceType::Switch,
+                    inverse: Some(true),
+                    operation: Some(InterfaceOperation::PositionLt),
+                },
+            });
+        }
     }
 
     if settings.gamepad.enabled {

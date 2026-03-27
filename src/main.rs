@@ -23,6 +23,7 @@ use crate::{
     aircraft::{
         AircraftState, Damage,
         animations::{update_control_surfaces, update_rotors},
+        buttons::{Button, ButtonMessages},
         collision_listener,
         landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
         lights::{ACOL_OFF_DURATION, Light, LightsTimers, STROBE_OFF_DURATION},
@@ -142,6 +143,7 @@ fn main() {
         .add_message::<LandingGearCommand>()
         .add_message::<Damage>()
         .add_message::<ChunkMessage>()
+        .add_message::<ButtonMessages>()
         // Systems
         .add_systems(
             Update,
@@ -162,6 +164,7 @@ fn main() {
                 poll_terrain,
                 scenery::terrain::update_chunks,
                 Chunk::message_reader,
+                Button::listener,
             ),
         )
         .add_systems(FixedPostUpdate, Damage::handler);

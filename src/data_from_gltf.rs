@@ -27,10 +27,7 @@ ldg_gear_element: LandingGearElements
 use crate::aircraft::{
     self, ControlSurface, Rotor,
     buttons::{Button, InterfaceType},
-    landing_gear::{
-        LandingGearElement,
-        LandingGearElements, //, LandingGearStatus
-    },
+    landing_gear::{LandingGearElement, LandingGearElements},
     lights::Light,
     screens::Screen,
 };
@@ -127,10 +124,7 @@ pub fn load(
                                 operation: button_data.operation,
                             },
                         );
-                        commands
-                            .entity(entity)
-                            .insert(bundle)
-                            .observe(crate::aircraft::buttons::button_listener);
+                        commands.entity(entity).insert(bundle);
                     }
                     e => {
                         warn!("{e:?} not handled yet")
