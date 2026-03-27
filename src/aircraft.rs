@@ -151,7 +151,7 @@ pub fn collision_listener(
 #[derive(Component)]
 pub struct Aircraft;
 
-const CAM_EXPOSURE: Exposure = Exposure::OVERCAST;
+const CAM_EXPOSURE: Exposure = Exposure::SUNLIGHT;
 
 pub fn spawn_aeroplane(
     mut commands: Commands,
