@@ -33,8 +33,7 @@ Use `cargo run --release` to run the program from the project root folder.
 
 ### Helicopter
 
-To start flying, you need to go to the cockpit view and turn on the engine. The switch is located in the center console and is labelled `ENG`.
-If you now bring the throttle to 100%, you should start flying.
+To start flying, you need to turn on the engine by pressing `M`. If you now bring the throttle to 100%, you should start flying.
 
 ### Aeroplane
 
@@ -58,6 +57,10 @@ You can change input methods in the settings.
 - Mouse wheel to zoom camera
 - `R` to reset camera
 - `G` to raise or lower landing gear
+- `1` for position lights
+- `2` for strobe lights
+- `3` for formation lights
+- `4` for anti-collision lights
 
 ### Some additional bindings for different configs
 
