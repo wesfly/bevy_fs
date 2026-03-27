@@ -27,9 +27,7 @@ pub struct Button {
 }
 
 #[derive(Message)]
-pub struct ButtonMessages {
-    pub button: Button,
-}
+pub struct ButtonMessages(pub InterfaceOperation);
 
 impl Button {
     pub fn listener(
@@ -38,8 +36,8 @@ impl Button {
         mut messages: MessageReader<ButtonMessages>,
     ) {
         for message in messages.read() {
-            let button = &message.button;
-            let (bool, _) = match button.operation.as_ref().unwrap() {
+            let interface_op = &message.0;
+            let (bool, _) = match interface_op {
                 InterfaceOperation::Engine => {
                     (Some(state.engine_on), state.engine_on = !state.engine_on)
                 }
@@ -60,23 +58,23 @@ impl Button {
                 ),
                 _ => (None, ()),
             };
-
-            const SWITCH_ANGLE_LIMIT: f32 = 70.0;
-            if let InterfaceType::Switch = button.interface_type
-                && let Some(mut bool) = bool
-            {
-                if let Some(inverse) = button.inverse
-                    && inverse
+            for (mut transform, button) in &mut query_tf_button {
+                const SWITCH_ANGLE_LIMIT: f32 = 70.0;
+                if let InterfaceType::Switch = button.interface_type
+                    && let Some(mut bool) = bool
                 {
-                    bool = !bool
-                }
+                    if let Some(inverse) = button.inverse
+                        && inverse
+                    {
+                        bool = !bool
+                    }
 
-                let angle = match bool {
-                    true => -SWITCH_ANGLE_LIMIT,
-                    false => SWITCH_ANGLE_LIMIT,
-                };
-                for (mut transform, button_ype) in &mut query_tf_button {
-                    if *button == *button_ype {
+                    let angle = match bool {
+                        true => -SWITCH_ANGLE_LIMIT,
+                        false => SWITCH_ANGLE_LIMIT,
+                    };
+
+                    if *interface_op == *button.operation.as_ref().unwrap() {
                         transform.rotate_local_x(angle.to_radians());
                     }
                 }

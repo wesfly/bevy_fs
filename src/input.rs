@@ -1,7 +1,7 @@
 use crate::{
     CameraSettings, Settings,
     aircraft::{
-        buttons::{Button, ButtonMessages, InterfaceOperation, InterfaceType},
+        buttons::{ButtonMessages, InterfaceOperation},
         landing_gear::LandingGearCommand,
     },
     camera::CameraView,
@@ -36,9 +36,12 @@ pub struct Keymap {
     throttle_down: KeyCode,
     change_camera: KeyCode,
     toggle_gear: KeyCode,
+    engine: KeyCode,
+
     pos_lights: KeyCode,
     strobe_lights: KeyCode,
     formation_lights: KeyCode,
+    anti_col_lights: KeyCode,
 }
 
 impl Default for Keymap {
@@ -55,10 +58,12 @@ impl Default for Keymap {
             throttle_down: KeyCode::PageDown,
             change_camera: KeyCode::KeyC,
             toggle_gear: KeyCode::KeyG,
+            engine: KeyCode::KeyM,
 
             pos_lights: KeyCode::Digit1,
             strobe_lights: KeyCode::Digit2,
             formation_lights: KeyCode::Digit3,
+            anti_col_lights: KeyCode::Digit4,
         }
     }
 }
@@ -89,33 +94,20 @@ pub fn input_system(
     }
 
     {
-        // TODO: why is inverse hardcoded
         if keyboard_input.just_pressed(keymap.formation_lights) {
-            button_messages.write(ButtonMessages {
-                button: Button {
-                    interface_type: InterfaceType::Switch,
-                    inverse: Some(true),
-                    operation: Some(InterfaceOperation::FormationLt),
-                },
-            });
+            button_messages.write(ButtonMessages(InterfaceOperation::FormationLt));
         }
         if keyboard_input.just_pressed(keymap.strobe_lights) {
-            button_messages.write(ButtonMessages {
-                button: Button {
-                    interface_type: InterfaceType::Switch,
-                    inverse: Some(true),
-                    operation: Some(InterfaceOperation::StrobeLt),
-                },
-            });
+            button_messages.write(ButtonMessages(InterfaceOperation::StrobeLt));
         }
         if keyboard_input.just_pressed(keymap.pos_lights) {
-            button_messages.write(ButtonMessages {
-                button: Button {
-                    interface_type: InterfaceType::Switch,
-                    inverse: Some(true),
-                    operation: Some(InterfaceOperation::PositionLt),
-                },
-            });
+            button_messages.write(ButtonMessages(InterfaceOperation::PositionLt));
+        }
+        if keyboard_input.just_pressed(keymap.anti_col_lights) {
+            button_messages.write(ButtonMessages(InterfaceOperation::AntiColLt));
+        }
+        if keyboard_input.just_pressed(keymap.engine) {
+            button_messages.write(ButtonMessages(InterfaceOperation::Engine));
         }
     }
 
