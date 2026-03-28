@@ -53,6 +53,7 @@ pub fn load(
     other_extras: Query<&GltfExtras>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut images: ResMut<Assets<Image>>,
+    asset_server: Res<AssetServer>,
 ) {
     for entity in children.iter_descendants(trigger.entity.entity()) {
         if let Ok(gltf_mesh_extras) = mesh_extras.get(entity) {
@@ -78,6 +79,7 @@ pub fn load(
                     &mut materials,
                     &mut images,
                     &screen_data,
+                    &asset_server,
                 );
                 commands
                     .entity(entity)
