@@ -30,6 +30,7 @@ pub enum ScreenUiElement {
     AirspeedKts,
     SpeedMach,
     Aoa,
+    Horizon,
 }
 
 pub fn get_material_handle(
@@ -72,7 +73,7 @@ pub fn get_material_handle(
 
     match screen_data.screen {
         Screens::Hud => {
-            let bundle = (
+            let text_bundle = (
                 Text::new("loading..."),
                 TextFont {
                     font_size: 40.0,
@@ -94,6 +95,15 @@ pub fn get_material_handle(
                         ..default()
                     },
                     UiTargetCamera(texture_camera),
+                    // adjust for the 40 deg angle of the hud
+                    UiTransform {
+                        scale: {
+                            let tilt_angle_degrees = 40.0_f32;
+                            let vertical_stretch = 1.0 / tilt_angle_degrees.to_radians().cos();
+                            Vec2::new(1.0, vertical_stretch)
+                        },
+                        ..Default::default()
+                    },
                 ))
                 .with_children(|parent| {
                     parent.spawn((
@@ -103,7 +113,7 @@ pub fn get_material_handle(
                             ..default()
                         },
                         ScreenUiElement::AirspeedKts,
-                        bundle.clone(),
+                        text_bundle.clone(),
                     ));
                     parent.spawn((
                         Node {
@@ -113,7 +123,7 @@ pub fn get_material_handle(
                             ..default()
                         },
                         ScreenUiElement::SpeedMach,
-                        bundle.clone(),
+                        text_bundle.clone(),
                     ));
                     parent.spawn((
                         Node {
@@ -122,7 +132,19 @@ pub fn get_material_handle(
                             ..default()
                         },
                         ScreenUiElement::Altitude,
-                        bundle,
+                        text_bundle,
+                    ));
+                    parent.spawn((
+                        Node {
+                            position_type: PositionType::Absolute,
+                            width: percent(50.0),
+                            left: percent(25.0),
+                            top: percent(50.0),
+                            height: px(5.0),
+                            ..default()
+                        },
+                        BackgroundColor(GREEN.into()),
+                        ScreenUiElement::Horizon,
                     ));
                 });
 
@@ -136,6 +158,7 @@ pub fn get_material_handle(
                 ..default()
             })
         }
+
         _ => {
             let label = match screen_data.screen {
                 Screens::Left => ScreenUiElement::Throttle,
@@ -196,36 +219,54 @@ pub fn get_material_handle(
 }
 
 pub fn update_screens(
-    query: Query<(&mut Text, &ScreenUiElement)>,
+    query: Query<(Option<&mut Text>, &ScreenUiElement, &mut UiTransform)>,
     input_axis: Res<InputAxis>,
     vel_tf: Single<(&LinearVelocity, &Transform), With<Aircraft>>,
 ) {
     let (vel, tf) = *vel_tf;
-    for (mut text, screen) in query {
-        match screen {
-            ScreenUiElement::Throttle => {
-                *text = Text::new(format!("{:.2}%", input_axis.throttle * 100.0))
-            }
-            ScreenUiElement::AirspeedKts => {
-                *text = Text::new(format!("{}", (tf.forward().dot(vel.0) * M_S_TO_KTS) as i32))
-            }
-            ScreenUiElement::Altitude => {
-                *text = Text::new(format!("{}", (tf.translation.y * METRES_TO_FEET) as i32))
-            }
-            ScreenUiElement::SpeedMach => {
-                let velocity_dir = vel_tf.0.to_vec3a().to_vec3();
+    for (text, screen, mut ui_transform) in query {
+        if let Some(mut text) = text {
+            match screen {
+                ScreenUiElement::Throttle => {
+                    *text = Text::new(format!("{:.2}%", input_axis.throttle * 100.0))
+                }
+                ScreenUiElement::AirspeedKts => {
+                    *text = Text::new(format!("{}", (tf.forward().dot(vel.0) * M_S_TO_KTS) as i32))
+                }
+                ScreenUiElement::Altitude => {
+                    *text = Text::new(format!("{}", (tf.translation.y * METRES_TO_FEET) as i32))
+                }
+                ScreenUiElement::SpeedMach => {
+                    let velocity_dir = vel_tf.0.to_vec3a().to_vec3();
 
-                let transform = vel_tf.1;
-                let sin = transform
-                    .forward()
-                    .cross(velocity_dir)
-                    .dot(transform.right().as_vec3());
-                let cos = transform.forward().dot(velocity_dir);
-                let aoa = -sin.atan2(cos).to_degrees();
+                    let transform = vel_tf.1;
+                    let sin = transform
+                        .forward()
+                        .cross(velocity_dir)
+                        .dot(transform.right().as_vec3());
+                    let cos = transform.forward().dot(velocity_dir);
+                    let aoa = -sin.atan2(cos).to_degrees();
 
-                *text = Text::new(format!("AOA {:.2}", aoa))
+                    *text = Text::new(format!("AOA {:.2}", aoa))
+                }
+
+                _ => *text = Text::new("todo!()"),
             }
-            _ => *text = Text::new("todo!()"),
+        } else {
+            match screen {
+                ScreenUiElement::Horizon => {
+                    let (_, pitch, roll) = tf.rotation.to_euler(EulerRot::YXZ);
+
+                    ui_transform.rotation.sin = roll.sin();
+                    ui_transform.rotation.cos = roll.cos();
+
+                    let sensitivity = 3000.0;
+                    ui_transform.translation.y = px(pitch * sensitivity);
+
+                    ui_transform.translation.x = px(0.0);
+                }
+                _ => {}
+            }
         }
     }
 }
