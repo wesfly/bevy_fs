@@ -119,10 +119,14 @@ pub fn poll_terrain(
     camera: Single<&Transform, With<Camera>>,
     mut messages: MessageWriter<ChunkMessage>,
 ) {
-    let chunk_size = if settings.terrain.level_of_detail != 14 {
-        2_000.0 * ((14 - settings.terrain.level_of_detail) * 2) as f32
+    let base_size = 2048.0;
+
+    let chunk_size = if settings.terrain.level_of_detail <= 14 {
+        let scale_factor = 2.0_f32.powi((14 - settings.terrain.level_of_detail) as i32);
+        base_size * scale_factor
     } else {
-        2_000.0
+        let scale_factor = 2.0_f32.powi((settings.terrain.level_of_detail - 14) as i32);
+        base_size / scale_factor
     };
 
     for (entity, mut task) in &mut tasks {
