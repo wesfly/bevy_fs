@@ -50,7 +50,7 @@ impl Coordinates {
         let tile_y = y.floor() as u32;
 
         TerrariumCoords {
-            z: zoom as u8,
+            z: zoom,
             x: tile_x,
             y: tile_y,
         }
@@ -77,12 +77,12 @@ pub fn spawn_terrain(
             let coords = &settings.terrain.coordinates;
 
             let mut coords =
-                Coordinates::to_terrarium_coords(&coords, settings.terrain.level_of_detail);
+                Coordinates::to_terrarium_coords(coords, settings.terrain.level_of_detail);
 
-            coords.y += y as u32;
+            coords.y += y;
             coords.y -= CHUNKS_PER_SIDE / 2;
 
-            coords.x += x as u32;
+            coords.x += x;
             coords.x -= CHUNKS_PER_SIDE / 2;
 
             coord_list.0.push(coords.clone());
@@ -130,11 +130,11 @@ pub fn poll_terrain(
     };
 
     for (entity, mut task) in &mut tasks {
-        if let Some(_) = future::block_on(future::poll_once(&mut task.0)) {
+        if future::block_on(future::poll_once(&mut task.0)).is_some() {
             let translation = Vec3::new(
-                chunk_size as f32 * task.1.0 as f32 - chunk_size * 0.5 * CHUNKS_PER_SIDE as f32,
+                chunk_size * task.1.0 as f32 - chunk_size * 0.5 * CHUNKS_PER_SIDE as f32,
                 0.0,
-                chunk_size as f32 * task.1.1 as f32 - chunk_size * 0.5 * CHUNKS_PER_SIDE as f32,
+                chunk_size * task.1.1 as f32 - chunk_size * 0.5 * CHUNKS_PER_SIDE as f32,
             );
 
             // Check if terrain should even be spawned
@@ -166,6 +166,7 @@ impl Chunk {
         for message in messages.read() {
             match &message.0 {
                 ChunkMessages::Spawn(translation, coord, chunk_size) => {
+                    warn!("Failed to decode tile, skipping...");
                     Chunk::spawn(
                         &mut commands,
                         &mut meshes,
@@ -174,7 +175,7 @@ impl Chunk {
                         translation,
                         coord,
                     )
-                    .unwrap_or(warn!("Failed to decode tile, skipping..."));
+                    .unwrap_or(());
                 }
                 ChunkMessages::Despawn(entity) => {
                     Self::despawn(entity, &mut commands);
@@ -220,7 +221,7 @@ impl Chunk {
             let mut terrain = Mesh::from(
                 Plane3d::default()
                     .mesh()
-                    .size(*chunk_size as f32, *chunk_size as f32)
+                    .size(*chunk_size, *chunk_size)
                     .subdivisions(width - 2),
             );
 

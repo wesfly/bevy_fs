@@ -63,7 +63,7 @@ impl LandingGear {
         mut phase: Local<LdgGearPhase>,
         ready_vec: Local<Vec<bool>>,
     ) {
-        if let Some(_) = landing_gear_messages.read().last() {
+        if landing_gear_messages.read().last().is_some() {
             match *status {
                 LandingGearStatus::Deployed => {
                     *phase = LdgGearPhase::Phase1;

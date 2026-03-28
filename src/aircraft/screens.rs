@@ -253,19 +253,16 @@ pub fn update_screens(
                 _ => *text = Text::new("todo!()"),
             }
         } else {
-            match screen {
-                ScreenUiElement::Horizon => {
-                    let (_, pitch, roll) = tf.rotation.to_euler(EulerRot::YXZ);
+            if let ScreenUiElement::Horizon = screen {
+                let (_, pitch, roll) = tf.rotation.to_euler(EulerRot::YXZ);
 
-                    ui_transform.rotation.sin = roll.sin();
-                    ui_transform.rotation.cos = roll.cos();
+                ui_transform.rotation.sin = roll.sin();
+                ui_transform.rotation.cos = roll.cos();
 
-                    let sensitivity = 3000.0;
-                    ui_transform.translation.y = px(pitch * sensitivity);
+                let sensitivity = 3000.0;
+                ui_transform.translation.y = px(pitch * sensitivity);
 
-                    ui_transform.translation.x = px(0.0);
-                }
-                _ => {}
+                ui_transform.translation.x = px(0.0);
             }
         }
     }

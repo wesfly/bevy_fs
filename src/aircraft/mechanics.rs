@@ -221,14 +221,11 @@ pub fn rho(altitude_m: f64) -> Atmosphere {
     // Calculate Density (Rho) using the Ideal Gas Law
     let density = (pressure * M) / (R * temperature);
 
-    let result = Atmosphere {
+    Atmosphere {
         pressure,
         density,
         temperature,
-    };
-    // dbg!(&result);
-
-    result
+    }
 }
 
 fn thrust(input: &InputAxis, forward: &Dir3) -> Vec3 {
