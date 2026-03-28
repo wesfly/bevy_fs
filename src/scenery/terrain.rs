@@ -174,7 +174,7 @@ impl Chunk {
                         translation,
                         coord,
                     )
-                    .unwrap();
+                    .unwrap_or(warn!("Failed to decode tile, skipping..."));
                 }
                 ChunkMessages::Despawn(entity) => {
                     Self::despawn(entity, &mut commands);
