@@ -1,6 +1,6 @@
 use crate::{InputAxis, RunOnceSystemList, aircraft::Aircraft};
 use avian3d::prelude::LinearVelocity;
-use bevy::{input_focus::InputFocus, prelude::*};
+use bevy::{input_focus::InputFocus, prelude::*, window::WindowMode};
 
 #[derive(Component)]
 pub struct MenuCamera;
@@ -99,7 +99,12 @@ impl Plugin for UI {
             .add_message::<UIMessage>()
             .add_systems(
                 Update,
-                (Self::ui_main_loop, Self::update_ui_hud, Self::button_system),
+                (
+                    Self::ui_main_loop,
+                    Self::update_ui_hud,
+                    Self::button_system,
+                    toggle_fullscreen,
+                ),
             );
     }
 }
@@ -242,5 +247,16 @@ impl UI {
             };
             text.0 = string;
         }
+    }
+}
+
+fn toggle_fullscreen(input: Res<ButtonInput<KeyCode>>, mut windows: Query<&mut Window>) {
+    if input.just_pressed(KeyCode::F11) {
+        let mut window = windows.single_mut().unwrap();
+
+        window.mode = match window.mode {
+            WindowMode::Windowed => WindowMode::BorderlessFullscreen(MonitorSelection::Current),
+            _ => WindowMode::Windowed,
+        };
     }
 }
