@@ -45,7 +45,7 @@ The settings are located in `settings.json` at the root of this project.
 
 ## Terrain
 
-Terrain data will be stored in the `terrain_cache` folder after the first fetch (the game window will be unresponsive while fetching). To change the location or the resolution, change `terrain.coordinates` or `terrain.level_of_detail` in the settings. Note that the maximum level of detail is 14, in some regions even less.
+Terrain data will be stored in the `terrain_cache` folder after the first fetch (the game window will be unresponsive while fetching). To change the coordinates or the resolution, change `terrain.coordinates` or `terrain.level_of_detail` in the settings. Note that the general maximum level of detail is 15, but in most regions 14 or even less. Here is an interactive map for different resolutions: https://mapterhorn.com/coverage/
 
 ## Controls
 
