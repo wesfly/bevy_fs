@@ -108,6 +108,16 @@ pub fn get_material_handle(
                     parent.spawn((
                         Node {
                             position_type: PositionType::Absolute,
+                            left: px(150.0),
+                            bottom: px(400.0),
+                            ..default()
+                        },
+                        ScreenUiElement::SpeedMach,
+                        bundle.clone(),
+                    ));
+                    parent.spawn((
+                        Node {
+                            position_type: PositionType::Absolute,
                             right: px(150.0),
                             ..default()
                         },
@@ -201,6 +211,19 @@ pub fn update_screens(
             }
             ScreenUiElement::Altitude => {
                 *text = Text::new(format!("{}", (tf.translation.y * METRES_TO_FEET) as i32))
+            }
+            ScreenUiElement::SpeedMach => {
+                let velocity_dir = vel_tf.0.to_vec3a().to_vec3();
+
+                let transform = vel_tf.1;
+                let sin = transform
+                    .forward()
+                    .cross(velocity_dir)
+                    .dot(transform.right().as_vec3());
+                let cos = transform.forward().dot(velocity_dir);
+                let aoa = -sin.atan2(cos).to_degrees();
+
+                *text = Text::new(format!("AOA {:.2}", aoa))
             }
             _ => *text = Text::new("todo!()"),
         }
