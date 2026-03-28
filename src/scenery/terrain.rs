@@ -57,6 +57,8 @@ impl Coordinates {
     }
 }
 
+const CHUNKS_PER_SIDE: u32 = 9;
+
 #[derive(Component)]
 pub struct SpawnTerrain(Task<()>, (usize, usize));
 
@@ -70,20 +72,18 @@ pub fn spawn_terrain(
 ) {
     let thread_pool = AsyncComputeTaskPool::get();
 
-    let chunks_per_side: u32 = 9;
-
-    for x in 0..chunks_per_side {
-        for y in 0..chunks_per_side {
+    for x in 0..CHUNKS_PER_SIDE {
+        for y in 0..CHUNKS_PER_SIDE {
             let coords = &settings.terrain.coordinates;
 
             let mut coords =
                 Coordinates::to_terrarium_coords(&coords, settings.terrain.level_of_detail);
 
             coords.y += y as u32;
-            coords.y -= chunks_per_side / 2;
+            coords.y -= CHUNKS_PER_SIDE / 2;
 
             coords.x += x as u32;
-            coords.x -= chunks_per_side / 2;
+            coords.x -= CHUNKS_PER_SIDE / 2;
 
             coord_list.0.push(coords.clone());
             let tokio_handle = TOKIO_RUNTIME.spawn(get_terrain(coords));
@@ -128,9 +128,9 @@ pub fn poll_terrain(
     for (entity, mut task) in &mut tasks {
         if let Some(_) = future::block_on(future::poll_once(&mut task.0)) {
             let translation = Vec3::new(
-                chunk_size as f32 * task.1.0 as f32 - chunk_size * 0.5 * 9.0,
+                chunk_size as f32 * task.1.0 as f32 - chunk_size * 0.5 * CHUNKS_PER_SIDE as f32,
                 0.0,
-                chunk_size as f32 * task.1.1 as f32 - chunk_size * 0.5 * 9.0,
+                chunk_size as f32 * task.1.1 as f32 - chunk_size * 0.5 * CHUNKS_PER_SIDE as f32,
             );
 
             // Check if terrain should even be spawned
@@ -139,7 +139,7 @@ pub fn poll_terrain(
                 break;
             }
 
-            let coord = &coords.0[task.1.0 * 9 + task.1.1];
+            let coord = &coords.0[task.1.0 * CHUNKS_PER_SIDE as usize + task.1.1];
 
             messages.write(ChunkMessage(ChunkMessages::Spawn(
                 translation,
