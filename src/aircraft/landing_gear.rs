@@ -31,7 +31,7 @@ pub enum LandingGearCommands {
 #[derive(Message)]
 pub struct LandingGearCommand(pub LandingGearCommands);
 
-#[derive(Resource, Deserialize, Debug, Default)]
+#[derive(Resource, Deserialize, Debug, Default, Clone)]
 pub enum LandingGearStatus {
     Deploying,
     Deployed,
@@ -63,19 +63,20 @@ impl LandingGear {
         mut phase: Local<LdgGearPhase>,
         ready_vec: Local<Vec<bool>>,
     ) {
-        if let Some(message) = landing_gear_messages.read().last() {
-            match message.0 {
-                LandingGearCommands::Toggle => {
-                    *status = match *status {
-                        LandingGearStatus::Deploying => LandingGearStatus::Retracting,
-                        LandingGearStatus::Deployed => LandingGearStatus::Retracting,
-                        LandingGearStatus::Retracting => LandingGearStatus::Deploying,
-                        LandingGearStatus::Retracted => LandingGearStatus::Deploying,
-                    };
+        if let Some(_) = landing_gear_messages.read().last() {
+            match *status {
+                LandingGearStatus::Deployed => {
                     *phase = LdgGearPhase::Phase1;
+                    *status = LandingGearStatus::Retracting;
                     info!("Toggled landing gear");
                 }
-            }
+                LandingGearStatus::Retracted => {
+                    *phase = LdgGearPhase::Phase1;
+                    *status = LandingGearStatus::Deploying;
+                    info!("Toggled landing gear");
+                }
+                _ => {}
+            };
         }
 
         match *status {
