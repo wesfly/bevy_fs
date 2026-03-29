@@ -73,14 +73,15 @@ pub fn get_material_handle(
 
     match screen_data.screen {
         Screens::Hud => {
+            const HUD_COLOUR: Color = Color::Srgba(GREEN);
+
             let text_bundle = (
-                Text::new("loading..."),
                 TextFont {
-                    font_size: 40.0,
+                    font_size: 32.0,
                     font: asset_server.load("fonts/SourceCodePro-Bold.ttf"),
                     ..default()
                 },
-                TextColor(GREEN.into()),
+                TextColor(HUD_COLOUR),
             );
 
             commands
@@ -95,10 +96,10 @@ pub fn get_material_handle(
                         ..default()
                     },
                     UiTargetCamera(texture_camera),
-                    // adjust for the 40 deg angle of the hud
+                    // adjust for the 41 deg angle of the hud
                     UiTransform {
                         scale: {
-                            let tilt_angle_degrees = 40.0_f32;
+                            let tilt_angle_degrees = 41.0_f32;
                             let vertical_stretch = 1.0 / tilt_angle_degrees.to_radians().cos();
                             Vec2::new(1.0, vertical_stretch)
                         },
@@ -113,6 +114,7 @@ pub fn get_material_handle(
                             ..default()
                         },
                         ScreenUiElement::AirspeedKts,
+                        Text::new("loading..."),
                         text_bundle.clone(),
                     ));
                     parent.spawn((
@@ -123,6 +125,7 @@ pub fn get_material_handle(
                             ..default()
                         },
                         ScreenUiElement::SpeedMach,
+                        Text::new("loading..."),
                         text_bundle.clone(),
                     ));
                     parent.spawn((
@@ -132,20 +135,77 @@ pub fn get_material_handle(
                             ..default()
                         },
                         ScreenUiElement::Altitude,
-                        text_bundle,
+                        Text::new("loading..."),
+                        text_bundle.clone(),
                     ));
-                    parent.spawn((
-                        Node {
-                            position_type: PositionType::Absolute,
-                            width: percent(50.0),
-                            left: percent(25.0),
-                            top: percent(50.0),
-                            height: px(5.0),
-                            ..default()
-                        },
-                        BackgroundColor(GREEN.into()),
-                        ScreenUiElement::Horizon,
-                    ));
+                    parent
+                        .spawn((
+                            Node {
+                                position_type: PositionType::Absolute,
+                                width: percent(50.0),
+                                left: percent(25.0),
+                                top: percent(50.0),
+                                height: px(2.0),
+                                ..default()
+                            },
+                            BackgroundColor(HUD_COLOUR),
+                            ScreenUiElement::Horizon,
+                        ))
+                        .with_children(|parent| {
+                            for i in -10..10 {
+                                if i != 0 {
+                                    let text = format!("{}", i * -10);
+                                    parent.spawn((
+                                        Node {
+                                            position_type: PositionType::Absolute,
+                                            right: percent(25.0),
+                                            top: px(100.0 * i as f32 - 10.0),
+                                            ..default()
+                                        },
+                                        Text::new(&text),
+                                        text_bundle.clone(),
+                                        TextColor(HUD_COLOUR),
+                                    ));
+
+                                    parent.spawn((
+                                        Node {
+                                            position_type: PositionType::Absolute,
+                                            left: percent(15.0),
+                                            top: px(100.0 * i as f32 - 10.0),
+                                            ..default()
+                                        },
+                                        text_bundle.clone(),
+                                        Text::new(&text),
+                                        TextColor(HUD_COLOUR),
+                                    ));
+
+                                    for j in 0..3 {
+                                        parent.spawn((
+                                            Node {
+                                                position_type: PositionType::Absolute,
+                                                width: px(10.0),
+                                                left: percent(35.0 - j as f32 * 5.0),
+                                                top: px(100.0 * i as f32),
+                                                height: px(2.0),
+                                                ..default()
+                                            },
+                                            BackgroundColor(HUD_COLOUR),
+                                        ));
+                                        parent.spawn((
+                                            Node {
+                                                position_type: PositionType::Absolute,
+                                                width: px(10.0),
+                                                right: percent(35.0 + j as f32 * 5.0),
+                                                top: px(100.0 * i as f32),
+                                                height: px(2.0),
+                                                ..default()
+                                            },
+                                            BackgroundColor(HUD_COLOUR),
+                                        ));
+                                    }
+                                }
+                            }
+                        });
                 });
 
             let brt = 60.0;
@@ -199,7 +259,7 @@ pub fn get_material_handle(
                                 label,
                                 Text::new("loading..."),
                                 TextFont {
-                                    font_size: 40.0,
+                                    // font_size: 40.0,
                                     ..default()
                                 },
                                 TextColor::WHITE,
@@ -254,14 +314,14 @@ pub fn update_screens(
             }
         } else {
             if let ScreenUiElement::Horizon = screen {
-                let (_, pitch, roll) = tf.rotation.to_euler(EulerRot::YXZ);
+                let (_, _, roll) = tf.rotation.to_euler(EulerRot::YXZ);
+                ui_transform.rotation = Rot2::radians(roll);
 
-                ui_transform.rotation.sin = roll.sin();
-                ui_transform.rotation.cos = roll.cos();
+                let forward = tf.forward();
+                let pitch = forward.y.asin();
 
-                let sensitivity = 3000.0;
-                ui_transform.translation.y = px(pitch * sensitivity);
-
+                let px_per_rad = 2800.0;
+                ui_transform.translation.y = px(pitch * px_per_rad);
                 ui_transform.translation.x = px(0.0);
             }
         }
