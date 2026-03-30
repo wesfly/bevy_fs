@@ -66,7 +66,7 @@ pub fn spawn_terrain(mut commands: Commands) {
 }
 
 #[derive(Component)]
-pub struct SpawnTerrain(Task<()>, TerrariumCoords);
+pub struct SpawnTerrain(Task<Option<(Mesh, Collider)>>, TerrariumCoords);
 
 static TOKIO_RUNTIME: Lazy<Runtime> =
     Lazy::new(|| Runtime::new().expect("Failed to create Tokio runtime"));
@@ -111,12 +111,13 @@ pub fn load_dynamic_chunks(
                     y: terrarium_y,
                 };
 
-                let tokio_handle = TOKIO_RUNTIME.spawn(get_terrain(chunk_coord.clone()));
+                let tokio_handle =
+                    TOKIO_RUNTIME.spawn(get_terrain(chunk_coord.clone(), chunk_size));
 
                 let task = thread_pool.spawn(async move {
                     match tokio_handle.await {
                         Ok(terrain) => terrain,
-                        Err(e) => panic!("make this an issue pls thx: {:?}", e),
+                        Err(e) => panic!("make this an issue pls thx:\n {:#?}", e),
                     }
                 });
 
@@ -128,7 +129,7 @@ pub fn load_dynamic_chunks(
 }
 
 pub enum ChunkMessages {
-    Spawn(Vec3, TerrariumCoords, f32),
+    Spawn(Vec3, Mesh, Collider),
     Despawn(Entity),
 }
 
@@ -137,9 +138,6 @@ pub struct ChunkMessage(ChunkMessages);
 
 #[derive(Resource, Default)]
 pub struct LoadedChunks(pub HashSet<(u32, u32)>);
-
-// #[derive(Component)]
-// pub struct ChunkCoord(TerrariumCoords);
 
 pub fn poll_terrain(
     mut commands: Commands,
@@ -164,26 +162,29 @@ pub fn poll_terrain(
     let base_world_y = base_coords.y as f32 * chunk_size;
 
     for (entity, mut task) in &mut tasks {
-        if future::block_on(future::poll_once(&mut task.0)).is_some() {
-            let coord = task.1.clone();
+        if let Some(mesh_collider) = future::block_on(future::poll_once(&mut task.0)) {
+            if let Some((mesh, collider)) = mesh_collider {
+                let coord = task.1.clone();
 
-            // Calculate world position of this chunk
-            let chunk_world_x = coord.x as f32 * chunk_size;
-            let chunk_world_y = coord.y as f32 * chunk_size;
+                // Calculate world position of this chunk
+                let chunk_world_x = coord.x as f32 * chunk_size;
+                let chunk_world_y = coord.y as f32 * chunk_size;
 
-            let translation = Vec3::new(
-                (chunk_world_x - base_world_x) + chunk_size * 0.5,
-                0.0,
-                (chunk_world_y - base_world_y) + chunk_size * 0.5,
-            );
+                let translation = Vec3::new(
+                    (chunk_world_x - base_world_x) + chunk_size * 0.5,
+                    0.0,
+                    (chunk_world_y - base_world_y) + chunk_size * 0.5,
+                );
 
-            // Check if terrain is in render distance
-            if translation.distance(camera.translation) <= settings.terrain.max_render_distance {
-                messages.write(ChunkMessage(ChunkMessages::Spawn(
-                    translation,
-                    coord.clone(),
-                    chunk_size,
-                )));
+                // Check if terrain is in render distance
+                if translation.distance(camera.translation) <= settings.terrain.max_render_distance
+                {
+                    messages.write(ChunkMessage(ChunkMessages::Spawn(
+                        translation,
+                        mesh,
+                        collider,
+                    )));
+                }
             }
 
             commands.entity(entity).remove::<SpawnTerrain>();
@@ -200,15 +201,14 @@ impl Chunk {
     ) {
         for message in messages.read() {
             match &message.0 {
-                ChunkMessages::Spawn(translation, coord, chunk_size) => {
-                    warn!("Failed to decode tile, skipping...");
+                ChunkMessages::Spawn(translation, mesh, collider) => {
                     Chunk::spawn(
                         &mut commands,
                         &mut meshes,
                         &mut materials,
-                        chunk_size,
+                        mesh.clone(),
+                        collider.clone(),
                         translation,
-                        coord.clone(),
                     )
                     .unwrap_or(());
                 }
@@ -224,68 +224,21 @@ impl Chunk {
         commands: &mut Commands<'_, '_>,
         meshes: &mut ResMut<'_, Assets<Mesh>>,
         materials: &mut ResMut<'_, Assets<StandardMaterial>>,
-        chunk_size: &f32,
+        mesh: Mesh,
+        collider: Collider,
         translation: &Vec3,
-        coord: TerrariumCoords,
     ) -> Result<()> {
-        let path = format!("terrain_cache/{}_{}_{}.webp", coord.z, coord.x, coord.y);
-        let Ok(img) = image::load_from_memory_with_format(
-            fs::read(&path)
-                .expect("file to be fetched")
-                .iter()
-                .as_slice(),
-            image::ImageFormat::WebP,
-        ) else {
-            return Err("Failed to decode tile {path}".into());
-        };
-
-        let rgb_img = img.to_rgb8();
-        let (width, height) = rgb_img.dimensions();
-        let mut heights: std::vec::Vec<f32> = Vec::with_capacity((width * height) as usize);
-        for pixel in rgb_img.pixels() {
-            let r = pixel[0] as f32;
-            let g = pixel[1] as f32;
-            let b = pixel[2] as f32;
-
-            let h = (r * 256.0 + g + b / 256.0) - 32768.0;
-            heights.push(h);
-        }
-
-        // unless all elements of heights are the same
-        if !heights.windows(2).all(|w| w[0] == w[1]) {
-            let mut terrain = Mesh::from(
-                Plane3d::default()
-                    .mesh()
-                    .size(*chunk_size, *chunk_size)
-                    .subdivisions(width - 2),
-            );
-
-            if let bevy::mesh::VertexAttributeValues::Float32x3(positions) =
-                terrain.try_attribute_mut(Mesh::ATTRIBUTE_POSITION).unwrap()
-            {
-                assert_eq!(positions.len(), heights.len());
-
-                for (i, pos) in positions.iter_mut().enumerate() {
-                    pos[1] = heights[i]
-                }
-            }
-
-            terrain.compute_normals();
-
-            commands.spawn((
-                Collider::trimesh_from_mesh(&terrain).expect("trimesh_from_mesh to work"),
-                RigidBody::Static,
-                Transform::from_translation(*translation),
-                Mesh3d(meshes.add(terrain)),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: bevy::color::palettes::css::GREEN.into(),
-                    perceptual_roughness: 1.0,
-                    ..Default::default()
-                })),
-            ));
-        } else {
-            info!("all-zero, skipping chunk");
-        }
+        commands.spawn((
+            collider,
+            RigidBody::Static,
+            Transform::from_translation(*translation),
+            Mesh3d(meshes.add(mesh)),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: bevy::color::palettes::css::GREEN.into(),
+                perceptual_roughness: 1.0,
+                ..Default::default()
+            })),
+        ));
 
         Ok(())
     }
@@ -309,12 +262,67 @@ pub fn update_chunks(
     }
 }
 
-async fn get_terrain(coords: TerrariumCoords) {
-    let file_name = format!("terrain_cache/{}_{}_{}.webp", coords.z, coords.x, coords.y);
+async fn get_terrain(coord: TerrariumCoords, chunk_size: f32) -> Option<(Mesh, Collider)> {
+    data_from_file(&coord).await;
+
+    let path = format!("terrain_cache/{}_{}_{}.webp", coord.z, coord.x, coord.y);
+    let img = match image::load_from_memory_with_format(
+        &fs::read(&path).expect("file to be fetched"),
+        image::ImageFormat::WebP,
+    ) {
+        Ok(img) => img,
+        Err(e) => {
+            warn!("Failed to load WebP image: {}, {path}", e);
+            return None;
+        }
+    };
+
+    let rgb_img = img.to_rgb8();
+    let (width, height) = rgb_img.dimensions();
+    let mut heights: std::vec::Vec<f32> = Vec::with_capacity((width * height) as usize);
+
+    for pixel in rgb_img.pixels() {
+        let r = pixel[0] as f32;
+        let g = pixel[1] as f32;
+        let b = pixel[2] as f32;
+
+        let h = (r * 256.0 + g + b / 256.0) - 32768.0;
+        heights.push(h);
+    }
+    if !heights.windows(2).all(|w| w[0] == w[1]) {
+        let mut terrain = Mesh::from(
+            Plane3d::default()
+                .mesh()
+                .size(chunk_size, chunk_size)
+                .subdivisions(width - 2),
+        );
+
+        if let bevy::mesh::VertexAttributeValues::Float32x3(positions) =
+            terrain.try_attribute_mut(Mesh::ATTRIBUTE_POSITION).unwrap()
+        {
+            assert_eq!(positions.len(), heights.len());
+
+            for (i, pos) in positions.iter_mut().enumerate() {
+                pos[1] = heights[i]
+            }
+        }
+
+        terrain.compute_normals();
+
+        let mesh: Mesh = terrain;
+
+        let collider = Collider::trimesh_from_mesh(&mesh).unwrap();
+        return Some((mesh, collider));
+    }
+    None
+}
+
+async fn data_from_file(coord: &TerrariumCoords) {
+    let file_name = format!("terrain_cache/{}_{}_{}.webp", coord.z, coord.x, coord.y);
     if !Path::new(&file_name).exists() {
         let url = format!(
             "https://tiles.mapterhorn.com/{}/{}/{}.webp",
-            coords.z, coords.x, coords.y
+            coord.z, coord.x, coord.y
         );
 
         let response = reqwest::get(url).await.unwrap();
