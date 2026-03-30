@@ -54,7 +54,7 @@ pub fn update_control_surfaces(
             ControlSurfaces::CanardStarboard => {
                 transform.rotation = transform
                     .rotation
-                    .lerp(Quat::from_rotation_x(canards_angle), lerp_speed);
+                    .lerp(Quat::from_rotation_x(-canards_angle), lerp_speed);
             }
             ControlSurfaces::Rudder => {
                 transform.rotation = transform.rotation.lerp(
