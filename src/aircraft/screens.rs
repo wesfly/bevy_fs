@@ -124,7 +124,7 @@ pub fn get_material_handle(
                             bottom: px(400.0),
                             ..default()
                         },
-                        ScreenUiElement::SpeedMach,
+                        ScreenUiElement::Aoa,
                         Text::new("loading..."),
                         text_bundle.clone(),
                     ));
@@ -155,11 +155,12 @@ pub fn get_material_handle(
                             for i in -10..10 {
                                 if i != 0 {
                                     let text = format!("{}", i * -10);
+                                    let top = 360.0 * i as f32;
                                     parent.spawn((
                                         Node {
                                             position_type: PositionType::Absolute,
-                                            right: percent(25.0),
-                                            top: px(100.0 * i as f32 - 10.0),
+                                            right: percent(22.0),
+                                            top: px(top - 20.0),
                                             ..default()
                                         },
                                         Text::new(&text),
@@ -169,8 +170,8 @@ pub fn get_material_handle(
                                     parent.spawn((
                                         Node {
                                             position_type: PositionType::Absolute,
-                                            left: percent(15.0),
-                                            top: px(100.0 * i as f32 - 10.0),
+                                            left: percent(12.0),
+                                            top: px(top - 20.0),
                                             ..default()
                                         },
                                         text_bundle.clone(),
@@ -183,7 +184,7 @@ pub fn get_material_handle(
                                                 position_type: PositionType::Absolute,
                                                 width: px(10.0),
                                                 left: percent(35.0 - j as f32 * 5.0),
-                                                top: px(100.0 * i as f32),
+                                                top: px(top),
                                                 height: px(2.0),
                                                 ..default()
                                             },
@@ -194,7 +195,7 @@ pub fn get_material_handle(
                                                 position_type: PositionType::Absolute,
                                                 width: px(10.0),
                                                 right: percent(35.0 + j as f32 * 5.0),
-                                                top: px(100.0 * i as f32),
+                                                top: px(top),
                                                 height: px(2.0),
                                                 ..default()
                                             },
@@ -294,7 +295,7 @@ pub fn update_screens(
                 ScreenUiElement::Altitude => {
                     *text = Text::new(format!("{}", (tf.translation.y * METRES_TO_FEET) as i32))
                 }
-                ScreenUiElement::SpeedMach => {
+                ScreenUiElement::Aoa => {
                     let velocity_dir = vel_tf.0.to_vec3a().to_vec3();
 
                     let transform = vel_tf.1;
