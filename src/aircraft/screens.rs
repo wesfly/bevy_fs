@@ -164,7 +164,6 @@ pub fn get_material_handle(
                                         },
                                         Text::new(&text),
                                         text_bundle.clone(),
-                                        TextColor(HUD_COLOUR),
                                     ));
 
                                     parent.spawn((
@@ -176,7 +175,6 @@ pub fn get_material_handle(
                                         },
                                         text_bundle.clone(),
                                         Text::new(&text),
-                                        TextColor(HUD_COLOUR),
                                     ));
 
                                     for j in 0..3 {
