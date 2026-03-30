@@ -105,24 +105,22 @@ pub fn load_dynamic_chunks(
             if !loaded_chunks.0.contains(&chunk_key) {
                 let thread_pool = AsyncComputeTaskPool::get();
 
-                let tokio_handle = TOKIO_RUNTIME.spawn(get_terrain(coords.clone()));
-
-                let coord = TerrariumCoords {
+                let chunk_coord = TerrariumCoords {
                     z: settings.terrain.level_of_detail,
                     x: terrarium_x,
                     y: terrarium_y,
                 };
 
-                let coords = coords.clone();
+                let tokio_handle = TOKIO_RUNTIME.spawn(get_terrain(chunk_coord.clone()));
+
                 let task = thread_pool.spawn(async move {
-                    get_terrain(coords).await;
                     match tokio_handle.await {
                         Ok(terrain) => terrain,
                         Err(e) => panic!("make this an issue pls thx: {:?}", e),
                     }
                 });
 
-                commands.spawn(SpawnTerrain(task, coord.clone()));
+                commands.spawn(SpawnTerrain(task, chunk_coord.clone()));
                 loaded_chunks.0.insert(chunk_key);
             }
         }
