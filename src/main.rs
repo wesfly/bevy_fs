@@ -28,7 +28,7 @@ use crate::{
         landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
         lights::{ACOL_OFF_DURATION, Light, LightsTimers, STROBE_OFF_DURATION},
     },
-    camera::{Camera, CameraPosition, CameraSettings},
+    camera::{Camera, CameraPosition, CameraSettings, rotate_sun},
     input::InputAxis,
     scenery::terrain::{Chunk, ChunkMessage, TerrainPathList, TerrainSettings, poll_terrain},
     sse::Sse,
@@ -165,6 +165,7 @@ fn main() {
                 scenery::terrain::update_chunks,
                 Chunk::message_reader,
                 Button::listener,
+                rotate_sun,
             ),
         )
         .add_systems(FixedPostUpdate, Damage::handler);
