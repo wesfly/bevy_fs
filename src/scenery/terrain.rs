@@ -238,6 +238,7 @@ impl Chunk {
                 perceptual_roughness: 1.0,
                 ..Default::default()
             })),
+            Chunk,
         ));
 
         Ok(())
