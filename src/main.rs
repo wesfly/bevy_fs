@@ -30,7 +30,7 @@ use crate::{
     },
     camera::{Camera, CameraPosition, CameraSettings, rotate_sun},
     input::InputAxis,
-    scenery::terrain::{Chunk, ChunkMessage, TerrainPathList, TerrainSettings, poll_terrain},
+    scenery::terrain::{Chunk, ChunkMessage, TerrainSettings, load_dynamic_chunks, poll_terrain},
     sse::Sse,
     ui::UI,
 };
@@ -133,7 +133,6 @@ fn main() {
         .init_resource::<RunOnceSystemList>()
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AircraftState::default())
-        .insert_resource(TerrainPathList(vec![]))
         .insert_resource(LandingGearStatus::Retracted)
         .insert_resource(CameraPosition(Transform {
             translation: Vec3::ZERO,
@@ -166,6 +165,7 @@ fn main() {
                 Chunk::message_reader,
                 Button::listener,
                 rotate_sun,
+                load_dynamic_chunks,
             ),
         )
         .add_systems(FixedPostUpdate, Damage::handler);

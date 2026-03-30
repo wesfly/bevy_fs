@@ -7,6 +7,7 @@ use bevy::{
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::{
+    collections::HashSet,
     f64::consts::PI,
     fs::{self, File},
     io::Write,
@@ -57,45 +58,73 @@ impl Coordinates {
     }
 }
 
-const CHUNKS_PER_SIDE: u32 = 9;
+const CHUNKS_PER_SIDE: u32 = 5;
+const BASE_SIZE: f32 = 2048.0;
+
+pub fn spawn_terrain(mut commands: Commands) {
+    commands.init_resource::<LoadedChunks>();
+}
 
 #[derive(Component)]
-pub struct SpawnTerrain(Task<()>, (usize, usize));
+pub struct SpawnTerrain(Task<()>, TerrariumCoords);
 
 static TOKIO_RUNTIME: Lazy<Runtime> =
     Lazy::new(|| Runtime::new().expect("Failed to create Tokio runtime"));
 
-pub fn spawn_terrain(
+pub fn load_dynamic_chunks(
     mut commands: Commands,
-    mut coord_list: ResMut<TerrainPathList>,
     settings: Res<Settings>,
+    camera: Single<&Transform, With<Camera>>,
+    mut loaded_chunks: ResMut<LoadedChunks>,
 ) {
-    let thread_pool = AsyncComputeTaskPool::get();
+    let chunk_size = if settings.terrain.level_of_detail <= 14 {
+        let scale_factor = 2.0_f32.powi((14 - settings.terrain.level_of_detail) as i32);
+        BASE_SIZE * scale_factor
+    } else {
+        let scale_factor = 2.0_f32.powi((settings.terrain.level_of_detail - 14) as i32);
+        BASE_SIZE / scale_factor
+    };
 
-    for x in 0..CHUNKS_PER_SIDE {
-        for y in 0..CHUNKS_PER_SIDE {
-            let coords = &settings.terrain.coordinates;
+    let coords = Coordinates::to_terrarium_coords(
+        &settings.terrain.coordinates,
+        settings.terrain.level_of_detail,
+    );
+    // The chunk where the camera is
+    let camera_chunk_x = (camera.translation.x / chunk_size).round() as i32;
+    let camera_chunk_y = (camera.translation.z / chunk_size).round() as i32;
 
-            let mut coords =
-                Coordinates::to_terrarium_coords(coords, settings.terrain.level_of_detail);
+    let radius = (CHUNKS_PER_SIDE / 2) as i32;
 
-            coords.y += y;
-            coords.y -= CHUNKS_PER_SIDE / 2;
+    for x in -radius..radius {
+        for y in -radius..radius {
+            let terrarium_x = coords.x.wrapping_add((camera_chunk_x + x) as u32);
+            let terrarium_y = coords.y.wrapping_add((camera_chunk_y + y) as u32);
 
-            coords.x += x;
-            coords.x -= CHUNKS_PER_SIDE / 2;
+            let chunk_key = (terrarium_x, terrarium_y);
 
-            coord_list.0.push(coords.clone());
-            let tokio_handle = TOKIO_RUNTIME.spawn(get_terrain(coords));
+            if !loaded_chunks.0.contains(&chunk_key) {
+                let thread_pool = AsyncComputeTaskPool::get();
 
-            let task = thread_pool.spawn(async move {
-                match tokio_handle.await {
-                    Ok(terrain) => terrain,
-                    Err(e) => panic!("make this an issue pls thx: {:?}", e),
-                }
-            });
+                let tokio_handle = TOKIO_RUNTIME.spawn(get_terrain(coords.clone()));
 
-            commands.spawn(SpawnTerrain(task, (x as usize, y as usize)));
+                let coord = TerrariumCoords {
+                    z: settings.terrain.level_of_detail,
+                    x: terrarium_x,
+                    y: terrarium_y,
+                };
+
+                let coords = coords.clone();
+                let task = thread_pool.spawn(async move {
+                    get_terrain(coords).await;
+                    match tokio_handle.await {
+                        Ok(terrain) => terrain,
+                        Err(e) => panic!("make this an issue pls thx: {:?}", e),
+                    }
+                });
+
+                commands.spawn(SpawnTerrain(task, coord.clone()));
+                loaded_chunks.0.insert(chunk_key);
+            }
         }
     }
 }
@@ -108,48 +137,56 @@ pub enum ChunkMessages {
 #[derive(Message)]
 pub struct ChunkMessage(ChunkMessages);
 
-#[derive(Resource)]
-pub struct TerrainPathList(pub Vec<TerrariumCoords>);
+#[derive(Resource, Default)]
+pub struct LoadedChunks(pub HashSet<(u32, u32)>);
+
+// #[derive(Component)]
+// pub struct ChunkCoord(TerrariumCoords);
 
 pub fn poll_terrain(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut SpawnTerrain)>,
-    coords: Res<TerrainPathList>,
     settings: Res<Settings>,
     camera: Single<&Transform, With<Camera>>,
     mut messages: MessageWriter<ChunkMessage>,
 ) {
-    let base_size = 2048.0;
-
     let chunk_size = if settings.terrain.level_of_detail <= 14 {
         let scale_factor = 2.0_f32.powi((14 - settings.terrain.level_of_detail) as i32);
-        base_size * scale_factor
+        BASE_SIZE * scale_factor
     } else {
         let scale_factor = 2.0_f32.powi((settings.terrain.level_of_detail - 14) as i32);
-        base_size / scale_factor
+        BASE_SIZE / scale_factor
     };
+
+    let base_coords = Coordinates::to_terrarium_coords(
+        &settings.terrain.coordinates,
+        settings.terrain.level_of_detail,
+    );
+    let base_world_x = base_coords.x as f32 * chunk_size;
+    let base_world_y = base_coords.y as f32 * chunk_size;
 
     for (entity, mut task) in &mut tasks {
         if future::block_on(future::poll_once(&mut task.0)).is_some() {
+            let coord = task.1.clone();
+
+            // Calculate world position of this chunk
+            let chunk_world_x = coord.x as f32 * chunk_size;
+            let chunk_world_y = coord.y as f32 * chunk_size;
+
             let translation = Vec3::new(
-                chunk_size * task.1.0 as f32 - chunk_size * 0.5 * CHUNKS_PER_SIDE as f32,
+                (chunk_world_x - base_world_x) + chunk_size * 0.5,
                 0.0,
-                chunk_size * task.1.1 as f32 - chunk_size * 0.5 * CHUNKS_PER_SIDE as f32,
+                (chunk_world_y - base_world_y) + chunk_size * 0.5,
             );
 
-            // Check if terrain should even be spawned
-            if translation.distance(camera.translation) > settings.terrain.max_render_distance {
-                commands.entity(entity).remove::<SpawnTerrain>();
-                break;
+            // Check if terrain is in render distance
+            if translation.distance(camera.translation) <= settings.terrain.max_render_distance {
+                messages.write(ChunkMessage(ChunkMessages::Spawn(
+                    translation,
+                    coord.clone(),
+                    chunk_size,
+                )));
             }
-
-            let coord = &coords.0[task.1.0 * CHUNKS_PER_SIDE as usize + task.1.1];
-
-            messages.write(ChunkMessage(ChunkMessages::Spawn(
-                translation,
-                coord.clone(),
-                chunk_size,
-            )));
 
             commands.entity(entity).remove::<SpawnTerrain>();
         }
@@ -173,13 +210,13 @@ impl Chunk {
                         &mut materials,
                         chunk_size,
                         translation,
-                        coord,
+                        coord.clone(),
                     )
                     .unwrap_or(());
                 }
                 ChunkMessages::Despawn(entity) => {
                     Self::despawn(entity, &mut commands);
-                    info!("despawning chunks: {entity}")
+                    info!("Despawning chunks: {entity}")
                 }
             };
         }
@@ -191,7 +228,7 @@ impl Chunk {
         materials: &mut ResMut<'_, Assets<StandardMaterial>>,
         chunk_size: &f32,
         translation: &Vec3,
-        coord: &TerrariumCoords,
+        coord: TerrariumCoords,
     ) -> Result<()> {
         let path = format!("terrain_cache/{}_{}_{}.webp", coord.z, coord.x, coord.y);
         let Ok(img) = image::load_from_memory_with_format(
@@ -247,7 +284,6 @@ impl Chunk {
                     perceptual_roughness: 1.0,
                     ..Default::default()
                 })),
-                Chunk,
             ));
         } else {
             info!("all-zero, skipping chunk");
