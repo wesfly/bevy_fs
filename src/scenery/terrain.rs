@@ -238,7 +238,6 @@ impl Chunk {
         translation: &Vec3,
         coord: &TerrariumCoords,
     ) {
-        dbg!(&coord);
         commands.spawn((
             collider,
             RigidBody::Static,
@@ -272,8 +271,8 @@ async fn get_terrain(coord: TerrariumCoords, chunk_size: f32) -> Option<(Mesh, C
         image::ImageFormat::WebP,
     ) {
         Ok(img) => img,
-        Err(e) => {
-            warn!("Failed to load WebP image: {}, {path}", e);
+        Err(_) => {
+            warn!("Failed to load WebP image, skipping");
             return None;
         }
     };
