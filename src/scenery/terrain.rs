@@ -28,15 +28,15 @@ struct Coordinates {
     long: f32,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TerrariumCoords {
     z: u8,
     x: u32,
     y: u32,
 }
 
-#[derive(Component)]
-pub struct Chunk;
+#[derive(Component, Clone)]
+pub struct Chunk(u32, u32);
 
 impl Coordinates {
     fn to_terrarium_coords(coords: &Self, zoom: u8) -> TerrariumCoords {
@@ -58,12 +58,7 @@ impl Coordinates {
     }
 }
 
-const CHUNKS_PER_SIDE: u32 = 5;
 const BASE_SIZE: f32 = 2048.0;
-
-pub fn spawn_terrain(mut commands: Commands) {
-    commands.init_resource::<LoadedChunks>();
-}
 
 #[derive(Component)]
 pub struct SpawnTerrain(Task<Option<(Mesh, Collider)>>, TerrariumCoords);
@@ -71,12 +66,23 @@ pub struct SpawnTerrain(Task<Option<(Mesh, Collider)>>, TerrariumCoords);
 static TOKIO_RUNTIME: Lazy<Runtime> =
     Lazy::new(|| Runtime::new().expect("Failed to create Tokio runtime"));
 
-pub fn load_dynamic_chunks(
+pub fn dynamic_chunks(
     mut commands: Commands,
     settings: Res<Settings>,
-    camera: Single<&Transform, With<Camera>>,
+    camera: Single<&Transform, With<Camera>>, // This system runs as soon as there's a Camera
     mut loaded_chunks: ResMut<LoadedChunks>,
+    chunks: Query<(Entity, &Chunk, &Transform)>,
+    mut messages: MessageWriter<ChunkMessage>,
 ) {
+    // Despawn old chunks
+    for (entity, chunk, transform) in chunks {
+        if transform.translation.distance(camera.translation)
+            >= settings.terrain.max_render_distance
+        {
+            messages.write(ChunkMessage(ChunkMessages::Despawn(entity, chunk.clone())));
+        }
+    }
+
     let chunk_size = if settings.terrain.level_of_detail <= 14 {
         let scale_factor = 2.0_f32.powi((14 - settings.terrain.level_of_detail) as i32);
         BASE_SIZE * scale_factor
@@ -89,26 +95,27 @@ pub fn load_dynamic_chunks(
         &settings.terrain.coordinates,
         settings.terrain.level_of_detail,
     );
-    // The chunk where the camera is
-    let camera_chunk_x = (camera.translation.x / chunk_size).round() as i32;
-    let camera_chunk_y = (camera.translation.z / chunk_size).round() as i32;
 
-    let radius = (CHUNKS_PER_SIDE / 2) as i32;
+    // The chunk where the camera is
+    let camera_chunk_x = (camera.translation.x / chunk_size) as i32;
+    let camera_chunk_y = (camera.translation.z / chunk_size) as i32;
+
+    let radius = 4; // The radius where the system considers to spawn chunks, but it's filtered in poll_terrain
 
     for x in -radius..radius {
         for y in -radius..radius {
-            let terrarium_x = coords.x.wrapping_add((camera_chunk_x + x) as u32);
-            let terrarium_y = coords.y.wrapping_add((camera_chunk_y + y) as u32);
+            let coord_x = coords.x.wrapping_add((camera_chunk_x + x) as u32);
+            let coord_y = coords.y.wrapping_add((camera_chunk_y + y) as u32);
 
-            let chunk_key = (terrarium_x, terrarium_y);
+            let chunk_key = (coord_x, coord_y);
 
             if !loaded_chunks.0.contains(&chunk_key) {
                 let thread_pool = AsyncComputeTaskPool::get();
 
                 let chunk_coord = TerrariumCoords {
                     z: settings.terrain.level_of_detail,
-                    x: terrarium_x,
-                    y: terrarium_y,
+                    x: coord_x,
+                    y: coord_y,
                 };
 
                 let tokio_handle =
@@ -129,8 +136,8 @@ pub fn load_dynamic_chunks(
 }
 
 pub enum ChunkMessages {
-    Spawn(Vec3, Mesh, Collider),
-    Despawn(Entity),
+    Spawn(Vec3, Mesh, Collider, TerrariumCoords),
+    Despawn(Entity, Chunk),
 }
 
 #[derive(Message)]
@@ -183,6 +190,7 @@ pub fn poll_terrain(
                         translation,
                         mesh,
                         collider,
+                        coord,
                     )));
                 }
             }
@@ -198,10 +206,11 @@ impl Chunk {
         mut commands: Commands,
         mut meshes: ResMut<Assets<Mesh>>,
         mut materials: ResMut<Assets<StandardMaterial>>,
+        mut loaded_chunks: ResMut<LoadedChunks>,
     ) {
         for message in messages.read() {
             match &message.0 {
-                ChunkMessages::Spawn(translation, mesh, collider) => {
+                ChunkMessages::Spawn(translation, mesh, collider, coord) => {
                     Chunk::spawn(
                         &mut commands,
                         &mut meshes,
@@ -209,11 +218,11 @@ impl Chunk {
                         mesh.clone(),
                         collider.clone(),
                         translation,
-                    )
-                    .unwrap_or(());
+                        coord,
+                    );
                 }
-                ChunkMessages::Despawn(entity) => {
-                    Self::despawn(entity, &mut commands);
+                ChunkMessages::Despawn(entity, coord) => {
+                    Self::despawn((entity, coord), &mut commands, &mut loaded_chunks);
                     info!("Despawning chunks: {entity}")
                 }
             };
@@ -227,7 +236,9 @@ impl Chunk {
         mesh: Mesh,
         collider: Collider,
         translation: &Vec3,
-    ) -> Result<()> {
+        coord: &TerrariumCoords,
+    ) {
+        dbg!(&coord);
         commands.spawn((
             collider,
             RigidBody::Static,
@@ -238,28 +249,17 @@ impl Chunk {
                 perceptual_roughness: 1.0,
                 ..Default::default()
             })),
-            Chunk,
+            Chunk(coord.x, coord.y),
         ));
-
-        Ok(())
     }
 
-    fn despawn(entity: &Entity, commands: &mut Commands) {
-        commands.entity(*entity).despawn();
-    }
-}
-
-pub fn update_chunks(
-    chunks: Query<(Entity, &Transform), With<Chunk>>,
-    camera: Single<&Transform, With<Camera>>,
-    settings: Res<Settings>,
-    mut messages: MessageWriter<ChunkMessage>,
-) {
-    for (entity, transform) in &chunks {
-        if transform.translation.distance(camera.translation) > settings.terrain.max_render_distance
-        {
-            messages.write(ChunkMessage(ChunkMessages::Despawn(entity)));
-        }
+    fn despawn(
+        entity: (&Entity, &Chunk),
+        commands: &mut Commands,
+        loaded_chunks: &mut ResMut<LoadedChunks>,
+    ) {
+        loaded_chunks.0.remove(&(entity.1.0, entity.1.1));
+        commands.entity(*entity.0).despawn();
     }
 }
 

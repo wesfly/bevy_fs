@@ -175,7 +175,7 @@ impl UI {
                 UIMessage::SpawnUIHud => commands.run_system(systems.0["spawn_ui_hud"]),
                 UIMessage::SpawnScenery => {
                     commands.run_system(system.0["setup_scene"]);
-                    commands.run_system(system.0["setup_terrain"]);
+                    // commands.run_system(system.0["setup_terrain"]);
                 }
                 UIMessage::SpawnHelicopter => {
                     commands.run_system(system.0["spawn_helicopter"]);

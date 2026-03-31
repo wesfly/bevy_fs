@@ -30,7 +30,9 @@ use crate::{
     },
     camera::{Camera, CameraPosition, CameraSettings, rotate_sun},
     input::InputAxis,
-    scenery::terrain::{Chunk, ChunkMessage, TerrainSettings, load_dynamic_chunks, poll_terrain},
+    scenery::terrain::{
+        Chunk, ChunkMessage, LoadedChunks, TerrainSettings, dynamic_chunks, poll_terrain,
+    },
     sse::Sse,
     ui::UI,
 };
@@ -76,10 +78,6 @@ impl FromWorld for RunOnceSystemList {
             world.register_system(scenery::setup_scene),
         );
         my_item_systems.0.insert(
-            "setup_terrain".into(),
-            world.register_system(scenery::terrain::spawn_terrain),
-        );
-        my_item_systems.0.insert(
             "setup_aeroplane".into(),
             world.register_system(aircraft::spawn_aeroplane),
         );
@@ -121,6 +119,7 @@ fn main() {
             roll: 0.0,
             throttle: 0.0,
         })
+        .init_resource::<LoadedChunks>()
         .insert_resource(CameraSettings::default())
         .insert_resource(input::Keymap::default())
         .insert_resource(Settings::fetch())
@@ -161,11 +160,10 @@ fn main() {
                 aircraft::mechanics,
                 collision_listener,
                 poll_terrain,
-                scenery::terrain::update_chunks,
                 Chunk::message_reader,
                 Button::listener,
                 rotate_sun,
-                load_dynamic_chunks,
+                dynamic_chunks,
             ),
         )
         .add_systems(FixedPostUpdate, Damage::handler);
