@@ -1,6 +1,6 @@
 [package]
 name = "bevy_fs"
-version = "2026.3.0"
+version = "0.1.0"
 license-file = "LICENSE.md"
 readme = "README.md"
 edition = "2024"
