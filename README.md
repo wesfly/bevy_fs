@@ -12,7 +12,7 @@ This is a little flight sim made in Bevy.
 - Support for both keyboard and gamepad, but gamepad is recommended
 - Terrain with real-world elevation data and collisions
 - Loading data from GLTF with custom properties
-- 3D cockpit with clickable buttons
+- 3D cockpit
 - Collisions with `avian3d`
 - Water with screen space reflections
 - A settings file (settings.json)
