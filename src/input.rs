@@ -91,24 +91,22 @@ pub fn input_system(
         ldg_gear_messages.write(LandingGearCommand(
             crate::aircraft::landing_gear::LandingGearCommands::Toggle,
         ));
+        button_messages.write(ButtonMessages(InterfaceOperation::LdgGear));
     }
-
-    {
-        if keyboard_input.just_pressed(keymap.formation_lights) {
-            button_messages.write(ButtonMessages(InterfaceOperation::FormationLt));
-        }
-        if keyboard_input.just_pressed(keymap.strobe_lights) {
-            button_messages.write(ButtonMessages(InterfaceOperation::StrobeLt));
-        }
-        if keyboard_input.just_pressed(keymap.pos_lights) {
-            button_messages.write(ButtonMessages(InterfaceOperation::PositionLt));
-        }
-        if keyboard_input.just_pressed(keymap.anti_col_lights) {
-            button_messages.write(ButtonMessages(InterfaceOperation::AntiColLt));
-        }
-        if keyboard_input.just_pressed(keymap.engine) {
-            button_messages.write(ButtonMessages(InterfaceOperation::Engine));
-        }
+    if keyboard_input.just_pressed(keymap.formation_lights) {
+        button_messages.write(ButtonMessages(InterfaceOperation::FormationLt));
+    }
+    if keyboard_input.just_pressed(keymap.strobe_lights) {
+        button_messages.write(ButtonMessages(InterfaceOperation::StrobeLt));
+    }
+    if keyboard_input.just_pressed(keymap.pos_lights) {
+        button_messages.write(ButtonMessages(InterfaceOperation::PositionLt));
+    }
+    if keyboard_input.just_pressed(keymap.anti_col_lights) {
+        button_messages.write(ButtonMessages(InterfaceOperation::AntiColLt));
+    }
+    if keyboard_input.just_pressed(keymap.engine) {
+        button_messages.write(ButtonMessages(InterfaceOperation::Engine));
     }
 
     if settings.gamepad.enabled {

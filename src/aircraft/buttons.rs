@@ -1,3 +1,5 @@
+use crate::aircraft::landing_gear::LandingGearStatus;
+
 use super::AircraftState;
 use bevy::prelude::*;
 use serde::Deserialize;
@@ -10,6 +12,7 @@ pub enum InterfaceOperation {
     StrobeLt,
     FormationLt,
     Apu,
+    LdgGear,
 }
 
 #[derive(Debug, Component, Deserialize, PartialEq)]
@@ -34,6 +37,7 @@ impl Button {
         mut query_tf_button: Query<(&mut Transform, &Button)>,
         mut state: ResMut<AircraftState>,
         mut messages: MessageReader<ButtonMessages>,
+        ldg_gear_status: Res<LandingGearStatus>,
     ) {
         for message in messages.read() {
             let interface_op = &message.0;
@@ -55,6 +59,15 @@ impl Button {
                 InterfaceOperation::FormationLt => (
                     Some(state.form_lts_on),
                     state.form_lts_on = !state.form_lts_on,
+                ),
+                InterfaceOperation::LdgGear => (
+                    match *ldg_gear_status {
+                        LandingGearStatus::Deploying => None,
+                        LandingGearStatus::Deployed => Some(state.landing_gear_deployed),
+                        LandingGearStatus::Retracting => None,
+                        LandingGearStatus::Retracted => Some(state.landing_gear_deployed),
+                    },
+                    (),
                 ),
                 _ => (None, ()),
             };
