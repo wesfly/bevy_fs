@@ -46,12 +46,7 @@ pub fn mechanics(
                 let cos = forward.dot(velocity_dir);
                 let aoa = -sin.atan2(cos).to_degrees();
 
-                let lift_coeff = match aoa {
-                    d if d < 23.0 => d / 23.0 * 1.0 + 0.5,
-                    d if d < 27.0 => 1.2 * (1.0 - (d - 23.0) / 5.0),
-                    _ => 0.2,
-                };
-                // dbg!(lift_coeff);
+                let lift_coeff = lift_coeff(aoa);
 
                 let parasitic_drag_coeff = match state.landing_gear_deployed {
                     true => 2.2,
@@ -161,6 +156,23 @@ fn steering(transform: &GlobalTransform, force: &mut ForcesItem, input: &InputAx
     );
 }
 
+fn lift_coeff(aoa_deg: f32) -> f32 {
+    let alpha = aoa_deg.to_radians();
+
+    // Polhamus Analogy Constants
+    let potential_lift_factor = 1.65;
+    let vortex_lift_factor = 3.05;
+
+    let sin_a = alpha.sin();
+    let cos_a = alpha.cos();
+
+    // Polhamus Equation
+    let cl_potential = potential_lift_factor * sin_a * cos_a.powi(2);
+    let cl_vortex = vortex_lift_factor * sin_a.powi(2) * cos_a;
+
+    cl_potential + cl_vortex
+}
+
 #[allow(unused)]
 #[derive(Debug)]
 pub struct Atmosphere {
@@ -244,7 +256,7 @@ fn induced_drag(lift_coeff: f32, rho: f32, speed: f32) -> f32 {
 }
 
 fn stabilise() -> Vec3 {
-    Vec3::ZERO
+    Vec3::ZERO // TODO
 }
 
 fn lift(lift_coeff: f32, airspeed: f32, wing_area: f32, up: Dir3, rho: f32) -> Vec3 {
