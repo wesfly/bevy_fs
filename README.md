@@ -98,6 +98,6 @@ You can change input methods in the settings.
 
 ## Contributions
 
-Contributions are welcome.
+PRs welcome.
 
 If you have any problems regarding this repository, please report them as an issue. Thanks!
