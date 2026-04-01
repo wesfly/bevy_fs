@@ -35,7 +35,7 @@ pub struct TerrariumCoords {
     y: u32,
 }
 
-#[derive(Component, Clone)]
+#[derive(Component, Clone, Debug)]
 pub struct Chunk(u32, u32);
 
 impl Coordinates {
@@ -74,15 +74,6 @@ pub fn dynamic_chunks(
     chunks: Query<(Entity, &Chunk, &Transform)>,
     mut messages: MessageWriter<ChunkMessage>,
 ) {
-    // Despawn old chunks
-    for (entity, chunk, transform) in chunks {
-        if transform.translation.distance(camera.translation)
-            >= settings.terrain.max_render_distance
-        {
-            messages.write(ChunkMessage(ChunkMessages::Despawn(entity, chunk.clone())));
-        }
-    }
-
     let chunk_size = if settings.terrain.level_of_detail <= 14 {
         let scale_factor = 2.0_f32.powi((14 - settings.terrain.level_of_detail) as i32);
         BASE_SIZE * scale_factor
@@ -100,7 +91,7 @@ pub fn dynamic_chunks(
     let camera_chunk_x = (camera.translation.x / chunk_size) as i32;
     let camera_chunk_y = (camera.translation.z / chunk_size) as i32;
 
-    let radius = 4; // The radius where the system considers to spawn chunks, but it's filtered in poll_terrain
+    let radius = (settings.terrain.max_render_distance / chunk_size) as i32; // The radius where the system considers to spawn chunks, but it's filtered in poll_terrain
 
     for x in -radius..radius {
         for y in -radius..radius {
@@ -133,6 +124,16 @@ pub fn dynamic_chunks(
             }
         }
     }
+
+    // Despawn old chunks
+    for (entity, chunk, transform) in chunks {
+        // To end spawn/despawn wars with chunk_size added
+        if transform.translation.distance(camera.translation)
+            >= settings.terrain.max_render_distance + chunk_size
+        {
+            messages.write(ChunkMessage(ChunkMessages::Despawn(entity, chunk.clone())));
+        }
+    }
 }
 
 pub enum ChunkMessages {
@@ -150,7 +151,7 @@ pub fn poll_terrain(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut SpawnTerrain)>,
     settings: Res<Settings>,
-    camera: Single<&Transform, With<Camera>>,
+    camera: Single<&GlobalTransform, With<Camera>>,
     mut messages: MessageWriter<ChunkMessage>,
 ) {
     let chunk_size = if settings.terrain.level_of_detail <= 14 {
@@ -184,7 +185,8 @@ pub fn poll_terrain(
                 );
 
                 // Check if terrain is in render distance
-                if translation.distance(camera.translation) <= settings.terrain.max_render_distance
+                if translation.distance(camera.translation())
+                    <= settings.terrain.max_render_distance
                 {
                     messages.write(ChunkMessage(ChunkMessages::Spawn(
                         translation,
@@ -192,6 +194,8 @@ pub fn poll_terrain(
                         collider,
                         coord,
                     )));
+                } else {
+                    warn!("Rejected chunk with translation: {translation}");
                 }
             }
 
@@ -223,7 +227,7 @@ impl Chunk {
                 }
                 ChunkMessages::Despawn(entity, coord) => {
                     Self::despawn((entity, coord), &mut commands, &mut loaded_chunks);
-                    info!("Despawning chunks: {entity}")
+                    info!("Despawning chunks: {coord:?}")
                 }
             };
         }
