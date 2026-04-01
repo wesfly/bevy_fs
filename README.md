@@ -18,16 +18,29 @@ This is a little flight sim made in Bevy.
 - A settings file (settings.json)
 
 ## Running `bevy_fs`
+## Installation
 
-First you need to install Rust from [here](https://rust-lang.org/tools/install/), if you haven't already, and `git-lfs` by installing it with your package manager and then running `git lfs install`.
+### Prerequisites
 
-```sh
-git clone https://github.com/wesfly/bevy_fs.git
-cd bevy_fs
-git lfs pull # Pull the big files
-```
+- **Rust toolchain:** [Install Rust](https://rust-lang.org/tools/install)
+- **Git LFS:** Used for large file assets.  
+  - [Git LFS install guide](https://git-lfs.github.com/)
 
-Use `cargo run --release` to run the program from the project root folder.
+### Installation steps
+
+1. Clone the repository and get large assets
+   ```sh
+   git clone https://github.com/wesfly/bevy_fs.git
+   cd bevy_fs
+   git lfs pull
+   ```
+
+2. Build and run the project
+   ```sh
+   cargo run --release
+   ```
+
+   This will build and launch bevy_fs. The first startup fetches terrain data and can take some time.
 
 ## Flying
 
