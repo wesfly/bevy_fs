@@ -16,7 +16,7 @@ enum UIHudComponent {
     Velocity,
 }
 
-#[derive(Component)]
+#[derive(Component, Clone, PartialEq)]
 enum SpawnButton {
     AircraftSelector(AircraftTypes),
     Fly,
@@ -178,6 +178,7 @@ impl UI {
             Changed<Interaction>,
         >,
         mut spawn_settings: Local<SpawnSettings>,
+        mut highlighted: Local<Option<SpawnButton>>,
     ) {
         for (entity, interaction, mut color, mut border_color, mut button, spawn_button) in
             interaction_query.iter_mut()
@@ -185,15 +186,17 @@ impl UI {
             match *interaction {
                 Interaction::Pressed => {
                     input_focus.set(entity);
-                    *color = Color::srgb(0.15, 0.15, 0.15).into();
-                    button.set_changed();
 
                     match spawn_button {
                         SpawnButton::AircraftSelector(AircraftTypes::Aeroplane) => {
-                            spawn_settings.aircraft = Some(AircraftTypes::Aeroplane)
+                            spawn_settings.aircraft = Some(AircraftTypes::Aeroplane);
+                            *highlighted =
+                                Some(SpawnButton::AircraftSelector(AircraftTypes::Aeroplane));
                         }
                         SpawnButton::AircraftSelector(AircraftTypes::Helicopter) => {
-                            spawn_settings.aircraft = Some(AircraftTypes::Helicopter)
+                            spawn_settings.aircraft = Some(AircraftTypes::Helicopter);
+                            *highlighted =
+                                Some(SpawnButton::AircraftSelector(AircraftTypes::Helicopter));
                         }
                         SpawnButton::Fly => {
                             if let Some(aircraft) = &spawn_settings.aircraft {
@@ -211,6 +214,10 @@ impl UI {
                             }
                         }
                     }
+
+                    *color = Color::srgb(0.15, 0.15, 0.15).into();
+
+                    button.set_changed();
                 }
                 Interaction::Hovered => {
                     input_focus.set(entity);
@@ -223,6 +230,9 @@ impl UI {
                     *color = Color::srgb(0.15, 0.15, 0.15).into();
                     *border_color = BorderColor::all(Color::BLACK);
                 }
+            }
+            if *highlighted == Some(spawn_button.clone()) {
+                *border_color = Color::srgb(0.45, 0.55, 1.00).into();
             }
         }
     }
@@ -240,7 +250,6 @@ impl UI {
                 UIMessage::SpawnUIHud => commands.run_system(systems.0["spawn_ui_hud"]),
                 UIMessage::SpawnScenery => {
                     commands.run_system(system.0["setup_scene"]);
-                    // commands.run_system(system.0["setup_terrain"]);
                 }
                 UIMessage::SpawnHelicopter => {
                     commands.run_system(system.0["spawn_helicopter"]);
