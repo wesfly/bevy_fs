@@ -221,11 +221,8 @@ impl Plugin for UI {
         app.add_systems(Startup, (Self::ui_main_setup, Menu::spawn))
             .init_resource::<InputFocus>()
             .add_message::<UIMessage>()
-            .add_systems(Update, (Self::update_ui_hud))
-            .add_systems(
-                FixedUpdate,
-                (Self::button_system, toggle_fullscreen, Self::ui_main_loop),
-            );
+            .add_systems(Update, (Self::update_ui_hud, Self::ui_main_loop))
+            .add_systems(FixedUpdate, (Self::button_system, toggle_fullscreen));
     }
 }
 
@@ -333,7 +330,7 @@ impl UI {
     }
 
     fn ui_main_setup(mut commands: Commands) {
-        commands.spawn((Camera3d::default(), MenuCamera));
+        commands.spawn((Camera3d::default(), MenuCamera, IsDefaultUiCamera));
     }
 
     pub fn setup_ui_hud(mut commands: Commands) {
