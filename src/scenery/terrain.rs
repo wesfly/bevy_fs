@@ -151,7 +151,6 @@ pub fn poll_terrain(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut SpawnTerrain)>,
     settings: Res<Settings>,
-    camera: Single<&GlobalTransform, With<Camera>>,
     mut messages: MessageWriter<ChunkMessage>,
 ) {
     let chunk_size = if settings.terrain.level_of_detail <= 14 {
@@ -184,19 +183,12 @@ pub fn poll_terrain(
                     (chunk_world_y - base_world_y) + chunk_size * 0.5,
                 );
 
-                // Check if terrain is in render distance
-                if translation.distance(camera.translation())
-                    <= settings.terrain.max_render_distance
-                {
-                    messages.write(ChunkMessage(ChunkMessages::Spawn(
-                        translation,
-                        mesh,
-                        collider,
-                        coord,
-                    )));
-                } else {
-                    warn!("Rejected chunk with translation: {translation}");
-                }
+                messages.write(ChunkMessage(ChunkMessages::Spawn(
+                    translation,
+                    mesh,
+                    collider,
+                    coord,
+                )));
             }
 
             commands.entity(entity).remove::<SpawnTerrain>();
