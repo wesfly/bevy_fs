@@ -1,10 +1,11 @@
 use crate::{
-    InputAxis, RunOnceSystemList,
+    InputAxis, RunOnceSystemList, Settings,
     aircraft::{Aircraft, AircraftTypes},
     scenery::terrain::Coordinates,
 };
 use avian3d::prelude::LinearVelocity;
 use bevy::{input_focus::InputFocus, prelude::*, window::WindowMode};
+use std::collections::HashMap;
 
 #[derive(Component)]
 pub struct MenuCamera;
@@ -19,6 +20,7 @@ enum UIHudComponent {
 #[derive(Component, Clone, PartialEq)]
 enum SpawnButton {
     AircraftSelector(AircraftTypes),
+    Location(Coordinates),
     Fly,
 }
 
@@ -35,37 +37,81 @@ impl Menu {
     }
 
     fn spawn(mut commands: Commands, asset_server: Res<AssetServer>) {
-        let aircraft_spawn_button = |spawn_button_type: SpawnButton| {
+        let spawn_button = |spawn_button_type: SpawnButton| {
             (
                 Button,
+                if spawn_button_type.clone() == SpawnButton::Fly {
+                    Node {
+                        border: UiRect::all(px(5)),
+                        padding: px(12.0).all(),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    }
+                } else {
+                    Node {
+                        border: UiRect::all(px(5)),
+                        padding: px(12.0).all(),
+                        ..default()
+                    }
+                },
                 spawn_button_type,
                 Menu,
-                Node {
-                    border: UiRect::all(px(5)),
-                    padding: px(12.0).all(),
-                    ..default()
-                },
                 BorderColor::all(Color::WHITE),
                 BackgroundColor(Color::BLACK),
             )
         };
 
-        commands.spawn((
-            Menu,
-            Node {
-                // fill the entire window
-                width: percent(100),
-                height: percent(100),
-                padding: px(12.0).all(),
-                row_gap: px(12.0),
-                column_gap: px(12.0),
-                display: Display::Grid,
-                grid_template_columns: RepeatedGridTrack::flex(2, 1.0),
-                ..default()
-            },
-            BackgroundColor(Color::BLACK),
-            children![
-                (
+        let locations = HashMap::from([
+            (
+                "Toulon, FR",
+                Coordinates {
+                    lat: 43.12694,
+                    long: 5.93071,
+                },
+            ),
+            (
+                "Hobart, AU",
+                Coordinates {
+                    lat: -42.88369,
+                    long: 147.32871,
+                },
+            ),
+            (
+                "San Francisco, USA",
+                Coordinates {
+                    lat: 37.7922,
+                    long: -122.4385,
+                },
+            ),
+            (
+                "Cape Town, ZA",
+                Coordinates {
+                    lat: -33.9114,
+                    long: 18.5033,
+                },
+            ),
+        ]);
+
+        commands
+            .spawn((
+                Menu,
+                Name::new("Root of menu"),
+                Node {
+                    // fill the entire window
+                    width: percent(100),
+                    height: percent(100),
+                    padding: px(12.0).all(),
+                    row_gap: px(12.0),
+                    column_gap: px(12.0),
+                    display: Display::Grid,
+                    grid_template_columns: RepeatedGridTrack::flex(2, 1.0),
+                    ..default()
+                },
+                BackgroundColor(Color::BLACK),
+            ))
+            .with_children(|parent| {
+                parent.spawn((
                     Name::new("Aircraft Menu"),
                     Node {
                         width: percent(100),
@@ -78,9 +124,7 @@ impl Menu {
                     },
                     children![
                         (
-                            aircraft_spawn_button(SpawnButton::AircraftSelector(
-                                AircraftTypes::Helicopter
-                            )),
+                            spawn_button(SpawnButton::AircraftSelector(AircraftTypes::Helicopter)),
                             children![(
                                 Text::new("Spawn Helicopter"),
                                 TextColor(Color::WHITE),
@@ -91,9 +135,7 @@ impl Menu {
                             )]
                         ),
                         (
-                            aircraft_spawn_button(SpawnButton::AircraftSelector(
-                                AircraftTypes::Aeroplane
-                            )),
+                            spawn_button(SpawnButton::AircraftSelector(AircraftTypes::Aeroplane)),
                             children![(
                                 Text::new("Spawn Aeroplane"),
                                 TextColor(Color::WHITE),
@@ -103,21 +145,64 @@ impl Menu {
                                 }
                             )],
                         )
-                    ]
-                ),
-                (
-                    aircraft_spawn_button(SpawnButton::Fly),
-                    children![(
-                        Text::new("Fly"),
-                        TextColor(Color::WHITE),
-                        TextFont {
-                            font: asset_server.load(FONT_PATH),
+                    ],
+                ));
+
+                parent
+                    .spawn((
+                        Name::new("Location Menu & Fly button"),
+                        Node {
+                            width: percent(100),
+                            height: percent(100),
+                            row_gap: px(12.0),
+                            column_gap: px(12.0),
+                            display: Display::Grid,
+                            grid_template_columns: RepeatedGridTrack::flex(1, 1.0),
                             ..default()
-                        }
-                    )],
-                )
-            ],
-        ));
+                        },
+                    ))
+                    .with_children(|parent| {
+                        parent
+                            .spawn((
+                                Name::new("Location Menu"),
+                                Node {
+                                    width: percent(100),
+                                    height: percent(80),
+                                    row_gap: px(12.0),
+                                    column_gap: px(12.0),
+                                    display: Display::Grid,
+                                    ..default()
+                                },
+                            ))
+                            .with_children(|parent| {
+                                for loc in locations {
+                                    let text = format!("{}", loc.0);
+                                    parent.spawn((
+                                        spawn_button(SpawnButton::Location(loc.1)),
+                                        children![(
+                                            Text::new(text),
+                                            TextColor(Color::WHITE),
+                                            TextFont {
+                                                font: asset_server.load(FONT_PATH),
+                                                ..default()
+                                            },
+                                        )],
+                                    ));
+                                }
+                            });
+                        parent.spawn((
+                            spawn_button(SpawnButton::Fly),
+                            children![(
+                                Text::new("Fly"),
+                                TextColor(Color::WHITE),
+                                TextFont {
+                                    font: asset_server.load(FONT_PATH),
+                                    ..default()
+                                }
+                            ),],
+                        ));
+                    });
+            });
     }
 }
 
@@ -136,29 +221,11 @@ impl Plugin for UI {
         app.add_systems(Startup, (Self::ui_main_setup, Menu::spawn))
             .init_resource::<InputFocus>()
             .add_message::<UIMessage>()
+            .add_systems(Update, (Self::update_ui_hud))
             .add_systems(
-                Update,
-                (
-                    Self::ui_main_loop,
-                    Self::update_ui_hud,
-                    Self::button_system,
-                    toggle_fullscreen,
-                ),
+                FixedUpdate,
+                (Self::button_system, toggle_fullscreen, Self::ui_main_loop),
             );
-    }
-}
-
-struct SpawnSettings {
-    aircraft: Option<AircraftTypes>,
-    location: Option<Coordinates>,
-}
-
-impl Default for SpawnSettings {
-    fn default() -> Self {
-        SpawnSettings {
-            aircraft: None,
-            location: None,
-        }
     }
 }
 
@@ -166,19 +233,17 @@ impl UI {
     fn button_system(
         mut input_focus: ResMut<InputFocus>,
         mut messages: MessageWriter<UIMessage>,
-        mut interaction_query: Query<
-            (
-                Entity,
-                &Interaction,
-                &mut BackgroundColor,
-                &mut BorderColor,
-                &mut Button,
-                &SpawnButton,
-            ),
-            Changed<Interaction>,
-        >,
-        mut spawn_settings: Local<SpawnSettings>,
-        mut highlighted: Local<Option<SpawnButton>>,
+        mut interaction_query: Query<(
+            Entity,
+            &Interaction,
+            &mut BackgroundColor,
+            &mut BorderColor,
+            &mut Button,
+            &SpawnButton,
+        )>,
+        mut settings: ResMut<Settings>,
+        mut spawn_settings: Local<Option<AircraftTypes>>,
+        mut highlighted: Local<(Option<SpawnButton>, Option<SpawnButton>)>, // One field for aircraft sel, one for location sel
     ) {
         for (entity, interaction, mut color, mut border_color, mut button, spawn_button) in
             interaction_query.iter_mut()
@@ -189,17 +254,21 @@ impl UI {
 
                     match spawn_button {
                         SpawnButton::AircraftSelector(AircraftTypes::Aeroplane) => {
-                            spawn_settings.aircraft = Some(AircraftTypes::Aeroplane);
-                            *highlighted =
+                            *spawn_settings = Some(AircraftTypes::Aeroplane);
+                            highlighted.0 =
                                 Some(SpawnButton::AircraftSelector(AircraftTypes::Aeroplane));
                         }
                         SpawnButton::AircraftSelector(AircraftTypes::Helicopter) => {
-                            spawn_settings.aircraft = Some(AircraftTypes::Helicopter);
-                            *highlighted =
+                            *spawn_settings = Some(AircraftTypes::Helicopter);
+                            highlighted.0 =
                                 Some(SpawnButton::AircraftSelector(AircraftTypes::Helicopter));
                         }
+                        SpawnButton::Location(l) => {
+                            settings.terrain.coordinates = l.clone();
+                            highlighted.1 = Some(SpawnButton::Location(l.clone()));
+                        }
                         SpawnButton::Fly => {
-                            if let Some(aircraft) = &spawn_settings.aircraft {
+                            if let Some(aircraft) = spawn_settings.clone() {
                                 match aircraft {
                                     AircraftTypes::Helicopter => {
                                         messages.write(UIMessage::SpawnHelicopter);
@@ -216,14 +285,11 @@ impl UI {
                     }
 
                     *color = Color::srgb(0.15, 0.15, 0.15).into();
-
-                    button.set_changed();
                 }
                 Interaction::Hovered => {
                     input_focus.set(entity);
                     *color = Color::srgb(0.15, 0.15, 0.15).into();
                     *border_color = BorderColor::all(Color::WHITE);
-                    button.set_changed();
                 }
                 Interaction::None => {
                     input_focus.clear();
@@ -231,9 +297,14 @@ impl UI {
                     *border_color = BorderColor::all(Color::BLACK);
                 }
             }
-            if *highlighted == Some(spawn_button.clone()) {
+
+            if highlighted.0 == Some(spawn_button.clone())
+                || highlighted.1 == Some(spawn_button.clone())
+            {
                 *border_color = Color::srgb(0.45, 0.55, 1.00).into();
             }
+
+            button.set_changed();
         }
     }
 

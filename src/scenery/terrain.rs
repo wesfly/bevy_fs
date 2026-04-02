@@ -17,15 +17,15 @@ use tokio::runtime::Runtime;
 
 #[derive(Deserialize)]
 pub struct TerrainSettings {
-    coordinates: Coordinates,
+    pub coordinates: Coordinates,
     max_render_distance: f32,
     pub level_of_detail: u8,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub struct Coordinates {
-    lat: f32,
-    long: f32,
+    pub lat: f32,
+    pub long: f32,
 }
 
 #[derive(Clone, Debug)]
