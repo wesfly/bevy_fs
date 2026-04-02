@@ -6,10 +6,9 @@ readme = "README.md"
 edition = "2024"
 
 [dependencies]
-avian3d = "0.6.0"
+avian3d = "0.6.1"
 bevy = { version = "0.18.1", default-features = false, features = [
     "bevy_dev_tools",
-    "mesh_picking",
     "3d",
 ] }
 chrono = "0.4.44"
