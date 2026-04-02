@@ -44,9 +44,9 @@ pub fn mechanics(
                 // Angle of attack
                 let sin = forward.cross(velocity_dir).dot(transform.right().as_vec3());
                 let cos = forward.dot(velocity_dir);
-                let aoa = -sin.atan2(cos).to_degrees();
+                let alpha = -sin.atan2(cos).to_degrees();
 
-                let lift_coeff = lift_coeff(aoa);
+                let lift_coeff = lift_coeff(alpha);
 
                 let parasitic_drag_coeff = match state.landing_gear_deployed {
                     true => 2.2,
@@ -156,8 +156,8 @@ fn steering(transform: &GlobalTransform, force: &mut ForcesItem, input: &InputAx
     );
 }
 
-fn lift_coeff(aoa_deg: f32) -> f32 {
-    let alpha = aoa_deg.to_radians();
+fn lift_coeff(alpha_deg: f32) -> f32 {
+    let alpha = alpha_deg.to_radians();
 
     // Polhamus Analogy Constants
     let potential_lift_factor = 1.65;
