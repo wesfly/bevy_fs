@@ -23,7 +23,7 @@ pub struct TerrainSettings {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-struct Coordinates {
+pub struct Coordinates {
     lat: f32,
     long: f32,
 }

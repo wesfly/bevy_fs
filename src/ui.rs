@@ -1,4 +1,8 @@
-use crate::{InputAxis, RunOnceSystemList, aircraft::Aircraft};
+use crate::{
+    InputAxis, RunOnceSystemList,
+    aircraft::{Aircraft, AircraftTypes},
+    scenery::terrain::Coordinates,
+};
 use avian3d::prelude::LinearVelocity;
 use bevy::{input_focus::InputFocus, prelude::*, window::WindowMode};
 
@@ -14,55 +18,38 @@ enum UIHudComponent {
 
 #[derive(Component)]
 enum SpawnButton {
-    Aeroplane,
-    Helicopter,
+    AircraftSelector(AircraftTypes),
+    Fly,
 }
 
 #[derive(Component)]
 struct Menu;
 
+const FONT_PATH: &str = "fonts/Geist-VariableFont_wght.ttf";
+
 impl Menu {
-    fn menu(commands: &mut Commands, menu_query: Query<Entity, With<Menu>>) {
+    fn despawn(commands: &mut Commands, menu_query: Query<Entity, With<Menu>>) {
         for entity in menu_query {
             commands.entity(entity).despawn();
         }
     }
 
-    fn spawn(mut commands: Commands) {
-        let aeroplane_button = (
-            Button,
-            SpawnButton::Aeroplane,
-            Menu,
-            Node {
-                border: UiRect::all(px(5)),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BorderColor::all(Color::WHITE),
-            BackgroundColor(Color::BLACK),
-            children![(
-                Text::new("Spawn Aeroplane"),
-                TextColor(Color::srgb(0.9, 0.9, 0.9)),
-            )],
-        );
-        let helicopter_button = (
-            Button,
-            SpawnButton::Helicopter,
-            Menu,
-            Node {
-                border: UiRect::all(px(5)),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BorderColor::all(Color::WHITE),
-            BackgroundColor(Color::BLACK),
-            children![(
-                Text::new("Spawn Helicopter"),
-                TextColor(Color::srgb(0.9, 0.9, 0.9)),
-            )],
-        );
+    fn spawn(mut commands: Commands, asset_server: Res<AssetServer>) {
+        let aircraft_spawn_button = |spawn_button_type: SpawnButton| {
+            (
+                Button,
+                spawn_button_type,
+                Menu,
+                Node {
+                    border: UiRect::all(px(5)),
+                    padding: px(12.0).all(),
+                    ..default()
+                },
+                BorderColor::all(Color::WHITE),
+                BackgroundColor(Color::BLACK),
+            )
+        };
+
         commands.spawn((
             Menu,
             Node {
@@ -73,11 +60,63 @@ impl Menu {
                 row_gap: px(12.0),
                 column_gap: px(12.0),
                 display: Display::Grid,
-                grid_template_columns: RepeatedGridTrack::fr(2, 1.),
+                grid_template_columns: RepeatedGridTrack::flex(2, 1.0),
                 ..default()
             },
             BackgroundColor(Color::BLACK),
-            children![aeroplane_button, helicopter_button],
+            children![
+                (
+                    Name::new("Aircraft Menu"),
+                    Node {
+                        width: percent(100),
+                        height: percent(100),
+                        row_gap: px(12.0),
+                        column_gap: px(12.0),
+                        display: Display::Grid,
+                        grid_template_columns: RepeatedGridTrack::flex(1, 1.0),
+                        ..default()
+                    },
+                    children![
+                        (
+                            aircraft_spawn_button(SpawnButton::AircraftSelector(
+                                AircraftTypes::Helicopter
+                            )),
+                            children![(
+                                Text::new("Spawn Helicopter"),
+                                TextColor(Color::WHITE),
+                                TextFont {
+                                    font: asset_server.load(FONT_PATH),
+                                    ..default()
+                                }
+                            )]
+                        ),
+                        (
+                            aircraft_spawn_button(SpawnButton::AircraftSelector(
+                                AircraftTypes::Aeroplane
+                            )),
+                            children![(
+                                Text::new("Spawn Aeroplane"),
+                                TextColor(Color::WHITE),
+                                TextFont {
+                                    font: asset_server.load(FONT_PATH),
+                                    ..default()
+                                }
+                            )],
+                        )
+                    ]
+                ),
+                (
+                    aircraft_spawn_button(SpawnButton::Fly),
+                    children![(
+                        Text::new("Fly"),
+                        TextColor(Color::WHITE),
+                        TextFont {
+                            font: asset_server.load(FONT_PATH),
+                            ..default()
+                        }
+                    )],
+                )
+            ],
         ));
     }
 }
@@ -109,6 +148,20 @@ impl Plugin for UI {
     }
 }
 
+struct SpawnSettings {
+    aircraft: Option<AircraftTypes>,
+    location: Option<Coordinates>,
+}
+
+impl Default for SpawnSettings {
+    fn default() -> Self {
+        SpawnSettings {
+            aircraft: None,
+            location: None,
+        }
+    }
+}
+
 impl UI {
     fn button_system(
         mut input_focus: ResMut<InputFocus>,
@@ -124,6 +177,7 @@ impl UI {
             ),
             Changed<Interaction>,
         >,
+        mut spawn_settings: Local<SpawnSettings>,
     ) {
         for (entity, interaction, mut color, mut border_color, mut button, spawn_button) in
             interaction_query.iter_mut()
@@ -135,17 +189,28 @@ impl UI {
                     button.set_changed();
 
                     match spawn_button {
-                        SpawnButton::Aeroplane => {
-                            messages.write(UIMessage::SpawnAeroplane);
+                        SpawnButton::AircraftSelector(AircraftTypes::Aeroplane) => {
+                            spawn_settings.aircraft = Some(AircraftTypes::Aeroplane)
                         }
-                        SpawnButton::Helicopter => {
-                            messages.write(UIMessage::SpawnHelicopter);
+                        SpawnButton::AircraftSelector(AircraftTypes::Helicopter) => {
+                            spawn_settings.aircraft = Some(AircraftTypes::Helicopter)
+                        }
+                        SpawnButton::Fly => {
+                            if let Some(aircraft) = &spawn_settings.aircraft {
+                                match aircraft {
+                                    AircraftTypes::Helicopter => {
+                                        messages.write(UIMessage::SpawnHelicopter);
+                                    }
+                                    AircraftTypes::Aeroplane => {
+                                        messages.write(UIMessage::SpawnAeroplane);
+                                    }
+                                }
+                                messages.write(UIMessage::SpawnScenery);
+                                messages.write(UIMessage::DespawnMenu);
+                                messages.write(UIMessage::SpawnUIHud);
+                            }
                         }
                     }
-
-                    messages.write(UIMessage::SpawnScenery);
-                    messages.write(UIMessage::DespawnMenu);
-                    messages.write(UIMessage::SpawnUIHud);
                 }
                 Interaction::Hovered => {
                     input_focus.set(entity);
@@ -171,7 +236,7 @@ impl UI {
     ) {
         for message in messages.read() {
             match message {
-                UIMessage::DespawnMenu => Menu::menu(&mut commands, menu_query),
+                UIMessage::DespawnMenu => Menu::despawn(&mut commands, menu_query),
                 UIMessage::SpawnUIHud => commands.run_system(systems.0["spawn_ui_hud"]),
                 UIMessage::SpawnScenery => {
                     commands.run_system(system.0["setup_scene"]);
