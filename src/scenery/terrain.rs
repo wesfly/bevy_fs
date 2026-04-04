@@ -8,7 +8,7 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
-    f64::consts::PI,
+    f32::consts::PI,
     fs::{self, File},
     io::Write,
     path::Path,
@@ -40,11 +40,11 @@ pub struct Chunk(u32, u32);
 
 impl Coordinates {
     fn to_terrarium_coords(self, zoom: u8) -> TerrariumCoords {
-        let z = zoom as f64;
-        let n = 2.0_f64.powf(z);
+        let z = zoom as f32;
+        let n = 2.0_f32.powf(z);
 
-        let x = n * ((self.long as f64 + 180.0) / 360.0);
-        let lat_rad = (self.lat as f64).to_radians();
+        let x = n * ((self.long + 180.0) / 360.0);
+        let lat_rad = (self.lat).to_radians();
         let y = (1.0 - (lat_rad.tan() + (1.0 / lat_rad.cos())).ln() / PI) / 2.0 * n;
 
         let tile_x = x.floor() as u32;
