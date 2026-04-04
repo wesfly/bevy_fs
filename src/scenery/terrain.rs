@@ -39,12 +39,12 @@ pub struct TerrariumCoords {
 pub struct Chunk(u32, u32);
 
 impl Coordinates {
-    fn to_terrarium_coords(coords: &Self, zoom: u8) -> TerrariumCoords {
+    fn to_terrarium_coords(self, zoom: u8) -> TerrariumCoords {
         let z = zoom as f64;
         let n = 2.0_f64.powf(z);
 
-        let x = n * ((coords.long as f64 + 180.0) / 360.0);
-        let lat_rad = (coords.lat as f64).to_radians();
+        let x = n * ((self.long as f64 + 180.0) / 360.0);
+        let lat_rad = (self.lat as f64).to_radians();
         let y = (1.0 - (lat_rad.tan() + (1.0 / lat_rad.cos())).ln() / PI) / 2.0 * n;
 
         let tile_x = x.floor() as u32;
@@ -82,10 +82,11 @@ pub fn dynamic_chunks(
         BASE_SIZE / scale_factor
     };
 
-    let coords = Coordinates::to_terrarium_coords(
-        &settings.terrain.coordinates,
-        settings.terrain.level_of_detail,
-    );
+    let coords = settings
+        .terrain
+        .coordinates
+        .clone()
+        .to_terrarium_coords(settings.terrain.level_of_detail);
 
     // The chunk where the camera is
     let camera_chunk_x = (camera.translation.x / chunk_size) as i32;
@@ -161,10 +162,12 @@ pub fn poll_terrain(
         BASE_SIZE / scale_factor
     };
 
-    let base_coords = Coordinates::to_terrarium_coords(
-        &settings.terrain.coordinates,
-        settings.terrain.level_of_detail,
-    );
+    let base_coords = settings
+        .terrain
+        .coordinates
+        .clone()
+        .to_terrarium_coords(settings.terrain.level_of_detail);
+
     let base_world_x = base_coords.x as f32 * chunk_size;
     let base_world_y = base_coords.y as f32 * chunk_size;
 
