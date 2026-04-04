@@ -259,10 +259,7 @@ pub fn spawn_helicopter(
 
     let path = "models/helicopter/helicopter.gltf";
 
-    let spawn_pos = match settings.terrain.level_of_detail {
-        14 => Vec3::new(0.0, 32.0, 0.0),
-        _ => Vec3::new(0.0, 12.0, 0.0),
-    };
+    let spawn_pos = Vec3::new(0.0, 100.0, 0.0);
     let spawn_vel = Vec3::new(0.0, 0.0, 0.0);
 
     // Aircraft model

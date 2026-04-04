@@ -45,16 +45,13 @@ pub fn setup_scene(
         },
     ));
 
-    let hospital = match settings.terrain.level_of_detail {
-        14 => Vec3::new(0.0, 20.0, 0.0),
-        _ => Vec3::new(0.0, 0.0, 0.0),
-    };
+    let hospital_spawn_pos = Vec3::new(0.0, 0.0, 0.0);
 
     commands.spawn((
-        SceneRoot(asset_server.load("models/scenery/hospital.glb#Scene0")),
+        SceneRoot(asset_server.load("models/scenery/hospital/hospital.gltf#Scene0")),
         RigidBody::Static,
         ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
-        Transform::from_translation(hospital),
+        Transform::from_translation(hospital_spawn_pos),
     ));
 
     let cascade = CascadeShadowConfigBuilder {
