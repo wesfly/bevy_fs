@@ -66,6 +66,17 @@ pub struct SpawnTerrain(Task<Option<(Mesh, Collider)>>, TerrariumCoords);
 static TOKIO_RUNTIME: Lazy<Runtime> =
     Lazy::new(|| Runtime::new().expect("Failed to create Tokio runtime"));
 
+fn chunk_size(lod: &u8) -> f32 {
+    let chunk_size = if *lod <= 14 {
+        let scale_factor = 2.0_f32.powi((14 - lod) as i32);
+        BASE_SIZE * scale_factor
+    } else {
+        let scale_factor = 2.0_f32.powi((lod - 14) as i32);
+        BASE_SIZE / scale_factor
+    };
+    chunk_size
+}
+
 pub fn dynamic_chunks(
     mut commands: Commands,
     settings: Res<Settings>,
@@ -74,13 +85,7 @@ pub fn dynamic_chunks(
     chunks: Query<(Entity, &Chunk, &Transform)>,
     mut messages: MessageWriter<ChunkMessage>,
 ) {
-    let chunk_size = if settings.terrain.level_of_detail <= 14 {
-        let scale_factor = 2.0_f32.powi((14 - settings.terrain.level_of_detail) as i32);
-        BASE_SIZE * scale_factor
-    } else {
-        let scale_factor = 2.0_f32.powi((settings.terrain.level_of_detail - 14) as i32);
-        BASE_SIZE / scale_factor
-    };
+    let chunk_size = chunk_size(&settings.terrain.level_of_detail);
 
     let coords = settings
         .terrain
@@ -154,13 +159,7 @@ pub fn poll_terrain(
     settings: Res<Settings>,
     mut messages: MessageWriter<ChunkMessage>,
 ) {
-    let chunk_size = if settings.terrain.level_of_detail <= 14 {
-        let scale_factor = 2.0_f32.powi((14 - settings.terrain.level_of_detail) as i32);
-        BASE_SIZE * scale_factor
-    } else {
-        let scale_factor = 2.0_f32.powi((settings.terrain.level_of_detail - 14) as i32);
-        BASE_SIZE / scale_factor
-    };
+    let chunk_size = chunk_size(&settings.terrain.level_of_detail);
 
     let base_coords = settings
         .terrain
