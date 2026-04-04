@@ -4,7 +4,13 @@ use crate::{
     scenery::terrain::Coordinates,
 };
 use avian3d::prelude::LinearVelocity;
-use bevy::{input_focus::InputFocus, prelude::*, window::WindowMode};
+use bevy::{
+    input::mouse::{MouseScrollUnit, MouseWheel},
+    input_focus::InputFocus,
+    picking::hover::HoverMap,
+    prelude::*,
+    window::WindowMode,
+};
 use std::collections::HashMap;
 
 #[derive(Component)]
@@ -42,8 +48,11 @@ impl Menu {
                 Button,
                 if spawn_button_type.clone() == SpawnButton::Fly {
                     Node {
+                        position_type: PositionType::Absolute,
+                        bottom: px(5),
+                        right: px(5),
                         border: UiRect::all(px(5)),
-                        padding: px(12.0).all(),
+                        padding: px(32.0).vertical().with_left(px(64)).with_right(px(64)),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
                         ..default()
@@ -91,7 +100,79 @@ impl Menu {
                     long: 18.5033,
                 },
             ),
+            (
+                "Vancouver, CA",
+                Coordinates {
+                    lat: 49.2920,
+                    long: -123.1416,
+                },
+            ),
+            (
+                "London, UK",
+                Coordinates {
+                    lat: 51.5074,
+                    long: -0.1278,
+                },
+            ),
+            (
+                "Tokyo, JP",
+                Coordinates {
+                    lat: 35.6762,
+                    long: 139.6503,
+                },
+            ),
+            (
+                "New York, US",
+                Coordinates {
+                    lat: 40.7128,
+                    long: -74.0060,
+                },
+            ),
+            (
+                "Sydney, AU",
+                Coordinates {
+                    lat: -33.8688,
+                    long: 151.2093,
+                },
+            ),
+            (
+                "Paris, FR",
+                Coordinates {
+                    lat: 48.8566,
+                    long: 2.3522,
+                },
+            ),
+            (
+                "Cairo, EG",
+                Coordinates {
+                    lat: 30.0444,
+                    long: 31.2357,
+                },
+            ),
+            (
+                "Rio de Janeiro, BR",
+                Coordinates {
+                    lat: -22.9068,
+                    long: -43.1729,
+                },
+            ),
+            (
+                "Berlin, DE",
+                Coordinates {
+                    lat: 52.5200,
+                    long: 13.4050,
+                },
+            ),
+            (
+                "Mumbai, IN",
+                Coordinates {
+                    lat: 19.0760,
+                    long: 72.8777,
+                },
+            ),
         ]);
+
+        let font = asset_server.load(FONT_PATH);
 
         commands
             .spawn((
@@ -129,7 +210,7 @@ impl Menu {
                                 Text::new("Spawn Helicopter"),
                                 TextColor(Color::WHITE),
                                 TextFont {
-                                    font: asset_server.load(FONT_PATH),
+                                    font: font.clone(),
                                     ..default()
                                 }
                             )]
@@ -140,7 +221,7 @@ impl Menu {
                                 Text::new("Spawn Aeroplane"),
                                 TextColor(Color::WHITE),
                                 TextFont {
-                                    font: asset_server.load(FONT_PATH),
+                                    font: font.clone(),
                                     ..default()
                                 }
                             )],
@@ -162,41 +243,39 @@ impl Menu {
                         },
                     ))
                     .with_children(|parent| {
-                        parent
-                            .spawn((
-                                Name::new("Location Menu"),
-                                Node {
-                                    width: percent(100),
-                                    height: percent(80),
-                                    row_gap: px(12.0),
-                                    column_gap: px(12.0),
-                                    display: Display::Grid,
-                                    ..default()
-                                },
-                            ))
-                            .with_children(|parent| {
-                                for loc in locations {
-                                    let text = format!("{}", loc.0);
-                                    parent.spawn((
-                                        spawn_button(SpawnButton::Location(loc.1)),
-                                        children![(
-                                            Text::new(text),
-                                            TextColor(Color::WHITE),
-                                            TextFont {
-                                                font: asset_server.load(FONT_PATH),
-                                                ..default()
-                                            },
-                                        )],
-                                    ));
-                                }
-                            });
+                        let font2 = font.clone(); // hecky borrow checker things
+                        parent.spawn((
+                            Name::new("Location Menu"),
+                            Node {
+                                display: Display::Flex,
+                                flex_direction: FlexDirection::Column,
+                                align_self: AlignSelf::Stretch,
+                                height: percent(100),
+                                overflow: Overflow::scroll_y(),
+                                ..default()
+                            },
+                            Children::spawn(SpawnIter(locations.into_iter().map(move |loc| {
+                                (
+                                    spawn_button(SpawnButton::Location(loc.1)),
+                                    children![(
+                                        Text::new(format!("{}", loc.0)),
+                                        TextColor(Color::WHITE),
+                                        TextFont {
+                                            font: font2.clone(),
+                                            ..default()
+                                        },
+                                    )],
+                                )
+                            }))),
+                        ));
+
                         parent.spawn((
                             spawn_button(SpawnButton::Fly),
                             children![(
                                 Text::new("Fly"),
                                 TextColor(Color::WHITE),
                                 TextFont {
-                                    font: asset_server.load(FONT_PATH),
+                                    font: font,
                                     ..default()
                                 }
                             ),],
@@ -221,8 +300,12 @@ impl Plugin for UI {
         app.add_systems(Startup, (Self::ui_main_setup, Menu::spawn))
             .init_resource::<InputFocus>()
             .add_message::<UIMessage>()
-            .add_systems(Update, (Self::update_ui_hud, Self::ui_main_loop))
-            .add_systems(FixedUpdate, (Self::button_system, toggle_fullscreen));
+            .add_systems(
+                Update,
+                (Self::update_ui_hud, Self::ui_main_loop, Scroll::send_events),
+            )
+            .add_systems(FixedUpdate, (Self::button_system, toggle_fullscreen))
+            .add_observer(Scroll::handler);
     }
 }
 
@@ -388,6 +471,90 @@ impl UI {
                 ),
             };
             text.0 = string;
+        }
+    }
+}
+
+/// UI scrolling event.
+#[derive(EntityEvent, Debug)]
+#[entity_event(propagate, auto_propagate)]
+struct Scroll {
+    entity: Entity,
+    /// Scroll delta in logical coordinates.
+    delta: Vec2,
+}
+
+impl Scroll {
+    fn handler(
+        mut scroll: On<Scroll>,
+        mut query: Query<(&mut ScrollPosition, &Node, &ComputedNode)>,
+    ) {
+        let Ok((mut scroll_position, node, computed)) = query.get_mut(scroll.entity) else {
+            return;
+        };
+
+        let max_offset =
+            (computed.content_size() - computed.size()) * computed.inverse_scale_factor();
+
+        let delta = &mut scroll.delta;
+        if node.overflow.x == OverflowAxis::Scroll && delta.x != 0. {
+            // Is this node already scrolled all the way in the direction of the scroll?
+            let max = if delta.x > 0. {
+                scroll_position.x >= max_offset.x
+            } else {
+                scroll_position.x <= 0.
+            };
+
+            if !max {
+                scroll_position.x += delta.x;
+                // Consume the X portion of the scroll delta.
+                delta.x = 0.;
+            }
+        }
+
+        if node.overflow.y == OverflowAxis::Scroll && delta.y != 0. {
+            // Is this node already scrolled all the way in the direction of the scroll?
+            let max = if delta.y > 0. {
+                scroll_position.y >= max_offset.y
+            } else {
+                scroll_position.y <= 0.
+            };
+
+            if !max {
+                scroll_position.y += delta.y;
+                // Consume the Y portion of the scroll delta.
+                delta.y = 0.;
+            }
+        }
+
+        // Stop propagating when the delta is fully consumed.
+        if *delta == Vec2::ZERO {
+            scroll.propagate(false);
+        }
+    }
+
+    fn send_events(
+        mut mouse_wheel_reader: MessageReader<MouseWheel>,
+        hover_map: Res<HoverMap>,
+        keyboard_input: Res<ButtonInput<KeyCode>>,
+        mut commands: Commands,
+    ) {
+        for mouse_wheel in mouse_wheel_reader.read() {
+            let mut delta = -Vec2::new(mouse_wheel.x, mouse_wheel.y);
+
+            if mouse_wheel.unit == MouseScrollUnit::Line {
+                delta *= 10.0;
+            }
+
+            if keyboard_input.any_pressed([KeyCode::ControlLeft, KeyCode::ControlRight]) {
+                std::mem::swap(&mut delta.x, &mut delta.y);
+            }
+
+            for pointer_map in hover_map.values() {
+                for entity in pointer_map.keys().copied() {
+                    commands.trigger(Scroll { entity, delta });
+                }
+            }
         }
     }
 }
