@@ -18,7 +18,6 @@ This is a little flight sim made in Bevy.
 - A settings file (settings.json)
 
 ## Running `bevy_fs`
-## Installation
 
 ### Prerequisites
 
