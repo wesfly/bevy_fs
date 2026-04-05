@@ -1,12 +1,13 @@
 // Thanks to Hermitao for making a prototype flight model (https://gist.github.com/Hermitao/0a908f8af19b11132e3bdb5ba4ef99f0)
 
-use avian3d::prelude::{Forces, ReadRigidBodyForces, WriteRigidBodyForces, forces::ForcesItem};
-use bevy::prelude::*;
-
 use crate::{
     aircraft::{Aircraft, AircraftState, AircraftTypes},
     input::InputAxis,
 };
+use avian3d::prelude::{
+    Forces, LinearVelocity, ReadRigidBodyForces, WriteRigidBodyForces, forces::ForcesItem,
+};
+use bevy::prelude::*;
 
 const ASPECT_RATIO: f32 = 1.0;
 
@@ -263,4 +264,24 @@ fn lift(lift_coeff: f32, airspeed: f32, wing_area: f32, up: Dir3, rho: f32) -> V
     let lift_force = lift_coeff * rho * (airspeed.powi(2) * 0.5) * wing_area;
 
     lift_force * up
+}
+
+pub fn canards_angle(
+    aircraft: Single<'_, '_, (&Transform, &LinearVelocity), With<Aircraft>>,
+) -> (f32, f32) {
+    let velocity_dir = aircraft.1.to_vec3a().to_vec3();
+    let transform = aircraft.0;
+    let sin = transform
+        .forward()
+        .cross(velocity_dir)
+        .dot(transform.right().as_vec3());
+    let cos = transform.forward().dot(velocity_dir);
+    let aoa = -sin.atan2(cos).to_degrees();
+
+    let canards_angle = if velocity_dir.length() <= 1.0 {
+        0.0
+    } else {
+        aoa.clamp(-50.0, 50.0).to_radians()
+    };
+    (canards_angle, canards_angle)
 }
