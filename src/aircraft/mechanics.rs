@@ -269,19 +269,21 @@ fn lift(lift_coeff: f32, airspeed: f32, wing_area: f32, up: Dir3, rho: f32) -> V
 pub fn canards_angle(
     aircraft: Single<'_, '_, (&Transform, &LinearVelocity), With<Aircraft>>,
 ) -> (f32, f32) {
-    let velocity_dir = aircraft.1.to_vec3a().to_vec3();
+    let velocity = aircraft.1.to_vec3a().to_vec3();
     let transform = aircraft.0;
     let sin = transform
         .forward()
-        .cross(velocity_dir)
+        .cross(velocity)
         .dot(transform.right().as_vec3());
-    let cos = transform.forward().dot(velocity_dir);
-    let aoa = -sin.atan2(cos).to_degrees();
+    let cos = transform.forward().dot(velocity);
+    let alpha_deg = -sin.atan2(cos).to_degrees();
 
-    let canards_angle = if velocity_dir.length() <= 1.0 {
+    let canards_angle = if velocity.length() <= 1.0 {
         0.0
     } else {
-        aoa.clamp(-50.0, 50.0).to_radians()
+        alpha_deg.clamp(-50.0, 50.0).to_radians()
     };
+
+    // Port, Starboard
     (canards_angle, canards_angle)
 }

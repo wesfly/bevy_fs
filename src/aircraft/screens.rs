@@ -29,7 +29,7 @@ pub enum ScreenUiElement {
     Altitude,
     AirspeedKts,
     SpeedMach,
-    Aoa,
+    Alpha,
     Horizon,
 }
 
@@ -124,7 +124,7 @@ pub fn get_material_handle(
                             bottom: px(400.0),
                             ..default()
                         },
-                        ScreenUiElement::Aoa,
+                        ScreenUiElement::Alpha,
                         Text::new("loading..."),
                         text_bundle.clone(),
                     ));
@@ -295,7 +295,7 @@ pub fn update_screens(
                 ScreenUiElement::Altitude => {
                     *text = Text::new(format!("{}", (tf.translation.y * METRES_TO_FEET) as i32))
                 }
-                ScreenUiElement::Aoa => {
+                ScreenUiElement::Alpha => {
                     let velocity_dir = vel_tf.0.to_vec3a().to_vec3();
 
                     let transform = vel_tf.1;
@@ -304,9 +304,9 @@ pub fn update_screens(
                         .cross(velocity_dir)
                         .dot(transform.right().as_vec3());
                     let cos = transform.forward().dot(velocity_dir);
-                    let aoa = -sin.atan2(cos).to_degrees();
+                    let alpha_deg = -sin.atan2(cos).to_degrees();
 
-                    *text = Text::new(format!("AOA {:.2}", aoa))
+                    *text = Text::new(format!("AOA {:.2}", alpha_deg))
                 }
 
                 _ => *text = Text::new("todo!()"),
