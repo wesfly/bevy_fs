@@ -268,6 +268,7 @@ fn lift(lift_coeff: f32, airspeed: f32, wing_area: f32, up: Dir3, rho: f32) -> V
 
 pub fn canards_angle(
     aircraft: Single<'_, '_, (&Transform, &LinearVelocity), With<Aircraft>>,
+    state: AircraftState,
 ) -> (f32, f32) {
     let velocity = aircraft.1.to_vec3a().to_vec3();
     let transform = aircraft.0;
@@ -276,12 +277,19 @@ pub fn canards_angle(
         .cross(velocity)
         .dot(transform.right().as_vec3());
     let cos = transform.forward().dot(velocity);
-    let alpha_deg = -sin.atan2(cos).to_degrees();
+    let alpha = -sin.atan2(cos);
+    let alpha_deg = alpha.to_degrees();
+
+    // Canards work the other around way when landing gear is deployed, maximising lift
+    let factor = match state.landing_gear_deployed {
+        false => 1.0,
+        true => -1.0,
+    };
 
     let canards_angle = if velocity.length() <= 1.0 {
         0.0
     } else {
-        alpha_deg.clamp(-50.0, 50.0).to_radians()
+        (factor * alpha_deg).clamp(-30.0, 50.0).to_radians()
     };
 
     // Port, Starboard

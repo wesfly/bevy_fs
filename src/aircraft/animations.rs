@@ -22,8 +22,9 @@ pub fn update_control_surfaces(
     ctrl_surfaces: Query<(&mut Transform, &ControlSurfaces), Without<Aircraft>>,
     aircraft: Single<(&Transform, &LinearVelocity), With<Aircraft>>,
     input: Res<InputAxis>,
+    state: Res<AircraftState>,
 ) {
-    let canards_angle = super::mechanics::canards_angle(aircraft);
+    let canards_angle = super::mechanics::canards_angle(aircraft, *state);
 
     let aileron_angle = (input.roll * 40.0).to_radians();
     let elevator_angle = (-input.pitch * 40.0).to_radians();
@@ -40,7 +41,7 @@ pub fn update_control_surfaces(
             ControlSurfaces::CanardStarboard => {
                 transform.rotation = transform
                     .rotation
-                    .lerp(Quat::from_rotation_x(-canards_angle.1), lerp_speed);
+                    .lerp(Quat::from_rotation_x(canards_angle.1), lerp_speed);
             }
             ControlSurfaces::Rudder => {
                 transform.rotation = transform.rotation.lerp(

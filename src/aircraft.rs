@@ -50,14 +50,14 @@ pub struct ControlSurface {
     pub control_surface: ControlSurfaces,
 }
 
-#[derive(Resource, Default, Deserialize, PartialEq, Clone)]
+#[derive(Resource, Default, Deserialize, PartialEq, Clone, Copy)]
 pub enum AircraftTypes {
     Helicopter,
     #[default]
     Aeroplane,
 }
 
-#[derive(Resource)]
+#[derive(Resource, Copy, Clone)]
 pub struct AircraftState {
     pub aircraft_type: AircraftTypes,
     pub engine_on: bool,
