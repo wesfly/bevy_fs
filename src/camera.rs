@@ -37,11 +37,6 @@ pub struct CameraSettings {
 impl Default for CameraSettings {
     fn default() -> Self {
         // Limiting pitch stops some unexpected rotation past 90° up or down.
-        let cockpit_pos = Vec3 {
-            x: 0.0,
-            y: 1.2,
-            z: -3.27,
-        };
         let pitch_limit = FRAC_PI_2 - 0.01;
         Self {
             orbit_distance: 25.0,
@@ -58,7 +53,11 @@ impl Default for CameraSettings {
                 y: 2.5,
                 z: 0.0,
             },
-            cockpit_default_position: cockpit_pos,
+            cockpit_default_position: Vec3 { // Doesn't matter
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
             tail_default_position: Vec3 {
                 x: 0.0,
                 y: 4.0,
@@ -95,7 +94,7 @@ impl Camera {
             crate::aircraft::AircraftTypes::Aeroplane => Vec3 {
                 x: 0.0,
                 y: 1.2,
-                z: -3.27,
+                z: -3.5,
             },
         };
         let delta = mouse_motion.delta;
