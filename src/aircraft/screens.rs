@@ -96,15 +96,6 @@ pub fn get_material_handle(
                         ..default()
                     },
                     UiTargetCamera(texture_camera),
-                    // adjust for the 41 deg angle of the hud
-                    UiTransform {
-                        scale: {
-                            let tilt_angle_degrees = 41.0_f32;
-                            let vertical_stretch = 1.0 / tilt_angle_degrees.to_radians().cos();
-                            Vec2::new(1.0, vertical_stretch)
-                        },
-                        ..Default::default()
-                    },
                 ))
                 .with_children(|parent| {
                     parent.spawn((
