@@ -238,8 +238,8 @@ pub fn get_material_handle(
                                 width: Val::Auto,
                                 height: Val::Auto,
                                 align_items: AlignItems::Center,
-                                padding: UiRect::all(Val::Px(20.)),
-                                border_radius: BorderRadius::all(Val::Px(10.)),
+                                padding: px(50).all(),
+                                border_radius: BorderRadius::all(px(20)),
                                 ..default()
                             },
                             BackgroundColor(BLUE.into()),
@@ -249,7 +249,7 @@ pub fn get_material_handle(
                                 label,
                                 Text::new("loading..."),
                                 TextFont {
-                                    // font_size: 40.0,
+                                    font_size: 64.0,
                                     ..default()
                                 },
                                 TextColor::WHITE,
