@@ -281,10 +281,13 @@ pub fn update_screens(
                     *text = Text::new(format!("{:.2}%", input_axis.throttle * 100.0))
                 }
                 ScreenUiElement::AirspeedKts => {
-                    *text = Text::new(format!("{}", (tf.forward().dot(vel.0) * M_S_TO_KTS) as i32))
+                    *text = Text::new(format!(
+                        "{} kts",
+                        (tf.forward().dot(vel.0) * M_S_TO_KTS) as i32
+                    ))
                 }
                 ScreenUiElement::Altitude => {
-                    *text = Text::new(format!("{}", (tf.translation.y * METRES_TO_FEET) as i32))
+                    *text = Text::new(format!("{} ft", (tf.translation.y * METRES_TO_FEET) as i32))
                 }
                 ScreenUiElement::Alpha => {
                     let velocity_dir = vel_tf.0.to_vec3a().to_vec3();
