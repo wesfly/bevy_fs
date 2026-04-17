@@ -26,8 +26,8 @@ pub fn update_control_surfaces(
 ) {
     let canards_angle = super::mechanics::canards_angle(aircraft, *state);
 
-    let aileron_angle = (input.roll * 40.0).to_radians();
-    let elevator_angle = (-input.pitch * 40.0).to_radians();
+    let aileron_angle = (input.roll * 30.0).to_radians();
+    let elevator_angle = (-input.pitch * 30.0).to_radians();
 
     let lerp_speed = 0.05;
 
