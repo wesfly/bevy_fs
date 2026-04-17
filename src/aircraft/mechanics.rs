@@ -286,10 +286,10 @@ pub fn canards_angle(
         true => -1.0,
     };
 
-    let canards_angle = if velocity.length() <= 1.0 {
+    let canards_angle = if velocity.length() <= 20.0 {
         0.0
     } else {
-        (factor * alpha_deg).clamp(-30.0, 50.0).to_radians()
+        (factor * alpha_deg).clamp(-22.0, 50.0).to_radians()
     };
 
     // Port, Starboard
