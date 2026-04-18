@@ -13,7 +13,7 @@ This is a little flight sim made in Bevy.
 - Terrain with real-world elevation data and collisions
 - Loading data from GLTF with custom properties
 - 3D cockpit
-- Collisions with `avian3d`
+- Collisions using `avian3d`
 - Water with screen space reflections
 - A settings file (settings.json)
 
@@ -45,7 +45,7 @@ This is a little flight sim made in Bevy.
 
 ### Helicopter
 
-To start flying, you need to turn on the engine by pressing `M`. If you now bring the throttle to 100%, you should start flying.
+You can start the engines by pressing `M`. If you now bring the throttle to 100%, you will start flying.
 
 ### Aeroplane
 
@@ -97,7 +97,7 @@ You can change input methods in the settings.
 
 ---
 
-## Contributions
+## Contributing
 
 PRs welcome.
 
