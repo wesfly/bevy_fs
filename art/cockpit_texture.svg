@@ -7,7 +7,7 @@
    viewBox="0 0 1024 1024"
    version="1.1"
    id="svg1"
-   inkscape:version="1.4.3 (0d15f75042, 2025-12-25)"
+   inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
    sodipodi:docname="cockpit_texture.svg"
    inkscape:export-filename="../assets/cockpit_texture.png"
    inkscape:export-xdpi="96"
@@ -27,10 +27,10 @@
      inkscape:deskcolor="#505050"
      inkscape:document-units="px"
      inkscape:zoom="0.81719871"
-     inkscape:cx="731.15632"
-     inkscape:cy="480.29934"
-     inkscape:window-width="2048"
-     inkscape:window-height="1124"
+     inkscape:cx="846.79527"
+     inkscape:cy="374.44993"
+     inkscape:window-width="2560"
+     inkscape:window-height="1371"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -52,7 +52,7 @@
          id="tspan1"
          x="45.745701"
          y="89.14547"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:53.3333px;font-family:'Red Hat Mono';-inkscape-font-specification:'Red Hat Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none">STROBE</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:53.3333px;font-family:'Adwaita Mono';-inkscape-font-specification:'Adwaita Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none">STROBE</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:38.1582px;font-family:'Red Hat Mono';-inkscape-font-specification:'Red Hat Mono Bold';writing-mode:lr-tb;direction:ltr;fill:none;stroke:#000000;stroke-width:0.715467"
@@ -63,16 +63,16 @@
          id="tspan2"
          x="544.5177"
          y="199.09251"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:38.1582px;font-family:'Red Hat Mono';-inkscape-font-specification:'Red Hat Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.715467">BRT</tspan><tspan
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:38.1582px;font-family:'Adwaita Mono';-inkscape-font-specification:'Adwaita Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.715467">BRT</tspan><tspan
          sodipodi:role="line"
          x="544.5177"
-         y="246.79027"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:38.1582px;font-family:'Red Hat Mono';-inkscape-font-specification:'Red Hat Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.715467"
+         y="247.25711"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:38.1582px;font-family:'Adwaita Mono';-inkscape-font-specification:'Adwaita Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.715467"
          id="tspan3">DIM</tspan><tspan
          sodipodi:role="line"
          x="544.5177"
-         y="294.48801"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:38.1582px;font-family:'Red Hat Mono';-inkscape-font-specification:'Red Hat Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.715467"
+         y="295.42169"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:38.1582px;font-family:'Adwaita Mono';-inkscape-font-specification:'Adwaita Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.715467"
          id="tspan4">OFF</tspan></text>
     <text
        xml:space="preserve"
@@ -84,7 +84,7 @@
          id="tspan5"
          x="416.05331"
          y="89.14547"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:53.3333px;font-family:'Red Hat Mono';-inkscape-font-specification:'Red Hat Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none">NAV</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:53.3333px;font-family:'Adwaita Mono';-inkscape-font-specification:'Adwaita Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none">NAV</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:38.1582px;font-family:'Red Hat Mono';-inkscape-font-specification:'Red Hat Mono Bold';writing-mode:lr-tb;direction:ltr;fill:none;stroke:#000000;stroke-width:0.715467"
@@ -94,7 +94,7 @@
          sodipodi:role="line"
          x="31.822454"
          y="360.90012"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:38.1582px;font-family:'Red Hat Mono';-inkscape-font-specification:'Red Hat Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.715467"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:38.1582px;font-family:'Adwaita Mono';-inkscape-font-specification:'Adwaita Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.715467"
          id="tspan8">BRT.DIM.OFF</tspan></text>
     <text
        xml:space="preserve"
@@ -106,7 +106,7 @@
          id="tspan6"
          x="815.80804"
          y="89.14547"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:53.3333px;font-family:'Red Hat Mono';-inkscape-font-specification:'Red Hat Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none">FORM</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:53.3333px;font-family:'Adwaita Mono';-inkscape-font-specification:'Adwaita Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none">FORM</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:38.1582px;font-family:'Red Hat Mono';-inkscape-font-specification:'Red Hat Mono Bold';writing-mode:lr-tb;direction:ltr;fill:none;stroke:#000000;stroke-width:0.715467"
@@ -116,7 +116,7 @@
          sodipodi:role="line"
          x="846.42932"
          y="360.90012"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:38.1582px;font-family:'Red Hat Mono';-inkscape-font-specification:'Red Hat Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.715467"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:38.1582px;font-family:'Adwaita Mono';-inkscape-font-specification:'Adwaita Mono Bold';fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.715467"
          id="tspan10">OFF</tspan></text>
   </g>
 </svg>
