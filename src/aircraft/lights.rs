@@ -157,8 +157,8 @@ impl Light {
     ) {
         for (mut point_light, light) in point_light_query {
             let (colour, on) = match light {
-                Lights::PositionPort => (Color::linear_rgb(1.0, 0.0, 0.0), state.pos_lts_on),
-                Lights::PositionStarboard => (Color::linear_rgb(0.0, 1.0, 0.0), state.pos_lts_on),
+                Lights::PositionPort => (Color::linear_rgb(10.0, 0.0, 0.0), state.pos_lts_on),
+                Lights::PositionStarboard => (Color::linear_rgb(0.0, 10.0, 0.0), state.pos_lts_on),
                 Lights::PositionRear => (Color::linear_rgb(1.0, 1.0, 1.0), state.pos_lts_on),
                 Lights::AntiCol => (
                     Color::linear_rgb(1.0, 0.0, 0.0),
