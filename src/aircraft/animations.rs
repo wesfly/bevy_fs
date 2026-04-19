@@ -63,12 +63,12 @@ pub fn update_control_surfaces(
             ControlSurfaces::AileronPort => {
                 transform.rotation = transform
                     .rotation
-                    .lerp(Quat::from_rotation_x(aileron_angle), lerp_speed)
+                    .lerp(Quat::from_rotation_x(-aileron_angle), lerp_speed)
             }
             ControlSurfaces::AileronStarboard => {
                 transform.rotation = transform
                     .rotation
-                    .lerp(Quat::from_rotation_x(-aileron_angle), lerp_speed)
+                    .lerp(Quat::from_rotation_x(aileron_angle), lerp_speed)
             }
         }
     }
