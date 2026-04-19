@@ -65,7 +65,6 @@ impl Menu {
                     }
                 },
                 spawn_button_type,
-                Menu,
                 BorderColor::all(Color::WHITE),
                 BackgroundColor(Color::BLACK),
             )
@@ -177,7 +176,7 @@ impl Menu {
         commands
             .spawn((
                 Menu,
-                Name::new("Root of menu"),
+                Name::new("Root of Menu"),
                 Node {
                     // fill the entire window
                     width: percent(100),
