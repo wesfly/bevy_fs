@@ -22,7 +22,7 @@ This is a little flight sim made in Bevy.
 ### Prerequisites
 
 - **Rust toolchain:** [Install Rust](https://rust-lang.org/tools/install)
-- **Git LFS:** Used for large file assets.  
+- **Git LFS:** Used for large file assets.
   - [Git LFS install guide](https://git-lfs.github.com/)
 
 ### Installation steps
