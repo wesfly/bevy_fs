@@ -47,6 +47,10 @@ pub enum LdgGearPhase {
     Phase3,
 }
 
+pub const LEFT_POS: Vec3 = Vec3::new(-1.3, -0.60, 2.1);
+pub const RIGHT_POS: Vec3 = Vec3::new(1.3, -0.60, 2.1);
+pub const NOSEWHEEL_POS: Vec3 = Vec3::new(0.0, -0.53, -2.9);
+
 const LDG_GEAR_DEPLOY_SPD: f32 = 40.0_f32.to_radians();
 const DOOR_DEPLOY_ANGLE: f32 = 80.0_f32.to_radians();
 
