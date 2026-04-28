@@ -11,10 +11,11 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Resource)]
 pub struct InputAxis {
-    pub pitch: f32,    // Pitch
-    pub yaw: f32,      // Yaw
-    pub roll: f32,     // Roll
-    pub throttle: f32, // Throttle
+    pub pitch: f32,
+    pub yaw: f32,
+    pub roll: f32,
+    pub throttle: f32,
+    pub ground_brakes: f32, // 0.0 to 1.0
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -37,6 +38,8 @@ pub struct Keymap {
     change_camera: KeyCode,
     toggle_gear: KeyCode,
     engine: KeyCode,
+    parking_brake: KeyCode,
+    ground_brake: KeyCode,
 
     pos_lights: KeyCode,
     strobe_lights: KeyCode,
@@ -47,7 +50,6 @@ pub struct Keymap {
 impl Default for Keymap {
     fn default() -> Self {
         Self {
-            reset_camera: KeyCode::KeyR,
             up: KeyCode::KeyW,
             down: KeyCode::KeyS,
             rudder_left: KeyCode::KeyQ,
@@ -56,9 +58,15 @@ impl Default for Keymap {
             roll_right: KeyCode::KeyD,
             throttle_up: KeyCode::PageUp,
             throttle_down: KeyCode::PageDown,
+
             change_camera: KeyCode::KeyC,
+            reset_camera: KeyCode::KeyR,
+
             toggle_gear: KeyCode::KeyG,
             engine: KeyCode::KeyM,
+
+            parking_brake: KeyCode::Equal,
+            ground_brake: KeyCode::KeyZ,
 
             pos_lights: KeyCode::Digit1,
             strobe_lights: KeyCode::Digit2,
@@ -109,6 +117,15 @@ pub fn input_system(
         button_messages.write(ButtonMessages(InterfaceOperation::Engine));
     }
 
+    if keyboard_input.just_pressed(keymap.parking_brake) {
+        button_messages.write(ButtonMessages(InterfaceOperation::ParkBrk));
+    }
+    if keyboard_input.pressed(keymap.ground_brake) {
+        input.ground_brakes = input.ground_brakes.lerp(1.0, 0.1);
+    } else {
+        input.ground_brakes = input.ground_brakes.lerp(0.0, 0.1);
+    };
+
     if settings.gamepad.enabled {
         if let Some(gamepad) = gp {
             handle_gamepad_input(&mut input, settings, gamepad);
@@ -117,7 +134,7 @@ pub fn input_system(
         }
     } else {
         handle_keyboard_input(keys, keymap, input);
-    }
+    };
 }
 
 fn handle_gamepad_input(
@@ -126,10 +143,11 @@ fn handle_gamepad_input(
     gamepad: Single<'_, '_, &bevy::input::gamepad::Gamepad>,
 ) {
     let mut gamepad_input = InputAxis {
-        pitch: 0.,
-        roll: 0.,
-        yaw: 0.,
-        throttle: 0.,
+        pitch: 0.0,
+        roll: 0.0,
+        yaw: 0.0,
+        throttle: 0.0,
+        ground_brakes: 0.0,
     };
 
     if settings.gamepad.hotas {
@@ -183,10 +201,11 @@ fn handle_keyboard_input(
     mut input: ResMut<InputAxis>,
 ) {
     let mut button_input = InputAxis {
-        pitch: 0.,
-        roll: 0.,
-        yaw: 0.,
-        throttle: 0.,
+        pitch: 0.0,
+        roll: 0.0,
+        yaw: 0.0,
+        throttle: 0.0,
+        ground_brakes: 0.0,
     };
     if keys.pressed(keymap.up) {
         button_input.pitch = -1.0

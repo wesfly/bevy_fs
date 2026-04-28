@@ -13,6 +13,7 @@ pub enum InterfaceOperation {
     FormationLt,
     Apu,
     LdgGear,
+    ParkBrk,
 }
 
 #[derive(Debug, Component, Deserialize, PartialEq)]

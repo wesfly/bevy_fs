@@ -118,6 +118,7 @@ fn main() {
             yaw: 0.0,
             roll: 0.0,
             throttle: 0.0,
+            ground_brakes: 0.0,
         })
         .init_resource::<LoadedChunks>()
         .insert_resource(CameraSettings::default())

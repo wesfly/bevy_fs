@@ -67,6 +67,7 @@ pub struct AircraftState {
     pub form_lts_on: bool,
     pub ldg_lts_on: bool,
     pub landing_gear_deployed: bool,
+    pub parking_brake: bool,
 }
 
 impl Default for AircraftState {
@@ -80,6 +81,7 @@ impl Default for AircraftState {
             form_lts_on: false,
             ldg_lts_on: false,
             landing_gear_deployed: false,
+            parking_brake: false,
         }
     }
 }
@@ -143,7 +145,9 @@ pub fn collision_listener(
                     damage_messages.write(Damage(DamageTypes::Critical));
                 }
             }
-            Err(_) => todo!(),
+            Err(_) => {
+                warn!("something happened (collision_listener)")
+            }
         }
     }
 }
@@ -176,14 +180,14 @@ pub fn spawn_aeroplane(
             ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh),
             CenterOfMass::new(0.0, 0.5, 0.16),
             LinearVelocity(Vec3 {
-                x: -100.0,
+                x: -200.0,
                 y: 0.0,
                 z: 0.0,
             }),
             Transform {
                 translation: Vec3 {
-                    x: -100.0,
-                    y: 2200.0,
+                    x: 0.0,
+                    y: 120.0,
                     z: 0.0,
                 },
                 rotation: Quat::from_rotation_y(90.0_f32.to_radians()),
@@ -191,36 +195,7 @@ pub fn spawn_aeroplane(
             },
             CollisionEventsEnabled,
             Mass(10_000.0),
-            SweptCcd::new_with_mode(SweepMode::NonLinear),
-            children![
-                (
-                    Collider::capsule(0.5, 1.0),
-                    Transform::from_xyz(1.2, -0.62, 2.0),
-                    Friction::new(0.0),
-                    Mass(0.0),
-                    Name::new("rear left"),
-                    CollisionEventsEnabled,
-                    LandingGear,
-                ),
-                (
-                    Collider::capsule(0.5, 1.0),
-                    Transform::from_xyz(-1.2, -0.62, 2.0),
-                    Friction::new(0.0),
-                    Mass(0.0),
-                    Name::new("rear right"),
-                    CollisionEventsEnabled,
-                    LandingGear,
-                ),
-                (
-                    Collider::capsule(0.5, 1.0),
-                    Transform::from_xyz(0.0, -0.58, -2.8),
-                    Friction::new(0.0),
-                    Mass(0.0),
-                    Name::new("nosewheel"),
-                    CollisionEventsEnabled,
-                    LandingGear,
-                )
-            ],
+            // SweptCcd::new_with_mode(SweepMode::NonLinear),
         ))
         .observe(load);
 

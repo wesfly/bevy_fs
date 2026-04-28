@@ -1,5 +1,5 @@
 // Thanks to Hermitao for making a prototype flight model (https://gist.github.com/Hermitao/0a908f8af19b11132e3bdb5ba4ef99f0)
-
+mod landing_gear;
 use crate::{
     aircraft::{AircraftState, mechanics::AircraftPhysicsConfig},
     input::InputAxis,
@@ -14,6 +14,9 @@ pub fn mechanics(
     transform: &GlobalTransform,
     force: &mut ForcesItem,
     input: &InputAxis,
+    spatial_query: SpatialQuery,
+    gizmos: Gizmos,
+    time: Res<Time>,
 ) {
     if state.engine_on {
         steering(transform, force, &input);
@@ -55,6 +58,9 @@ pub fn mechanics(
         let lift = lift(lift_coeff, airspeed, wing_area, transform.up(), rho);
         force.apply_force(lift);
     }
+    // if state.landing_gear_deployed {
+    landing_gear::spring_forces(force, spatial_query, transform, gizmos, time, state, input);
+    // }
 }
 
 fn steering(transform: &GlobalTransform, force: &mut ForcesItem, input: &InputAxis) {

@@ -4,7 +4,7 @@ use crate::{
     aircraft::{Aircraft, AircraftState, AircraftTypes},
     input::InputAxis,
 };
-use avian3d::prelude::{Forces, LinearVelocity, WriteRigidBodyForces};
+use avian3d::prelude::{Forces, LinearVelocity, SpatialQuery, WriteRigidBodyForces};
 use bevy::prelude::*;
 
 pub fn alpha(velocity: &Vec3, transform: &GlobalTransform) -> f32 {
@@ -24,6 +24,9 @@ pub fn mechanics(
     mut force: Single<Forces, With<Aircraft>>,
     input: Res<InputAxis>,
     state: Res<AircraftState>,
+    spatial_query: SpatialQuery,
+    gizmos: Gizmos,
+    time: Res<Time>,
 ) {
     match state.aircraft_type {
         AircraftTypes::Helicopter => {
@@ -37,7 +40,15 @@ pub fn mechanics(
             }
         }
         AircraftTypes::Aeroplane => {
-            aeroplane::mechanics(*state, *transform, &mut force, &*input);
+            aeroplane::mechanics(
+                *state,
+                *transform,
+                &mut force,
+                &*input,
+                spatial_query,
+                gizmos,
+                time,
+            );
         }
     }
 }
