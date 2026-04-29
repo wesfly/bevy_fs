@@ -58,7 +58,11 @@ pub fn spring_forces(
                 force.apply_force_at_point(spring_force, origin);
 
                 //============================== steering/anti-drift ==============================
-                let steering_dir = transform.right(); // should actually be the tire's transform.right() but this isn't implemented yet
+                let steering_dir = if is_nosewheel {
+                    Quat::from_rotation_y(20.0 * input.yaw.to_radians()) * transform.right()
+                } else {
+                    transform.right()
+                };
                 let vel_at_contact_point = force.velocity_at_point(contact_point);
 
                 let steering_vel = steering_dir.dot(vel_at_contact_point);
