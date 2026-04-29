@@ -23,7 +23,7 @@ pub fn mechanics(
     transform: Single<&GlobalTransform, With<Aircraft>>,
     mut force: Single<Forces, With<Aircraft>>,
     input: Res<InputAxis>,
-    state: Res<AircraftState>,
+    mut state: ResMut<AircraftState>,
     spatial_query: SpatialQuery,
     gizmos: Gizmos,
     time: Res<Time>,
@@ -41,7 +41,7 @@ pub fn mechanics(
         }
         AircraftTypes::Aeroplane => {
             aeroplane::mechanics(
-                *state,
+                &mut state,
                 *transform,
                 &mut force,
                 &*input,

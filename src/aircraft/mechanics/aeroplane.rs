@@ -10,7 +10,7 @@ use bevy::prelude::*;
 const ASPECT_RATIO: f32 = 1.0;
 
 pub fn mechanics(
-    state: AircraftState,
+    mut state: &mut AircraftState,
     transform: &GlobalTransform,
     force: &mut ForcesItem,
     input: &InputAxis,
@@ -60,7 +60,15 @@ pub fn mechanics(
     }
 
     if state.landing_gear_deployed && force.linear_velocity().length() <= 200.0 {
-        landing_gear::spring_forces(force, spatial_query, transform, gizmos, time, state, input);
+        landing_gear::spring_forces(
+            force,
+            spatial_query,
+            transform,
+            gizmos,
+            time,
+            &mut state,
+            input,
+        );
     }
 }
 

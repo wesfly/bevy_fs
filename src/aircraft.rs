@@ -68,6 +68,7 @@ pub struct AircraftState {
     pub ldg_lts_on: bool,
     pub landing_gear_deployed: bool,
     pub parking_brake: bool,
+    pub on_ground: bool,
 }
 
 impl Default for AircraftState {
@@ -82,6 +83,7 @@ impl Default for AircraftState {
             ldg_lts_on: false,
             landing_gear_deployed: false,
             parking_brake: false,
+            on_ground: false,
         }
     }
 }

@@ -23,10 +23,12 @@ pub fn spring_forces(
     transform: &GlobalTransform,
     mut _gizmos: Gizmos,
     time: Res<Time>,
-    state: AircraftState,
+    state: &mut AircraftState,
     input: &InputAxis,
 ) {
     let landing_gear = vec![LEFT_POS, RIGHT_POS, NOSEWHEEL_POS];
+
+    let mut on_ground_vec = vec![false; 3];
 
     for (i, gear_pos) in landing_gear.iter().enumerate() {
         let is_nosewheel = i == 2;
@@ -44,6 +46,7 @@ pub fn spring_forces(
         if let Some(hit) = spatial_query.cast_ray(origin, ray_dir, rest, true, &filter) {
             let spring_dir = transform.up();
             if hit.distance != 0.0 {
+                on_ground_vec[i] = true;
                 // The point where the gear touches the ground
                 let contact_point = origin + ray_dir * hit.distance;
 
@@ -100,6 +103,9 @@ pub fn spring_forces(
             }
         }
     }
+
+    let ldg_gear_on_ground = on_ground_vec.iter().filter(|&&x| x).count();
+    state.on_ground = if ldg_gear_on_ground >= 2 { true } else { false };
 }
 
 fn spring(
