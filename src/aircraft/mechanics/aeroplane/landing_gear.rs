@@ -31,7 +31,7 @@ pub fn spring_forces(
     for (i, gear_pos) in landing_gear.iter().enumerate() {
         let is_nosewheel = i == 2;
         let strength = if is_nosewheel {
-            STRENGTH * 0.8
+            STRENGTH * 0.9
         } else {
             STRENGTH
         };
@@ -67,12 +67,15 @@ pub fn spring_forces(
 
                 let steering_vel = steering_dir.dot(vel_at_contact_point);
 
-                let tire_grip_factor = 0.6;
-                let desired_vel_change = -steering_vel * tire_grip_factor;
+                let tire_grip_factor = 0.8;
+                let desired_vel_change = -steering_vel * tire_grip_factor * 10.0;
 
                 let desired_accel = desired_vel_change * time.delta_secs();
                 let tire_mass = 3_300.0; // The mass that rests on each tire
-                force.apply_force_at_point(steering_dir * tire_mass * desired_accel, contact_point);
+                force.apply_force_at_point(
+                    (steering_dir * tire_mass * desired_accel).clamp_length_max(10000.0),
+                    contact_point,
+                );
 
                 //============================== brakes ==============================
 
