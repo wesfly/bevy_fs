@@ -58,9 +58,10 @@ pub fn mechanics(
         let lift = lift(lift_coeff, airspeed, wing_area, transform.up(), rho);
         force.apply_force(lift);
     }
-    // if state.landing_gear_deployed {
-    landing_gear::spring_forces(force, spatial_query, transform, gizmos, time, state, input);
-    // }
+
+    if state.landing_gear_deployed && force.linear_velocity().length() <= 200.0 {
+        landing_gear::spring_forces(force, spatial_query, transform, gizmos, time, state, input);
+    }
 }
 
 fn steering(transform: &GlobalTransform, force: &mut ForcesItem, input: &InputAxis) {
