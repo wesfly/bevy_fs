@@ -184,7 +184,7 @@ fn handle_gamepad_input(
             gamepad.get(GamepadAxis::LeftStickX),
             gamepad.get(GamepadAxis::LeftStickY),
         ) {
-            gamepad_input.throttle += y;
+            gamepad_input.throttle += y * 0.01;
             gamepad_input.yaw = -x;
         }
     }
