@@ -92,8 +92,6 @@ pub fn spring_forces(
                         * transform.back())
                     .clamp_length_max(MAX_BRAKING_FORCE);
 
-                    info!("{}", braking_force.length());
-
                     force.apply_force_at_point(braking_force, contact_point);
                 }
             }
