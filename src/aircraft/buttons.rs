@@ -70,6 +70,10 @@ impl Button {
                     },
                     (),
                 ),
+                InterfaceOperation::ParkBrk => (
+                    Some(state.parking_brake),
+                    state.parking_brake = !state.parking_brake,
+                ),
                 _ => (None, ()),
             };
             for (mut transform, button) in &mut query_tf_button {
