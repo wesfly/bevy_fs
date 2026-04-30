@@ -189,7 +189,7 @@ pub fn spawn_aeroplane(
             Transform {
                 translation: Vec3 {
                     x: 0.0,
-                    y: 120.0,
+                    y: 500.0,
                     z: 0.0,
                 },
                 rotation: Quat::from_rotation_y(90.0_f32.to_radians()),
@@ -197,7 +197,6 @@ pub fn spawn_aeroplane(
             },
             CollisionEventsEnabled,
             Mass(10_000.0),
-            // SweptCcd::new_with_mode(SweepMode::NonLinear),
         ))
         .observe(load);
 
