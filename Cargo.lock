@@ -912,7 +912,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_fs"
-version = "0.1.1-dev"
+version = "0.1.1"
 dependencies = [
  "avian3d",
  "bevy",
