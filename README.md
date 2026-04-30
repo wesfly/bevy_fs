@@ -73,6 +73,7 @@ You can change input methods in the settings.
 - Mouse wheel to zoom camera
 - `R` to reset camera
 - `G` to raise or lower landing gear
+- `Z` to brake
 - `1` for position lights
 - `2` for strobe lights
 - `3` for formation lights
