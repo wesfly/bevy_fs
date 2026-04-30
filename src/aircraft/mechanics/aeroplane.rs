@@ -15,19 +15,19 @@ pub fn mechanics(
     force: &mut ForcesItem,
     input: &InputAxis,
     spatial_query: SpatialQuery,
-    gizmos: Gizmos,
+    mut gizmos: Gizmos,
     time: Res<Time>,
 ) {
+    let velocity = force.linear_velocity();
+    let velocity_dir = velocity.normalize_or_zero();
+    let speed: f32 = velocity.length();
+
     if state.engine_on {
         steering(transform, force, &input);
 
         let forward = transform.forward();
 
         let rho = super::rho(transform.translation().y as f64).density as f32;
-
-        let velocity = force.linear_velocity();
-        let velocity_dir = velocity.normalize_or_zero();
-        let speed: f32 = velocity.length();
 
         force.apply_force(thrust(&input, &forward) * rho / 1.2041);
 
