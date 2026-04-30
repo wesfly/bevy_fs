@@ -60,6 +60,21 @@ pub fn mechanics(
     }
 
     if state.landing_gear_deployed && force.linear_velocity().length() <= 200.0 {
+        if input.pitch > 0.0 {
+            let factor = if state.on_ground { 1000.0 } else { 5.0 };
+            force.apply_force_at_point(
+                transform.up() * speed * factor * input.pitch,
+                transform.translation() + transform.rotation() * Vec3::new(0.0, 0.6, -1.8),
+            );
+            gizmos.arrow(
+                transform.translation() + transform.rotation() * Vec3::new(0.0, 0.6, -1.8),
+                transform.translation()
+                    + transform.rotation() * Vec3::new(0.0, 0.6, -1.8)
+                    + transform.up() * speed * 1.0 * input.pitch,
+                Color::BLACK,
+            );
+        }
+
         landing_gear::spring_forces(
             force,
             spatial_query,
