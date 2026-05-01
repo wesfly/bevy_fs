@@ -392,20 +392,19 @@ impl UI {
         mut messages: MessageReader<UIMessage>,
         menu_query: Query<Entity, With<Menu>>,
         systems: Res<RunOnceSystemList>,
-        system: Res<RunOnceSystemList>,
     ) {
         for message in messages.read() {
             match message {
                 UIMessage::DespawnMenu => Menu::despawn(&mut commands, menu_query),
                 UIMessage::SpawnUIHud => commands.run_system(systems.0["spawn_ui_hud"]),
                 UIMessage::SpawnScenery => {
-                    commands.run_system(system.0["setup_scene"]);
+                    commands.run_system(systems.0["setup_scene"]);
                 }
                 UIMessage::SpawnHelicopter => {
-                    commands.run_system(system.0["spawn_helicopter"]);
+                    commands.run_system(systems.0["spawn_helicopter"]);
                 }
                 UIMessage::SpawnAeroplane => {
-                    commands.run_system(system.0["setup_aeroplane"]);
+                    commands.run_system(systems.0["setup_aeroplane"]);
                 }
             }
         }
