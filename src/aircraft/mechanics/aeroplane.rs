@@ -15,7 +15,7 @@ pub fn mechanics(
     force: &mut ForcesItem,
     input: &InputAxis,
     spatial_query: SpatialQuery,
-    mut gizmos: Gizmos,
+    gizmos: Gizmos,
     time: Res<Time>,
 ) {
     let velocity = force.linear_velocity();
@@ -66,13 +66,13 @@ pub fn mechanics(
                 transform.up() * speed * factor * input.pitch,
                 transform.translation() + transform.rotation() * Vec3::new(0.0, 0.6, -1.8),
             );
-            gizmos.arrow(
-                transform.translation() + transform.rotation() * Vec3::new(0.0, 0.6, -1.8),
-                transform.translation()
-                    + transform.rotation() * Vec3::new(0.0, 0.6, -1.8)
-                    + transform.up() * speed * 1.0 * input.pitch,
-                Color::BLACK,
-            );
+            // gizmos.arrow(
+            //     transform.translation() + transform.rotation() * Vec3::new(0.0, 0.6, -1.8),
+            //     transform.translation()
+            //         + transform.rotation() * Vec3::new(0.0, 0.6, -1.8)
+            //         + transform.up() * speed * 1.0 * input.pitch,
+            //     Color::BLACK,
+            // );
         }
 
         landing_gear::spring_forces(
