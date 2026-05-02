@@ -1,5 +1,5 @@
 use crate::{
-    CameraSettings, Settings,
+    CameraSettings, GameState, Settings,
     aircraft::{
         buttons::{ButtonMessages, InterfaceOperation},
         landing_gear::LandingGearCommand,
@@ -45,6 +45,8 @@ pub struct Keymap {
     strobe_lights: KeyCode,
     formation_lights: KeyCode,
     anti_col_lights: KeyCode,
+
+    pause: KeyCode,
 }
 
 impl Default for Keymap {
@@ -72,6 +74,8 @@ impl Default for Keymap {
             strobe_lights: KeyCode::Digit2,
             formation_lights: KeyCode::Digit3,
             anti_col_lights: KeyCode::Digit4,
+
+            pause: KeyCode::KeyP,
         }
     }
 }
@@ -86,55 +90,67 @@ pub fn input_system(
     mut camera_settings: ResMut<CameraSettings>,
     mut ldg_gear_messages: MessageWriter<LandingGearCommand>,
     mut button_messages: MessageWriter<ButtonMessages>,
+    mut game_state: ResMut<GameState>,
 ) {
-    if keyboard_input.just_pressed(keymap.change_camera) {
-        match camera_settings.view {
-            CameraView::Follow => camera_settings.view = CameraView::Cockpit,
-            CameraView::Cockpit => camera_settings.view = CameraView::Tail,
-            CameraView::Tail => camera_settings.view = CameraView::Follow,
+    // Only read input when the game is running
+    if game_state.running {
+        if keyboard_input.just_pressed(keymap.change_camera) {
+            match camera_settings.view {
+                CameraView::Follow => camera_settings.view = CameraView::Cockpit,
+                CameraView::Cockpit => camera_settings.view = CameraView::Tail,
+                CameraView::Tail => camera_settings.view = CameraView::Follow,
+            }
         }
-    }
 
-    if keyboard_input.just_pressed(keymap.toggle_gear) {
-        ldg_gear_messages.write(LandingGearCommand(
-            crate::aircraft::landing_gear::LandingGearCommands::Toggle,
-        ));
-        button_messages.write(ButtonMessages(InterfaceOperation::LdgGear));
-    }
-    if keyboard_input.just_pressed(keymap.formation_lights) {
-        button_messages.write(ButtonMessages(InterfaceOperation::FormationLt));
-    }
-    if keyboard_input.just_pressed(keymap.strobe_lights) {
-        button_messages.write(ButtonMessages(InterfaceOperation::StrobeLt));
-    }
-    if keyboard_input.just_pressed(keymap.pos_lights) {
-        button_messages.write(ButtonMessages(InterfaceOperation::PositionLt));
-    }
-    if keyboard_input.just_pressed(keymap.anti_col_lights) {
-        button_messages.write(ButtonMessages(InterfaceOperation::AntiColLt));
-    }
-    if keyboard_input.just_pressed(keymap.engine) {
-        button_messages.write(ButtonMessages(InterfaceOperation::Engine));
-    }
+        if keyboard_input.just_pressed(keymap.toggle_gear) {
+            ldg_gear_messages.write(LandingGearCommand(
+                crate::aircraft::landing_gear::LandingGearCommands::Toggle,
+            ));
+            button_messages.write(ButtonMessages(InterfaceOperation::LdgGear));
+        }
+        if keyboard_input.just_pressed(keymap.formation_lights) {
+            button_messages.write(ButtonMessages(InterfaceOperation::FormationLt));
+        }
+        if keyboard_input.just_pressed(keymap.strobe_lights) {
+            button_messages.write(ButtonMessages(InterfaceOperation::StrobeLt));
+        }
+        if keyboard_input.just_pressed(keymap.pos_lights) {
+            button_messages.write(ButtonMessages(InterfaceOperation::PositionLt));
+        }
+        if keyboard_input.just_pressed(keymap.anti_col_lights) {
+            button_messages.write(ButtonMessages(InterfaceOperation::AntiColLt));
+        }
+        if keyboard_input.just_pressed(keymap.engine) {
+            button_messages.write(ButtonMessages(InterfaceOperation::Engine));
+        }
 
-    if keyboard_input.just_pressed(keymap.parking_brake) {
-        button_messages.write(ButtonMessages(InterfaceOperation::ParkBrk));
-    }
-    if keyboard_input.pressed(keymap.ground_brake) {
-        input.ground_brakes = input.ground_brakes.lerp(1.0, 0.1);
-    } else {
-        input.ground_brakes = input.ground_brakes.lerp(0.0, 0.1);
-    };
+        if keyboard_input.just_pressed(keymap.parking_brake) {
+            button_messages.write(ButtonMessages(InterfaceOperation::ParkBrk));
+        }
+        if keyboard_input.pressed(keymap.ground_brake) {
+            input.ground_brakes = input.ground_brakes.lerp(1.0, 0.1);
+        } else {
+            input.ground_brakes = input.ground_brakes.lerp(0.0, 0.1);
+        };
 
-    if settings.gamepad.enabled {
-        if let Some(gamepad) = gp {
-            handle_gamepad_input(&mut input, settings, gamepad);
+        if keyboard_input.just_pressed(keymap.pause) {
+            game_state.running = false;
+        }
+
+        if settings.gamepad.enabled {
+            if let Some(gamepad) = gp {
+                handle_gamepad_input(&mut input, settings, gamepad);
+            } else {
+                handle_keyboard_input(keys, keymap, input);
+            }
         } else {
             handle_keyboard_input(keys, keymap, input);
-        }
+        };
     } else {
-        handle_keyboard_input(keys, keymap, input);
-    };
+        if keyboard_input.just_pressed(keymap.pause) {
+            game_state.running = true;
+        }
+    }
 }
 
 fn handle_gamepad_input(

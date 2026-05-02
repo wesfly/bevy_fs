@@ -68,6 +68,11 @@ impl Settings {
 }
 
 #[derive(Resource)]
+pub struct GameState {
+    pub running: bool,
+}
+
+#[derive(Resource)]
 pub struct RunOnceSystemList(HashMap<String, SystemId>);
 
 impl FromWorld for RunOnceSystemList {
@@ -113,6 +118,7 @@ fn main() {
             },
         })
         // Resources
+        .insert_resource(GameState { running: false })
         .insert_resource(InputAxis {
             pitch: 0.0,
             yaw: 0.0,
@@ -165,6 +171,7 @@ fn main() {
                 Button::listener,
                 rotate_sun,
                 dynamic_chunks,
+                game_state,
             ),
         )
         .add_systems(FixedPostUpdate, Damage::handler);
@@ -207,5 +214,13 @@ fn screenshot_saving(
                 .insert(CursorIcon::from(SystemCursorIcon::Progress));
         }
         _ => {}
+    }
+}
+
+fn game_state(mut physics_time: ResMut<Time<Physics>>, game_state: Res<GameState>) {
+    info!("{}", game_state.running);
+    match game_state.running {
+        false => physics_time.pause(),
+        true => physics_time.unpause(),
     }
 }

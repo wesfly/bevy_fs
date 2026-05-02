@@ -7,7 +7,7 @@ pub mod screens;
 
 pub use mechanics::mechanics;
 
-use crate::{Settings, data_from_gltf::load, motion_blur};
+use crate::{GameState, Settings, data_from_gltf::load, motion_blur};
 use avian3d::prelude::*;
 use bevy::{
     anti_alias::fxaa::Fxaa,
@@ -100,12 +100,12 @@ impl Damage {
     pub fn handler(
         mut commands: Commands,
         mut messages: MessageReader<Self>,
-        mut physics_time: ResMut<Time<Physics>>,
+        mut game_state: ResMut<GameState>,
     ) {
         for message in messages.read() {
             match message.0 {
                 DamageTypes::Critical => {
-                    physics_time.pause();
+                    game_state.running = false;
                     commands.spawn((
                         Node {
                             position_type: PositionType::Absolute,
