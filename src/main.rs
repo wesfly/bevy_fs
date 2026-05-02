@@ -218,7 +218,6 @@ fn screenshot_saving(
 }
 
 fn game_state(mut physics_time: ResMut<Time<Physics>>, game_state: Res<GameState>) {
-    info!("{}", game_state.running);
     match game_state.running {
         false => physics_time.pause(),
         true => physics_time.unpause(),
