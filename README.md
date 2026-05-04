@@ -43,6 +43,8 @@ This is a little flight sim made in Bevy.
 
 ## Flying
 
+Press `P` to unpause the sim.
+
 ### Helicopter
 
 You can start the engines by pressing `M`. If you now bring the throttle to 100%, you will start flying.
