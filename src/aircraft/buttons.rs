@@ -44,7 +44,7 @@ impl Button {
             let interface_op = &message.0;
             let (bool, _) = match interface_op {
                 InterfaceOperation::Engine => {
-                    (Some(state.engine_on), state.engine_on = !state.engine_on)
+                    (Some(state.engine.on), state.engine.on = !state.engine.on)
                 }
                 InterfaceOperation::AntiColLt => (
                     Some(state.anti_col_lts_on),

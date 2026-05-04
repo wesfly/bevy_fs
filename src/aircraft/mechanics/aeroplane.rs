@@ -1,7 +1,10 @@
 // Thanks to Hermitao for making a prototype flight model (https://gist.github.com/Hermitao/0a908f8af19b11132e3bdb5ba4ef99f0)
 mod landing_gear;
 use crate::{
-    aircraft::{AircraftState, mechanics::AircraftPhysicsConfig},
+    aircraft::{
+        Aircraft, AircraftState, ControlSurfacesDeflection,
+        mechanics::{AircraftPhysicsConfig, canards_angle},
+    },
     input::InputAxis,
 };
 use avian3d::prelude::{forces::ForcesItem, *};
@@ -9,11 +12,27 @@ use bevy::prelude::*;
 
 const ASPECT_RATIO: f32 = 1.0;
 
+pub fn fly_by_wire(
+    input: &InputAxis,
+    state: &mut AircraftState,
+    aircraft: Single<(&GlobalTransform, Forces), With<Aircraft>>,
+) {
+    let mut cs = state.control_surfaces;
+    cs.elevator = input.pitch;
+    cs.aileron = input.roll;
+    cs.ground_brakes = input.ground_brakes;
+    cs.rudder = input.yaw;
+    cs.canards = canards_angle(aircraft, *state).0;
+
+    state.control_surfaces = cs;
+
+    state.engine.throttle = input.throttle;
+}
+
 pub fn mechanics(
     mut state: &mut AircraftState,
     transform: &GlobalTransform,
     force: &mut ForcesItem,
-    input: &InputAxis,
     spatial_query: SpatialQuery,
     gizmos: Gizmos,
     time: Res<Time>,
@@ -22,14 +41,16 @@ pub fn mechanics(
     let velocity_dir = velocity.normalize_or_zero();
     let speed: f32 = velocity.length();
 
-    if state.engine_on {
-        steering(transform, force, &input);
+    let control_surface: ControlSurfacesDeflection = state.control_surfaces;
+
+    if state.engine.on {
+        steering(transform, force, &control_surface);
 
         let forward = transform.forward();
 
         let rho = super::rho(transform.translation().y as f64).density as f32;
 
-        force.apply_force(thrust(&input, &forward) * rho / 1.2041);
+        force.apply_force(thrust(&state.engine.throttle, &forward) * rho / 1.2041);
 
         // Angle of attack
         let alpha = super::alpha(&velocity, transform);
@@ -60,10 +81,10 @@ pub fn mechanics(
     }
 
     if state.landing_gear_deployed && force.linear_velocity().length() <= 200.0 {
-        if input.pitch > 0.0 {
+        if control_surface.elevator > 0.0 {
             let factor = if state.on_ground { 1000.0 } else { 5.0 };
             force.apply_force_at_point(
-                transform.up() * speed * factor * input.pitch,
+                transform.up() * speed * factor * control_surface.elevator,
                 transform.translation() + transform.rotation() * Vec3::new(0.0, 0.6, -1.8),
             );
             // gizmos.arrow(
@@ -75,19 +96,15 @@ pub fn mechanics(
             // );
         }
 
-        landing_gear::spring_forces(
-            force,
-            spatial_query,
-            transform,
-            gizmos,
-            time,
-            &mut state,
-            input,
-        );
+        landing_gear::spring_forces(force, spatial_query, transform, gizmos, time, &mut state);
     }
 }
 
-fn steering(transform: &GlobalTransform, force: &mut ForcesItem, input: &InputAxis) {
+fn steering(
+    transform: &GlobalTransform,
+    force: &mut ForcesItem,
+    input: &ControlSurfacesDeflection,
+) {
     let airspeed = transform.forward().dot(force.linear_velocity());
     let factor = 0.01;
 
@@ -123,7 +140,7 @@ fn steering(transform: &GlobalTransform, force: &mut ForcesItem, input: &InputAx
         transform.translation() + transform.rotation() * physics_cfg.roll_port_point;
     let roll_port_force = Vec3 {
         x: 0.0,
-        y: -input.roll * ROLL_FACTOR,
+        y: -input.aileron * ROLL_FACTOR,
         z: 0.0,
     };
     force.apply_force_at_point(
@@ -135,7 +152,7 @@ fn steering(transform: &GlobalTransform, force: &mut ForcesItem, input: &InputAx
         transform.translation() + transform.rotation() * physics_cfg.roll_starboard_point;
     let roll_starboard_force = Vec3 {
         x: 0.0,
-        y: input.roll * ROLL_FACTOR,
+        y: input.aileron * ROLL_FACTOR,
         z: 0.0,
     };
     force.apply_force_at_point(
@@ -145,7 +162,7 @@ fn steering(transform: &GlobalTransform, force: &mut ForcesItem, input: &InputAx
 
     let pitch_force = Vec3 {
         x: 0.0,
-        y: -input.pitch * 50.0,
+        y: -input.elevator * 50.0,
         z: 0.0,
     };
     force.apply_force_at_point(
@@ -154,7 +171,7 @@ fn steering(transform: &GlobalTransform, force: &mut ForcesItem, input: &InputAx
     );
 
     let yaw_force = Vec3 {
-        x: input.yaw * 50.0,
+        x: input.rudder * 50.0,
         y: 0.0,
         z: 0.0,
     };
@@ -164,10 +181,10 @@ fn steering(transform: &GlobalTransform, force: &mut ForcesItem, input: &InputAx
     );
 }
 
-fn thrust(input: &InputAxis, forward: &Dir3) -> Vec3 {
+fn thrust(throttle: &f32, forward: &Dir3) -> Vec3 {
     let thrust_factor = 150_000.0;
 
-    forward.as_vec3() * thrust_factor * input.throttle
+    forward.as_vec3() * thrust_factor * throttle
 }
 
 fn induced_drag(lift_coeff: f32, rho: f32, speed: f32) -> f32 {

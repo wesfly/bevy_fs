@@ -4,7 +4,7 @@ use crate::{
     aircraft::{Aircraft, AircraftState, AircraftTypes},
     input::InputAxis,
 };
-use avian3d::prelude::{Forces, LinearVelocity, SpatialQuery, WriteRigidBodyForces};
+use avian3d::prelude::{Forces, ReadRigidBodyForces, SpatialQuery, WriteRigidBodyForces};
 use bevy::prelude::*;
 
 pub fn alpha(velocity: &Vec3, transform: &GlobalTransform) -> f32 {
@@ -20,17 +20,19 @@ pub fn alpha(velocity: &Vec3, transform: &GlobalTransform) -> f32 {
 }
 
 pub fn mechanics(
-    transform: Single<&GlobalTransform, With<Aircraft>>,
-    mut force: Single<Forces, With<Aircraft>>,
+    // mut force: Single<Forces, With<Aircraft>>,
     input: Res<InputAxis>,
     mut state: ResMut<AircraftState>,
     spatial_query: SpatialQuery,
     gizmos: Gizmos,
+    mut aircraft: Single<(&GlobalTransform, Forces), With<Aircraft>>,
     time: Res<Time>,
 ) {
+    let transform = &aircraft.0.clone();
+    let mut force = &mut aircraft.1;
     match state.aircraft_type {
         AircraftTypes::Helicopter => {
-            if state.engine_on {
+            if state.engine.on {
                 let thrust_factor = 120_000.;
                 let thrust = transform.up() * thrust_factor * input.throttle;
                 let torque = Vec3::new(input.pitch, input.yaw, input.roll);
@@ -42,13 +44,13 @@ pub fn mechanics(
         AircraftTypes::Aeroplane => {
             aeroplane::mechanics(
                 &mut state,
-                *transform,
+                &*transform,
                 &mut force,
-                &*input,
                 spatial_query,
                 gizmos,
                 time,
             );
+            aeroplane::fly_by_wire(&*input, &mut state, aircraft);
         }
     }
 }
@@ -145,10 +147,10 @@ pub fn rho(altitude_m: f64) -> Atmosphere {
 }
 
 pub fn canards_angle(
-    aircraft: Single<'_, '_, (&Transform, &LinearVelocity), With<Aircraft>>,
+    aircraft: Single<(&GlobalTransform, Forces), With<Aircraft>>,
     state: AircraftState,
 ) -> (f32, f32) {
-    let velocity = aircraft.1.to_vec3a().to_vec3();
+    let velocity = aircraft.1.linear_velocity();
     let transform = aircraft.0;
     let sin = transform
         .forward()

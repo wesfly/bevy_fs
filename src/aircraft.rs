@@ -58,9 +58,26 @@ pub enum AircraftTypes {
 }
 
 #[derive(Resource, Copy, Clone)]
+pub struct EngineState {
+    on: bool,
+    throttle: f32, // 0 to 1
+}
+
+/// Angles in radians
+#[derive(Resource, Copy, Clone)]
+pub struct ControlSurfacesDeflection {
+    canards: f32,
+    aileron: f32,
+    elevator: f32,
+    rudder: f32,
+    ground_brakes: f32, // from 0 to 1
+}
+
+#[derive(Resource, Copy, Clone)]
 pub struct AircraftState {
+    pub control_surfaces: ControlSurfacesDeflection,
+
     pub aircraft_type: AircraftTypes,
-    pub engine_on: bool,
     pub anti_col_lts_on: bool,
     pub pos_lts_on: bool,
     pub strobe_lts_on: bool,
@@ -69,13 +86,25 @@ pub struct AircraftState {
     pub landing_gear_deployed: bool,
     pub parking_brake: bool,
     pub on_ground: bool,
+    pub engine: EngineState,
 }
 
 impl Default for AircraftState {
     fn default() -> Self {
         AircraftState {
+            control_surfaces: ControlSurfacesDeflection {
+                canards: 0.0,
+                aileron: 0.0,
+                elevator: 0.0,
+                rudder: 0.0,
+
+                ground_brakes: 0.0,
+            },
+            engine: EngineState {
+                on: false,
+                throttle: 0.0,
+            },
             aircraft_type: AircraftTypes::Helicopter,
-            engine_on: false,
             anti_col_lts_on: false,
             pos_lts_on: false,
             strobe_lts_on: false,
@@ -169,7 +198,7 @@ pub fn spawn_aeroplane(
     let path = "models/aeroplane/aeroplane.gltf";
 
     state.aircraft_type = AircraftTypes::Aeroplane;
-    state.engine_on = true;
+    state.engine.on = true;
     state.anti_col_lts_on = true;
     state.ldg_lts_on = true;
 

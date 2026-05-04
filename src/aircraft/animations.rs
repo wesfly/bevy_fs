@@ -1,6 +1,6 @@
 use crate::aircraft::{Aircraft, AircraftState, ControlSurfaces, RotorTypes};
 use crate::input::InputAxis;
-use avian3d::prelude::LinearVelocity;
+use avian3d::prelude::Forces;
 use bevy::prelude::*;
 
 pub fn update_rotors(
@@ -8,7 +8,7 @@ pub fn update_rotors(
     state: Res<AircraftState>,
     time: Res<Time>,
 ) {
-    if state.engine_on {
+    if state.engine.on {
         for (mut rotor, rotor_type) in query {
             match rotor_type {
                 RotorTypes::Main => rotor.rotate_local_y(100.0 * time.delta_secs()),
@@ -20,7 +20,7 @@ pub fn update_rotors(
 
 pub fn update_control_surfaces(
     ctrl_surfaces: Query<(&mut Transform, &ControlSurfaces), Without<Aircraft>>,
-    aircraft: Single<(&Transform, &LinearVelocity), With<Aircraft>>,
+    aircraft: Single<(&GlobalTransform, Forces), With<Aircraft>>,
     input: Res<InputAxis>,
     state: Res<AircraftState>,
 ) {

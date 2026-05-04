@@ -1,9 +1,6 @@
-use crate::{
-    aircraft::{
-        AircraftState,
-        landing_gear::{LEFT_POS, NOSEWHEEL_POS, RIGHT_POS},
-    },
-    input::InputAxis,
+use crate::aircraft::{
+    AircraftState,
+    landing_gear::{LEFT_POS, NOSEWHEEL_POS, RIGHT_POS},
 };
 use avian3d::prelude::{forces::ForcesItem, *};
 use bevy::prelude::*;
@@ -24,7 +21,6 @@ pub fn spring_forces(
     mut _gizmos: Gizmos,
     time: Res<Time>,
     state: &mut AircraftState,
-    input: &InputAxis,
 ) {
     let landing_gear = vec![LEFT_POS, RIGHT_POS, NOSEWHEEL_POS];
 
@@ -62,7 +58,8 @@ pub fn spring_forces(
 
                 //============================== steering/anti-drift ==============================
                 let steering_dir = if is_nosewheel {
-                    Quat::from_rotation_y(20.0 * input.yaw.to_radians()) * transform.right()
+                    Quat::from_rotation_y(20.0 * state.control_surfaces.rudder.to_radians())
+                        * transform.right()
                 } else {
                     transform.right()
                 };
@@ -87,7 +84,7 @@ pub fn spring_forces(
                     let braking_input = if state.parking_brake {
                         0.9
                     } else {
-                        input.ground_brakes * 0.6
+                        state.control_surfaces.ground_brakes * 0.6
                     };
                     let braking_coeff = 20.0;
                     let braking_force = (braking_input
