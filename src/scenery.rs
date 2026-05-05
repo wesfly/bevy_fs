@@ -38,11 +38,7 @@ pub fn setup_scene(
         Restitution::new(0.0),
         SweptCcd::new_with_mode(SweepMode::Linear),
         Friction::new(1.0),
-        Transform {
-            translation: Vec3::new(-3000.0, 60.0, 0.0),
-            rotation: Quat::from_rotation_z(-0.9_f32.to_radians()),
-            ..default()
-        },
+        Transform::from_xyz(-3000.0, 60.0, 0.0),
     ));
 
     let hospital_spawn_pos = Vec3::new(0.0, 0.0, 0.0);
