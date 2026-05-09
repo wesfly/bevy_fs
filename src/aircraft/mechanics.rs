@@ -1,13 +1,13 @@
-mod aeroplane;
+pub mod aeroplane;
 
 use crate::{
     aircraft::{Aircraft, AircraftState, AircraftTypes},
     input::InputAxis,
 };
-use avian3d::prelude::{Forces, ReadRigidBodyForces, SpatialQuery, WriteRigidBodyForces};
+use avian3d::prelude::{Forces, SpatialQuery, WriteRigidBodyForces};
 use bevy::prelude::*;
 
-pub fn alpha(velocity: &Vec3, transform: &GlobalTransform) -> f32 {
+pub fn alpha_deg(velocity: &Vec3, transform: &GlobalTransform) -> f32 {
     let velocity = velocity.normalize_or_zero();
     let sin = transform
         .forward()
@@ -62,12 +62,8 @@ struct AircraftPhysicsConfig {
     roll_starboard_point: Vec3,
 }
 
-fn lift_coeff(alpha_deg: f32) -> f32 {
+fn lift_coeff(alpha_deg: f32, potential_lift_factor: f32, vortex_lift_factor: f32) -> f32 {
     let alpha = alpha_deg.to_radians();
-
-    // Polhamus Analogy Constants
-    let potential_lift_factor = 1.65;
-    let vortex_lift_factor = 3.05;
 
     let sin_a = alpha.sin();
     let cos_a = alpha.cos();
@@ -144,34 +140,4 @@ pub fn rho(altitude_m: f64) -> Atmosphere {
         density,
         temperature,
     }
-}
-
-pub fn canards_angle(
-    aircraft: Single<(&GlobalTransform, Forces), With<Aircraft>>,
-    state: AircraftState,
-) -> (f32, f32) {
-    let velocity = aircraft.1.linear_velocity();
-    let transform = aircraft.0;
-    let sin = transform
-        .forward()
-        .cross(velocity)
-        .dot(transform.right().as_vec3());
-    let cos = transform.forward().dot(velocity);
-    let alpha = -sin.atan2(cos);
-    let alpha_deg = alpha.to_degrees();
-
-    // Canards work the other around way when landing gear is deployed, maximising lift
-    let factor = match state.landing_gear_deployed {
-        false => 1.0,
-        true => -1.0,
-    };
-
-    let canards_angle = if velocity.length() <= 20.0 {
-        0.0
-    } else {
-        (factor * alpha_deg).clamp(-22.0, 50.0).to_radians()
-    };
-
-    // Port, Starboard
-    (canards_angle, canards_angle)
 }

@@ -1,3 +1,4 @@
+use crate::aircraft::mechanics::aeroplane;
 use crate::aircraft::{Aircraft, AircraftState, ControlSurfaces, RotorTypes};
 use crate::input::InputAxis;
 use avian3d::prelude::Forces;
@@ -24,7 +25,7 @@ pub fn update_control_surfaces(
     input: Res<InputAxis>,
     state: Res<AircraftState>,
 ) {
-    let canards_angle = super::mechanics::canards_angle(aircraft, *state);
+    let canards_angle = aeroplane::canards_angle(aircraft, *state);
 
     let aileron_angle = (input.roll * 30.0).to_radians();
     let elevator_angle = (-input.pitch * 30.0).to_radians();
@@ -36,12 +37,12 @@ pub fn update_control_surfaces(
             ControlSurfaces::CanardPort => {
                 transform.rotation = transform
                     .rotation
-                    .lerp(Quat::from_rotation_x(canards_angle.0), lerp_speed);
+                    .lerp(Quat::from_rotation_x(canards_angle.port), lerp_speed);
             }
             ControlSurfaces::CanardStarboard => {
                 transform.rotation = transform
                     .rotation
-                    .lerp(Quat::from_rotation_x(canards_angle.1), lerp_speed);
+                    .lerp(Quat::from_rotation_x(canards_angle.starboard), lerp_speed);
             }
             ControlSurfaces::Rudder => {
                 transform.rotation = transform.rotation.lerp(

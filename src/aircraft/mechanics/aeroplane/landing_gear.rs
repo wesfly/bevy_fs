@@ -18,7 +18,6 @@ pub fn spring_forces(
     force: &mut ForcesItem,
     spatial_query: SpatialQuery,
     transform: &GlobalTransform,
-    mut _gizmos: Gizmos,
     time: Res<Time>,
     state: &mut AircraftState,
 ) {

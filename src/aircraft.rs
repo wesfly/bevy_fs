@@ -2,10 +2,11 @@ pub mod animations;
 pub mod buttons;
 pub mod landing_gear;
 pub mod lights;
-mod mechanics;
 pub mod screens;
 
 pub use mechanics::mechanics;
+
+mod mechanics;
 
 use crate::{GameState, Settings, data_from_gltf::load, motion_blur};
 use avian3d::prelude::*;
@@ -66,11 +67,11 @@ pub struct EngineState {
 /// Angles in radians
 #[derive(Resource, Copy, Clone)]
 pub struct ControlSurfacesDeflection {
-    canards: f32,
-    aileron: f32,
+    canards: BothSides<f32>,
+    aileron: BothSides<f32>,
     elevator: f32,
     rudder: f32,
-    ground_brakes: f32, // from 0 to 1
+    ground_brakes: f32, // 0 to 1
 }
 
 #[derive(Resource, Copy, Clone)]
@@ -93,8 +94,8 @@ impl Default for AircraftState {
     fn default() -> Self {
         AircraftState {
             control_surfaces: ControlSurfacesDeflection {
-                canards: 0.0,
-                aileron: 0.0,
+                canards: 0.0_f32.both_sides(),
+                aileron: 0.0_f32.both_sides(),
                 elevator: 0.0,
                 rudder: 0.0,
 
@@ -302,5 +303,24 @@ pub fn spawn_helicopter(
 
     if let Some(mb) = motion_blur(&settings) {
         camera.insert(mb);
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct BothSides<T> {
+    pub port: T,
+    pub starboard: T,
+}
+
+pub trait BothSidesExt {
+    fn both_sides(self) -> BothSides<f32>;
+}
+
+impl BothSidesExt for f32 {
+    fn both_sides(self) -> BothSides<f32> {
+        BothSides {
+            port: self,
+            starboard: self,
+        }
     }
 }
