@@ -8,7 +8,7 @@ use avian3d::prelude::{forces::ForcesItem, *};
 use bevy::prelude::*;
 use forces::*;
 
-pub use fly_by_wire::{canards_angle, fly_by_wire};
+pub use fly_by_wire::fly_by_wire;
 
 const ASPECT_RATIO: f32 = 1.0;
 
