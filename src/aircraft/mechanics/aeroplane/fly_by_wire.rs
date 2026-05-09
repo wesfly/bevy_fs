@@ -33,16 +33,16 @@ pub fn canards_angle(
 
     let alpha_deg = alpha_deg(&velocity, transform);
 
-    // Canards work the other around way when landing gear is deployed, maximising lift
+    // Canards pitch up while landing gear is deployed, maximising lift
     let factor = match state.landing_gear_deployed {
-        false => 1.0,
-        true => -1.0,
+        false => 0.0,
+        true => -20.0,
     };
 
     let canards_angle = if velocity.length() <= 20.0 {
         0.0
     } else {
-        (factor * alpha_deg).clamp(-22.0, 50.0).to_radians()
+        (factor + alpha_deg).clamp(-22.0, 50.0).to_radians()
     };
 
     canards_angle.both_sides()
