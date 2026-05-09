@@ -144,9 +144,13 @@ pub fn canards_force(
             &GlobalTransform::from_rotation(canards.starboard),
         ),
     };
+
+    const POTENTIAL_LIFT_FACTOR: f32 = 1.2;
+    const VORTEX_LIFT_FACTOR: f32 = 0.5;
+
     let lift_coeff = BothSides {
-        port: lift_coeff(alpha.port, 1.6, 3.0),
-        starboard: lift_coeff(alpha.starboard, 1.6, 3.0),
+        port: lift_coeff(alpha.port, POTENTIAL_LIFT_FACTOR, VORTEX_LIFT_FACTOR),
+        starboard: lift_coeff(alpha.starboard, POTENTIAL_LIFT_FACTOR, VORTEX_LIFT_FACTOR),
     };
     let wing_area = 1.0;
 
