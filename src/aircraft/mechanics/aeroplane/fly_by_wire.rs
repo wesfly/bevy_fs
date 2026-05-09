@@ -11,13 +11,37 @@ pub fn fly_by_wire(
     aircraft: Single<(&GlobalTransform, Forces), With<Aircraft>>,
 ) {
     let mut cs = state.control_surfaces;
-    cs.elevator = input.pitch;
-    cs.ground_brakes = input.ground_brakes;
-    cs.rudder = input.yaw;
-    cs.canards = canards_angle(aircraft, *state);
 
+    cs.elevator = input.pitch;
     cs.aileron.port = -input.roll;
     cs.aileron.starboard = input.roll;
+
+    let velocity = aircraft.1.linear_velocity();
+    let transform = aircraft.0;
+
+    let alpha_deg = alpha_deg(&velocity, transform);
+
+    // Flaps
+    let flap_factor: f32 = if state.landing_gear_deployed {
+        0.07
+    } else {
+        0.05
+    };
+    if alpha_deg >= 0.0 {
+        cs.aileron.port += alpha_deg * flap_factor;
+        cs.aileron.starboard += alpha_deg * flap_factor;
+        cs.elevator -= alpha_deg * flap_factor;
+    }
+
+    cs.ground_brakes = input.ground_brakes;
+
+    cs.aileron.port = cs.aileron.port.clamp(-1.0, 1.0);
+    cs.aileron.starboard = cs.aileron.starboard.clamp(-1.0, 1.0);
+    cs.elevator = cs.elevator.clamp(-1.0, 1.0);
+
+    cs.rudder = input.yaw.clamp(-1.0, 1.0);
+
+    cs.canards = canards_angle(aircraft, *state);
 
     state.control_surfaces = cs;
 
