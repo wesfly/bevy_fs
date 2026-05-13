@@ -39,7 +39,7 @@ pub fn steering(
     let pitch_point = transform.translation() + transform.rotation() * physics_cfg.pitch_point;
     let yaw_point = transform.translation() + transform.rotation() * physics_cfg.yaw_point;
 
-    const ROLL_FACTOR: f32 = 20.0;
+    const ROLL_FACTOR: f32 = 50.0;
 
     let roll_port_point =
         transform.translation() + transform.rotation() * physics_cfg.roll_port_point;
@@ -67,7 +67,7 @@ pub fn steering(
 
     let pitch_force = Vec3 {
         x: 0.0,
-        y: -cs.elevator * 50.0,
+        y: -cs.elevator * 70.0,
         z: 0.0,
     };
     force.apply_force_at_point(
@@ -76,7 +76,7 @@ pub fn steering(
     );
 
     let yaw_force = Vec3 {
-        x: cs.rudder * 50.0,
+        x: cs.rudder * 100.0,
         y: 0.0,
         z: 0.0,
     };
