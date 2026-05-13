@@ -12,25 +12,28 @@ pub fn fly_by_wire(
 ) {
     let mut cs = state.control_surfaces;
 
-    cs.elevator = input.pitch;
-    cs.aileron.port = -input.roll;
-    cs.aileron.starboard = input.roll;
-
     let velocity = aircraft.1.linear_velocity();
     let transform = aircraft.0;
 
     let alpha_deg = alpha_deg(&velocity, transform);
 
+    cs.elevator = input.pitch;
+    cs.aileron.port = -input.roll;
+    cs.aileron.starboard = input.roll;
+
     // Flaps
-    let flap_factor: f32 = if state.landing_gear_deployed {
-        0.07
-    } else {
-        0.05
-    };
-    if alpha_deg >= 0.0 {
-        cs.aileron.port += alpha_deg * flap_factor;
-        cs.aileron.starboard += alpha_deg * flap_factor;
-        cs.elevator -= alpha_deg * flap_factor;
+    {
+        let flap_factor: f32 = if state.landing_gear_deployed {
+            0.07
+        } else {
+            0.05
+        };
+
+        // Fading in flaps smoothly
+        let factor = ((alpha_deg - 5.0) * 5.0).clamp(0.0, 1.0);
+        cs.aileron.port += alpha_deg * flap_factor * factor;
+        cs.aileron.starboard += alpha_deg * flap_factor * factor;
+        cs.elevator -= (alpha_deg * flap_factor * factor).clamp(0.0, 0.7);
     }
 
     cs.ground_brakes = input.ground_brakes;
