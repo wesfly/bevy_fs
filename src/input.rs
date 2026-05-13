@@ -92,14 +92,18 @@ pub fn input_system(
     mut button_messages: MessageWriter<ButtonMessages>,
     mut game_state: ResMut<GameState>,
 ) {
-    // Only read input when the game is running
+    if keyboard_input.just_pressed(keymap.change_camera) {
+        match camera_settings.view {
+            CameraView::Follow => camera_settings.view = CameraView::Cockpit,
+            CameraView::Cockpit => camera_settings.view = CameraView::Tail,
+            CameraView::Tail => camera_settings.view = CameraView::Follow,
+        }
+    }
+
+    // Only read input for flight dynamics when the game is running
     if game_state.running {
-        if keyboard_input.just_pressed(keymap.change_camera) {
-            match camera_settings.view {
-                CameraView::Follow => camera_settings.view = CameraView::Cockpit,
-                CameraView::Cockpit => camera_settings.view = CameraView::Tail,
-                CameraView::Tail => camera_settings.view = CameraView::Follow,
-            }
+        if keyboard_input.just_pressed(keymap.pause) {
+            game_state.running = false;
         }
 
         if keyboard_input.just_pressed(keymap.toggle_gear) {
@@ -132,10 +136,6 @@ pub fn input_system(
         } else {
             input.ground_brakes = input.ground_brakes.lerp(0.0, 0.1);
         };
-
-        if keyboard_input.just_pressed(keymap.pause) {
-            game_state.running = false;
-        }
 
         if settings.gamepad.enabled {
             if let Some(gamepad) = gp {
