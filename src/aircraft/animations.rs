@@ -26,7 +26,10 @@ pub fn update_control_surfaces(
         port: (cs.aileron.port * 30.0).to_radians(),
         starboard: (cs.aileron.starboard * 30.0).to_radians(),
     };
-    let elevator_angle = (-cs.elevator * 30.0).to_radians();
+    let elevator_angle = BothSides {
+        port: (cs.elevator.port * 30.0).to_radians(),
+        starboard: (cs.elevator.port * 30.0).to_radians(),
+    };
 
     let lerp_speed = 0.05;
 
@@ -48,17 +51,20 @@ pub fn update_control_surfaces(
                     lerp_speed,
                 )
             }
-            ControlSurfaces::Elevator => todo!(),
-            ControlSurfaces::FlapPort => {
+            ControlSurfaces::ElevatorPort => {
                 transform.rotation = transform
                     .rotation
-                    .lerp(Quat::from_rotation_x(elevator_angle), lerp_speed)
+                    .lerp(Quat::from_rotation_x(elevator_angle.port), lerp_speed)
             }
-            ControlSurfaces::FlapStarboard => {
+            ControlSurfaces::ElevatorStarboard => {
                 transform.rotation = transform
                     .rotation
-                    .lerp(Quat::from_rotation_x(elevator_angle), lerp_speed)
+                    .lerp(Quat::from_rotation_x(elevator_angle.starboard), lerp_speed)
             }
+
+            ControlSurfaces::FlapPort => todo!(),
+            ControlSurfaces::FlapStarboard => todo!(),
+
             ControlSurfaces::AileronPort => {
                 transform.rotation = transform
                     .rotation

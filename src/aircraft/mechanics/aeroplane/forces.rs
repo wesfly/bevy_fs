@@ -14,65 +14,92 @@ pub fn steering(
     let factor = 0.01;
 
     let physics_cfg = AircraftPhysicsConfig {
-        pitch_point: Vec3 {
-            x: 0.0,
-            y: 0.0,
-            z: 10.0,
+        pitch_point: BothSides {
+            port: Vec3 {
+                x: 0.0,
+                y: 0.0,
+                z: 10.0,
+            },
+            starboard: Vec3 {
+                x: 0.0,
+                y: 0.0,
+                z: 10.0,
+            },
         },
         yaw_point: Vec3 {
             x: 0.0,
             y: 2.0,
             z: 7.0,
         },
-        roll_port_point: Vec3 {
-            x: -6.0,
-            y: 0.0,
-            z: 2.0,
-        },
-        roll_starboard_point: Vec3 {
-            x: 6.0,
-            y: 0.0,
-            z: 2.0,
+        roll_point: BothSides {
+            port: Vec3 {
+                x: -6.0,
+                y: 0.0,
+                z: 2.0,
+            },
+            starboard: Vec3 {
+                x: 6.0,
+                y: 0.0,
+                z: 2.0,
+            },
         },
     };
 
-    let pitch_point = transform.translation() + transform.rotation() * physics_cfg.pitch_point;
+    let pitch_point = BothSides {
+        port: transform.translation() + transform.rotation() * physics_cfg.pitch_point.port,
+        starboard: transform.translation()
+            + transform.rotation() * physics_cfg.pitch_point.starboard,
+    };
     let yaw_point = transform.translation() + transform.rotation() * physics_cfg.yaw_point;
 
     const ROLL_FACTOR: f32 = 50.0;
 
-    let roll_port_point =
-        transform.translation() + transform.rotation() * physics_cfg.roll_port_point;
-    let roll_port_force = Vec3 {
-        x: 0.0,
-        y: cs.aileron.port * ROLL_FACTOR,
-        z: 0.0,
+    let roll_point = BothSides {
+        port: transform.translation() + transform.rotation() * physics_cfg.roll_point.port,
+        starboard: transform.translation()
+            + transform.rotation() * physics_cfg.roll_point.starboard,
+    };
+    let roll_force = BothSides {
+        port: Vec3 {
+            x: 0.0,
+            y: cs.aileron.port * ROLL_FACTOR,
+            z: 0.0,
+        },
+        starboard: Vec3 {
+            x: 0.0,
+            y: cs.aileron.starboard * ROLL_FACTOR,
+            z: 0.0,
+        },
     };
     force.apply_force_at_point(
-        transform.rotation() * roll_port_force * airspeed * factor,
-        roll_port_point,
+        transform.rotation() * roll_force.port * airspeed * factor,
+        roll_point.port,
     );
 
-    let roll_starboard_point =
-        transform.translation() + transform.rotation() * physics_cfg.roll_starboard_point;
-    let roll_starboard_force = Vec3 {
-        x: 0.0,
-        y: cs.aileron.starboard * ROLL_FACTOR,
-        z: 0.0,
-    };
     force.apply_force_at_point(
-        transform.rotation() * roll_starboard_force * airspeed * factor,
-        roll_starboard_point,
+        transform.rotation() * roll_force.starboard * airspeed * factor,
+        roll_point.starboard,
     );
 
-    let pitch_force = Vec3 {
-        x: 0.0,
-        y: -cs.elevator * 70.0,
-        z: 0.0,
+    let pitch_force = BothSides {
+        port: Vec3 {
+            x: 0.0,
+            y: cs.elevator.port * 30.0,
+            z: 0.0,
+        },
+        starboard: Vec3 {
+            x: 0.0,
+            y: cs.elevator.starboard * 30.0,
+            z: 0.0,
+        },
     };
     force.apply_force_at_point(
-        transform.rotation() * pitch_force * airspeed * factor,
-        pitch_point,
+        transform.rotation() * pitch_force.port * airspeed * factor,
+        pitch_point.port,
+    );
+    force.apply_force_at_point(
+        transform.rotation() * pitch_force.starboard * airspeed * factor,
+        pitch_point.starboard,
     );
 
     let yaw_force = Vec3 {

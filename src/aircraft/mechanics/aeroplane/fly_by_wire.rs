@@ -17,7 +17,9 @@ pub fn fly_by_wire(
 
     let alpha_deg = alpha_deg(&velocity, transform);
 
-    cs.elevator = input.pitch;
+    cs.elevator.port = -input.pitch;
+    cs.elevator.starboard = -input.pitch;
+
     cs.aileron.port = -input.roll;
     cs.aileron.starboard = input.roll;
 
@@ -33,14 +35,19 @@ pub fn fly_by_wire(
         let factor = ((alpha_deg - 5.0) * 5.0).clamp(0.0, 1.0);
         cs.aileron.port += alpha_deg * flap_factor * factor;
         cs.aileron.starboard += alpha_deg * flap_factor * factor;
-        cs.elevator -= (alpha_deg * flap_factor * factor).clamp(0.0, 0.7);
+
+        let elevator_factor = (alpha_deg * flap_factor * factor).clamp(0.0, 0.7);
+        cs.elevator.port -= elevator_factor;
+        cs.elevator.starboard -= elevator_factor;
     }
 
     cs.ground_brakes = input.ground_brakes;
 
     cs.aileron.port = cs.aileron.port.clamp(-1.0, 1.0);
     cs.aileron.starboard = cs.aileron.starboard.clamp(-1.0, 1.0);
-    cs.elevator = cs.elevator.clamp(-1.0, 1.0);
+
+    cs.elevator.port = cs.elevator.port.clamp(-1.0, 1.0);
+    cs.elevator.starboard = cs.elevator.starboard.clamp(-1.0, 1.0);
 
     cs.rudder = input.yaw.clamp(-1.0, 1.0);
 

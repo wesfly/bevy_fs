@@ -1,7 +1,7 @@
 pub mod aeroplane;
 
 use crate::{
-    aircraft::{Aircraft, AircraftState, AircraftTypes},
+    aircraft::{Aircraft, AircraftState, AircraftTypes, BothSides},
     input::InputAxis,
 };
 use avian3d::prelude::{Forces, SpatialQuery, WriteRigidBodyForces};
@@ -56,10 +56,9 @@ pub fn mechanics(
 }
 
 struct AircraftPhysicsConfig {
-    pitch_point: Vec3,
+    pitch_point: BothSides<Vec3>,
     yaw_point: Vec3,
-    roll_port_point: Vec3,
-    roll_starboard_point: Vec3,
+    roll_point: BothSides<Vec3>,
 }
 
 fn lift_coeff(alpha_deg: f32, potential_lift_factor: f32, vortex_lift_factor: f32) -> f32 {

@@ -39,7 +39,8 @@ pub enum ControlSurfaces {
     CanardPort,
     CanardStarboard,
     Rudder,
-    Elevator,
+    ElevatorPort,
+    ElevatorStarboard,
     FlapPort,
     FlapStarboard,
     AileronPort,
@@ -69,7 +70,7 @@ pub struct EngineState {
 pub struct ControlSurfacesDeflection {
     canards: BothSides<f32>,
     aileron: BothSides<f32>,
-    elevator: f32,
+    elevator: BothSides<f32>,
     rudder: f32,
     ground_brakes: f32, // 0 to 1
 }
@@ -96,7 +97,7 @@ impl Default for AircraftState {
             control_surfaces: ControlSurfacesDeflection {
                 canards: 0.0_f32.both_sides(),
                 aileron: 0.0_f32.both_sides(),
-                elevator: 0.0,
+                elevator: 0.0_f32.both_sides(),
                 rudder: 0.0,
 
                 ground_brakes: 0.0,
