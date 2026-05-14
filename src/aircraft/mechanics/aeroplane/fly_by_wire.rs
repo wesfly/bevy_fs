@@ -37,8 +37,8 @@ pub fn fly_by_wire(
         cs.aileron.starboard += alpha_deg * flap_factor * factor;
 
         let elevator_factor = (alpha_deg * flap_factor * factor).clamp(0.0, 0.7);
-        cs.elevator.port -= elevator_factor;
-        cs.elevator.starboard -= elevator_factor;
+        cs.elevator.port += elevator_factor;
+        cs.elevator.starboard += elevator_factor;
     }
 
     cs.ground_brakes = input.ground_brakes;
