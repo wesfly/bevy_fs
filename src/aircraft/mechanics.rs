@@ -1,8 +1,8 @@
 pub mod aeroplane;
 
 use crate::{
-    aircraft::{Aircraft, AircraftState, AircraftTypes, BothSides},
-    input::InputAxis,
+    aircraft::{Aircraft, AircraftState, AircraftTypes},
+    input::ControlInputs,
 };
 use avian3d::prelude::{Forces, SpatialQuery, WriteRigidBodyForces};
 use bevy::prelude::*;
@@ -20,8 +20,7 @@ pub fn alpha_deg(velocity: &Vec3, transform: &GlobalTransform) -> f32 {
 }
 
 pub fn mechanics(
-    // mut force: Single<Forces, With<Aircraft>>,
-    input: Res<InputAxis>,
+    input: Res<ControlInputs>,
     mut state: ResMut<AircraftState>,
     spatial_query: SpatialQuery,
     gizmos: Gizmos,

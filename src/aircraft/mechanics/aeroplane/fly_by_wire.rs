@@ -1,12 +1,12 @@
 use crate::{
     aircraft::{Aircraft, AircraftState, BothSides, BothSidesExt, mechanics::alpha_deg},
-    input::InputAxis,
+    input::ControlInputs,
 };
 use avian3d::prelude::{Forces, ReadRigidBodyForces};
 use bevy::prelude::*;
 
 pub fn fly_by_wire(
-    input: &InputAxis,
+    input: &ControlInputs,
     state: &mut AircraftState,
     aircraft: Single<(&GlobalTransform, Forces), With<Aircraft>>,
 ) {

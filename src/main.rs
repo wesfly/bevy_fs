@@ -29,7 +29,7 @@ use crate::{
         lights::{ACOL_OFF_DURATION, Light, LightsTimers, STROBE_OFF_DURATION},
     },
     camera::{Camera, CameraPosition, CameraSettings, rotate_sun},
-    input::InputAxis,
+    input::ControlInputs,
     scenery::terrain::{
         Chunk, ChunkMessage, LoadedChunks, TerrainSettings, dynamic_chunks, poll_terrain,
     },
@@ -119,7 +119,7 @@ fn main() {
         })
         // Resources
         .insert_resource(GameState { running: false })
-        .insert_resource(InputAxis {
+        .insert_resource(ControlInputs {
             pitch: 0.0,
             yaw: 0.0,
             roll: 0.0,

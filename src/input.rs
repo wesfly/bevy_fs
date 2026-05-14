@@ -10,7 +10,7 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Resource)]
-pub struct InputAxis {
+pub struct ControlInputs {
     pub pitch: f32,
     pub yaw: f32,
     pub roll: f32,
@@ -81,7 +81,7 @@ impl Default for Keymap {
 }
 
 pub fn input_system(
-    mut input: ResMut<InputAxis>,
+    mut input: ResMut<ControlInputs>,
     keys: Res<ButtonInput<KeyCode>>,
     keymap: Res<Keymap>,
     settings: Res<Settings>,
@@ -154,11 +154,11 @@ pub fn input_system(
 }
 
 fn handle_gamepad_input(
-    input: &mut ResMut<'_, InputAxis>,
+    input: &mut ResMut<'_, ControlInputs>,
     settings: Res<'_, Settings>,
     gamepad: Single<'_, '_, &bevy::input::gamepad::Gamepad>,
 ) {
-    let mut gamepad_input = InputAxis {
+    let mut gamepad_input = ControlInputs {
         pitch: 0.0,
         roll: 0.0,
         yaw: 0.0,
@@ -214,9 +214,9 @@ fn handle_gamepad_input(
 fn handle_keyboard_input(
     keys: Res<ButtonInput<KeyCode>>,
     keymap: Res<Keymap>,
-    mut input: ResMut<InputAxis>,
+    mut input: ResMut<ControlInputs>,
 ) {
-    let mut button_input = InputAxis {
+    let mut button_input = ControlInputs {
         pitch: 0.0,
         roll: 0.0,
         yaw: 0.0,

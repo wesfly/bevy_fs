@@ -1,4 +1,4 @@
-use crate::{M_S_TO_KTS, METRES_TO_FEET, aircraft::Aircraft, input::InputAxis};
+use crate::{M_S_TO_KTS, METRES_TO_FEET, aircraft::Aircraft, input::ControlInputs};
 use avian3d::prelude::LinearVelocity;
 use bevy::{
     asset::RenderAssetUsages,
@@ -270,7 +270,7 @@ pub fn get_material_handle(
 
 pub fn update_screens(
     query: Query<(Option<&mut Text>, &ScreenUiElement, &mut UiTransform)>,
-    input_axis: Res<InputAxis>,
+    input_axis: Res<ControlInputs>,
     vel_tf: Single<(&LinearVelocity, &Transform), With<Aircraft>>,
 ) {
     let (vel, tf) = *vel_tf;

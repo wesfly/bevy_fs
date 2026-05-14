@@ -1,5 +1,5 @@
 use crate::{
-    InputAxis, RunOnceSystemList, Settings,
+    ControlInputs, RunOnceSystemList, Settings,
     aircraft::{Aircraft, AircraftTypes},
     scenery::terrain::Coordinates,
 };
@@ -451,7 +451,7 @@ impl UI {
     fn update_ui_hud(
         query: Query<(&mut Text, &UIHudComponent)>,
         transform: Single<&Transform, With<Aircraft>>,
-        input: Res<InputAxis>,
+        input: Res<ControlInputs>,
         vel: Single<&LinearVelocity, With<Aircraft>>,
     ) {
         for (mut text, ui_hud_component) in query {
