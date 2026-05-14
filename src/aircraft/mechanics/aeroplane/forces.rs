@@ -16,14 +16,14 @@ pub fn steering(
     let physics_cfg = AircraftPhysicsConfig {
         pitch_point: BothSides {
             port: Vec3 {
-                x: 0.0,
+                x: -2.2,
                 y: 0.0,
-                z: 10.0,
+                z: 4.8,
             },
             starboard: Vec3 {
-                x: 0.0,
+                x: 2.2,
                 y: 0.0,
-                z: 10.0,
+                z: 4.8,
             },
         },
         yaw_point: Vec3 {
@@ -33,14 +33,14 @@ pub fn steering(
         },
         roll_point: BothSides {
             port: Vec3 {
-                x: -6.0,
+                x: -4.0,
                 y: 0.0,
-                z: 2.0,
+                z: 4.8,
             },
             starboard: Vec3 {
-                x: 6.0,
+                x: 4.0,
                 y: 0.0,
-                z: 2.0,
+                z: 4.8,
             },
         },
     };
@@ -52,7 +52,7 @@ pub fn steering(
     };
     let yaw_point = transform.translation() + transform.rotation() * physics_cfg.yaw_point;
 
-    const ROLL_FACTOR: f32 = 50.0;
+    const ROLL_FACTOR: f32 = 45.0;
 
     let roll_point = BothSides {
         port: transform.translation() + transform.rotation() * physics_cfg.roll_point.port,
@@ -84,12 +84,12 @@ pub fn steering(
     let pitch_force = BothSides {
         port: Vec3 {
             x: 0.0,
-            y: cs.elevator.port * 30.0,
+            y: cs.elevator.port * 50.0,
             z: 0.0,
         },
         starboard: Vec3 {
             x: 0.0,
-            y: cs.elevator.starboard * 30.0,
+            y: cs.elevator.starboard * 50.0,
             z: 0.0,
         },
     };
