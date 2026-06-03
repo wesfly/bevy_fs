@@ -26,8 +26,8 @@ ldg_gear_element: LandingGearElements
 
 use crate::aircraft::{
     self, ControlSurface, Rotor,
+    breeze::landing_gear::{LandingGearElement, LandingGearElements},
     buttons::{Button, InterfaceType},
-    landing_gear::{LandingGearElement, LandingGearElements},
     lights::Light,
     screens::Screen,
 };

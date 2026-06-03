@@ -1,6 +1,11 @@
-use crate::aircraft::AircraftState;
+use crate::{
+    aircraft::{Aircraft, AircraftState},
+    bevy_to_aerospace_coords,
+};
+use avian3d::prelude::*;
 use bevy::prelude::*;
 use serde::Deserialize;
+use std::ops::DerefMut;
 
 #[derive(Debug, Deserialize)]
 pub enum LandingGearElements {
@@ -47,6 +52,7 @@ pub enum LdgGearPhase {
     Phase3,
 }
 
+// Old transform, needs to be multiplied with bevy_to_aerospace_coords()
 pub const LEFT_POS: Vec3 = Vec3::new(-1.3, -0.60, 2.1);
 pub const RIGHT_POS: Vec3 = Vec3::new(1.3, -0.60, 2.1);
 pub const NOSEWHEEL_POS: Vec3 = Vec3::new(0.0, -0.53, -2.9);
@@ -457,4 +463,140 @@ impl LandingGear {
             }
         }
     }
+}
+
+const REST: f32 = 1.2;
+const STRENGTH: f32 = 200_000.0;
+const DAMPING: f32 = 5_000.0;
+
+const MAX_FORCE: f32 = 1_000_000.0;
+const MAX_BRAKING_FORCE: f32 = 100_000.0;
+
+// Making Custom Car Physics in Unity (for Very Very Valet)
+// https://www.youtube.com/watch?v=CdPYlj5uZeI
+pub fn spring_forces(
+    spatial_query: SpatialQuery,
+    mut query: Single<(&Transform, Forces), With<Aircraft>>,
+    time: Res<Time>,
+    mut state: ResMut<AircraftState>,
+) {
+    let (transform, force) = query.deref_mut();
+
+    if (state.landing_gear_deployed && force.linear_velocity().length() <= 200.0) == false {
+        return;
+    }
+
+    let landing_gear = vec![
+        bevy_to_aerospace_coords() * LEFT_POS,
+        bevy_to_aerospace_coords() * RIGHT_POS,
+        bevy_to_aerospace_coords() * NOSEWHEEL_POS,
+    ];
+
+    let mut on_ground_vec = vec![false; 3];
+
+    for (i, gear_pos) in landing_gear.iter().enumerate() {
+        let is_nosewheel = i == 2;
+        let strength = if is_nosewheel {
+            STRENGTH * 0.9
+        } else {
+            STRENGTH
+        };
+        let rest = if is_nosewheel { REST + 0.1 } else { REST };
+
+        let filter = SpatialQueryFilter::DEFAULT;
+        let origin = transform.translation + transform.rotation * gear_pos;
+        let ray_dir = transform.local_z();
+
+        info!(
+            "Attempting Cast -> Origin: {:?}, Dir: {:?}, Max Dist: {}",
+            origin, ray_dir, rest
+        );
+
+        if let Some(hit) = spatial_query.cast_ray(origin, ray_dir, rest, true, &filter) {
+            info!("some hit");
+            let spring_dir = transform.up();
+            if hit.distance != 0.0 {
+                info!("hitdistance!=0.0");
+                on_ground_vec[i] = true;
+
+                // The point where the gear touches the ground
+                let contact_point = origin + ray_dir * hit.distance;
+
+                //============================== springs ==============================
+                let spring_vel = spring_dir.dot(force.velocity_at_point(contact_point));
+
+                let spring_force = (spring(hit.distance, rest, strength, DAMPING, spring_vel)
+                    * spring_dir)
+                    .clamp_length_max(MAX_FORCE);
+
+                // This is applied three times because three rays are cast
+                force.apply_force_at_point(spring_force, origin);
+
+                //============================== steering/anti-drift ==============================
+                let steering_dir = if is_nosewheel {
+                    Quat::from_rotation_y(20.0 * state.control_surfaces.rudder.to_radians())
+                        * transform.right()
+                } else {
+                    transform.right()
+                };
+                let vel_at_contact_point = force.velocity_at_point(contact_point);
+
+                let steering_vel = steering_dir.dot(vel_at_contact_point);
+
+                let tire_grip_factor = if is_nosewheel { 0.02 } else { 0.02 };
+                let desired_vel_change = -steering_vel * tire_grip_factor;
+
+                let desired_accel = desired_vel_change / time.delta_secs();
+                let tire_mass = 3_300.0 / hit.distance; // The mass that rests on each tire
+                force.apply_force_at_point(
+                    (steering_dir * tire_mass * desired_accel * 10.0).clamp_length_max(10000.0),
+                    contact_point,
+                );
+
+                //============================== brakes ==============================
+
+                if !is_nosewheel {
+                    let tire_speed = transform.forward().dot(vel_at_contact_point);
+                    let braking_input = if state.parking_brake {
+                        0.9
+                    } else {
+                        state.control_surfaces.ground_brakes * 0.6
+                    };
+                    let braking_coeff = 20.0;
+                    let braking_force = (braking_input
+                        * tire_speed.signum()
+                        * tire_mass
+                        * tire_grip_factor
+                        * braking_coeff
+                        * transform.back())
+                    .clamp_length_max(MAX_BRAKING_FORCE);
+
+                    force.apply_force_at_point(braking_force, contact_point);
+                }
+            }
+        }
+    }
+
+    let ldg_gear_on_ground = on_ground_vec.iter().filter(|&&x| x).count();
+    state.on_ground = if ldg_gear_on_ground >= 2 { true } else { false };
+}
+
+fn spring(
+    distance: f32,
+    rest_length: f32,
+    strength: f32,
+    damping_factor: f32,
+    velocity: f32,
+) -> f32 {
+    let offset = rest_length - distance;
+
+    if offset >= 0.0 {
+        let spring = offset * strength;
+
+        let damping = velocity * damping_factor;
+
+        return spring - damping;
+    }
+
+    0.0
 }

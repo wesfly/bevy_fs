@@ -1,6 +1,5 @@
-use crate::aircraft::landing_gear::LandingGearStatus;
-
 use super::AircraftState;
+use crate::aircraft::breeze::landing_gear::LandingGearStatus;
 use bevy::prelude::*;
 use serde::Deserialize;
 

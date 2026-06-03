@@ -1,8 +1,9 @@
 use crate::{
     CameraSettings, GameState, Settings,
     aircraft::{
+        self,
+        breeze::landing_gear::LandingGearCommand,
         buttons::{ButtonMessages, InterfaceOperation},
-        landing_gear::LandingGearCommand,
     },
     camera::CameraView,
 };
@@ -108,7 +109,7 @@ pub fn input_system(
 
         if keyboard_input.just_pressed(keymap.toggle_gear) {
             ldg_gear_messages.write(LandingGearCommand(
-                crate::aircraft::landing_gear::LandingGearCommands::Toggle,
+                aircraft::breeze::landing_gear::LandingGearCommands::Toggle,
             ));
             button_messages.write(ButtonMessages(InterfaceOperation::LdgGear));
         }

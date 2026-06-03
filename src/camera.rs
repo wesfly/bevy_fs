@@ -1,5 +1,6 @@
 use crate::{
     aircraft::{Aircraft, AircraftState},
+    bevy_to_aerospace_coords,
     input::Keymap,
 };
 use bevy::{
@@ -29,7 +30,6 @@ pub struct CameraSettings {
     pub yaw_speed: f32,
     follow_default_position: Vec3,
     follow_default_lookat: Vec3,
-    cockpit_default_position: Vec3,
     tail_default_position: Vec3,
     pub view: CameraView,
 }
@@ -44,18 +44,13 @@ impl Default for CameraSettings {
             pitch_range: -pitch_limit..pitch_limit,
             yaw_speed: 0.001,
             follow_default_position: Vec3 {
-                x: 0.0,
+                x: -20.0,
                 y: 4.0,
-                z: 20.0,
+                z: 0.0,
             },
             follow_default_lookat: Vec3 {
                 x: 0.0,
                 y: 2.5,
-                z: 0.0,
-            },
-            cockpit_default_position: Vec3 { // Doesn't matter
-                x: 0.0,
-                y: 0.0,
                 z: 0.0,
             },
             tail_default_position: Vec3 {
@@ -74,7 +69,7 @@ pub struct CameraPosition(pub Transform);
 impl Camera {
     pub fn controller(
         mut camera: Single<&mut Transform, (With<Camera>, Without<Aircraft>)>,
-        mut camera_settings: ResMut<CameraSettings>,
+        camera_settings: Res<CameraSettings>,
         state: Res<AircraftState>,
         aircraft: Single<&Transform, With<Aircraft>>,
         mouse_buttons: Res<ButtonInput<MouseButton>>,
@@ -85,16 +80,16 @@ impl Camera {
         mut scroll_events: MessageReader<MouseWheel>,
         mut camera_pos: ResMut<CameraPosition>,
     ) {
-        camera_settings.cockpit_default_position = match state.aircraft_type {
+        let cockpit_default_position = match state.aircraft_type {
             crate::aircraft::AircraftTypes::Helicopter => Vec3 {
-                x: 0.38,
-                y: 1.2,
+                x: 1.2,
+                y: 0.38,
                 z: -2.6,
             },
-            crate::aircraft::AircraftTypes::Aeroplane => Vec3 {
-                x: 0.0,
-                y: 1.2,
-                z: -3.5,
+            _ => Vec3 {
+                x: 3.5,
+                y: 0.0,
+                z: -1.2,
             },
         };
         let delta = mouse_motion.delta;
@@ -117,22 +112,23 @@ impl Camera {
 
         match camera_settings.view {
             CameraView::Cockpit => {
-                camera.translation = aircraft.translation
-                    + aircraft.rotation * camera_settings.cockpit_default_position;
-                camera.rotation = aircraft.rotation * camera_pos.0.rotation;
+                camera.translation =
+                    aircraft.translation + aircraft.rotation * cockpit_default_position;
+                camera.rotation =
+                    aircraft.rotation * bevy_to_aerospace_coords() * camera_pos.0.rotation;
             }
             CameraView::Follow => {
                 let target = camera_settings.follow_default_lookat + aircraft.translation;
 
-                let forward = aircraft.rotation * Vec3::Z;
+                let forward = -aircraft.local_x();
                 let flat_forward = Vec3::new(forward.x, 0.0, forward.z).normalize();
 
                 // Ignoring roll to create a MSFS-like camera
                 let no_roll = Quat::from_euler(
                     EulerRot::YXZ,
                     flat_forward.x.atan2(flat_forward.z), // yaw
-                    0.0, //-forward.y.asin(),                    // pitch
-                    0.0, // roll
+                    0.0,                                  // pitch (-forward.y.asin(),)
+                    0.0,                                  // roll
                 );
                 camera.rotation = no_roll * camera_pos.0.rotation;
 

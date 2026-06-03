@@ -1,12 +1,10 @@
 pub mod animations;
 pub mod buttons;
-pub mod landing_gear;
 pub mod lights;
 pub mod screens;
 
-pub use mechanics::mechanics;
-
-mod mechanics;
+pub mod breeze;
+mod j3cub;
 
 use crate::{GameState, Settings, data_from_gltf::load, motion_blur};
 use avian3d::prelude::*;
@@ -20,8 +18,22 @@ use bevy::{
     prelude::*,
     render::view::Hdr,
 };
-use landing_gear::LandingGear;
+use breeze::landing_gear::LandingGear;
 use serde::Deserialize;
+
+pub fn alpha_deg(velocity: &Vec3, transform: &Transform) -> f32 {
+    let velocity = velocity.normalize_or_zero();
+    let forward = -transform.local_x();
+    let right = transform.local_z();
+
+    let sin = forward.cross(velocity).dot(right.as_vec3());
+    let cos = forward.dot(velocity);
+
+    let _alpha = -sin.atan2(cos).to_degrees();
+
+    // alpha
+    0.0
+}
 
 #[derive(Debug, Deserialize, Component)]
 pub enum RotorTypes {
@@ -55,8 +67,9 @@ pub struct ControlSurface {
 #[derive(Resource, Default, Deserialize, PartialEq, Clone, Copy)]
 pub enum AircraftTypes {
     Helicopter,
+    J3Cub,
     #[default]
-    Aeroplane,
+    Breeze,
 }
 
 #[derive(Resource, Copy, Clone)]
@@ -190,46 +203,66 @@ pub struct Aircraft;
 
 const CAM_EXPOSURE: Exposure = Exposure::SUNLIGHT;
 
-pub fn spawn_aeroplane(
+pub fn spawn_breeze(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     settings: Res<Settings>,
     mut state: ResMut<AircraftState>,
 ) {
-    let path = "models/aeroplane/aeroplane.gltf";
-
-    state.aircraft_type = AircraftTypes::Aeroplane;
+    state.aircraft_type = AircraftTypes::Breeze;
     state.engine.on = true;
     state.anti_col_lts_on = true;
     state.ldg_lts_on = true;
 
-    // Aircraft model
-    commands
-        .spawn((
-            SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(path))),
-            Aircraft,
-            RigidBody::Dynamic,
-            ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh),
-            CenterOfMass::new(0.0, 0.5, 0.16),
-            LinearVelocity(Vec3 {
-                x: -200.0,
-                y: 0.0,
-                z: 0.0,
-            }),
-            Transform {
-                translation: Vec3 {
-                    x: 0.0,
-                    y: 500.0,
-                    z: 0.0,
-                },
-                rotation: Quat::from_rotation_y(90.0_f32.to_radians()),
-                ..default()
-            },
-            CollisionEventsEnabled,
-            Mass(10_000.0),
-        ))
-        .observe(load);
+    let level = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
+    breeze::spawn(
+        &mut commands,
+        Transform::from_xyz(0.0, 1000.0, 0.0).with_rotation(level),
+        asset_server,
+    );
+
+    let mut camera = commands.spawn((
+        Camera3d::default(),
+        Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
+        AtmosphereEnvironmentMapLight::default(),
+        AtmosphereSettings::default(),
+        CAM_EXPOSURE,
+        Tonemapping::AgX,
+        Bloom::NATURAL,
+        Projection::from(PerspectiveProjection {
+            fov: 50.0_f32.to_radians(),
+            ..default()
+        }),
+        Fxaa::default(),
+        Msaa::Off,
+        ScreenSpaceReflections::default(),
+        Hdr,
+        crate::camera::Camera,
+    ));
+
+    if let Some(mb) = motion_blur(&settings) {
+        camera.insert(mb);
+    }
+}
+
+pub fn spawn_j3cub(
+    mut commands: Commands,
+    _asset_server: Res<AssetServer>,
+    mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
+    settings: Res<Settings>,
+    mut state: ResMut<AircraftState>,
+) {
+    state.aircraft_type = AircraftTypes::Breeze;
+    state.engine.on = true;
+    state.anti_col_lts_on = true;
+    state.ldg_lts_on = true;
+
+    let level = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
+    j3cub::spawn(
+        &mut commands,
+        Transform::from_xyz(0.0, 1000.0, 0.0).with_rotation(level),
+    );
 
     let mut camera = commands.spawn((
         Camera3d::default(),
@@ -264,7 +297,7 @@ pub fn spawn_helicopter(
 ) {
     state.aircraft_type = AircraftTypes::Helicopter;
 
-    let path = "models/helicopter/helicopter.gltf";
+    let path = "aircraft/helicopter/helicopter.gltf";
 
     let spawn_pos = Vec3::new(0.0, 100.0, 0.0);
     let spawn_vel = Vec3::new(0.0, 0.0, 0.0);

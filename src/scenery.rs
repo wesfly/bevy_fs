@@ -32,7 +32,7 @@ pub fn setup_scene(
 
     // runway
     commands.spawn((
-        SceneRoot(asset_server.load("models/scenery/rwy/rwy.gltf#Scene0")),
+        SceneRoot(asset_server.load("scenery/rwy/rwy.gltf#Scene0")),
         ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
         RigidBody::Static,
         Restitution::new(0.0),
@@ -44,7 +44,7 @@ pub fn setup_scene(
     let hospital_spawn_pos = Vec3::new(0.0, 0.0, 0.0);
 
     commands.spawn((
-        SceneRoot(asset_server.load("models/scenery/hospital/hospital.gltf#Scene0")),
+        SceneRoot(asset_server.load("scenery/hospital/hospital.gltf#Scene0")),
         RigidBody::Static,
         ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
         Transform::from_translation(hospital_spawn_pos),

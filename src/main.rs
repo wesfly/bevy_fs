@@ -23,9 +23,9 @@ use crate::{
     aircraft::{
         AircraftState, Damage,
         animations::{update_control_surfaces, update_rotors},
+        breeze::landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
         buttons::{Button, ButtonMessages},
         collision_listener,
-        landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
         lights::{ACOL_OFF_DURATION, Light, LightsTimers, STROBE_OFF_DURATION},
     },
     camera::{Camera, CameraPosition, CameraSettings, rotate_sun},
@@ -35,6 +35,10 @@ use crate::{
     },
     sse::Sse,
     ui::UI,
+};
+use avian_fdm::{
+    plugin::AircraftFdmPlugin,
+    prelude::{AircraftFdmDebugPlugin, FdmGizmos, ShowColliders},
 };
 use avian3d::prelude::*;
 use bevy::{
@@ -47,6 +51,14 @@ use bevy::{
 };
 use serde::Deserialize;
 use std::{collections::HashMap, fs};
+
+pub fn bevy_to_aerospace_coords() -> Quat {
+    Quat::from_mat3(&Mat3::from_cols(
+        Vec3::Y,  // Camera X goes to Aerospace +Y (Right)
+        -Vec3::Z, // Camera Y goes to Aerospace -Z (Up)
+        -Vec3::X, // Camera Z goes to Aerospace -X
+    ))
+}
 
 #[derive(Resource, Deserialize)]
 pub struct Settings {
@@ -83,8 +95,12 @@ impl FromWorld for RunOnceSystemList {
             world.register_system(scenery::setup_scene),
         );
         my_item_systems.0.insert(
-            "setup_aeroplane".into(),
-            world.register_system(aircraft::spawn_aeroplane),
+            "setup_breeze".into(),
+            world.register_system(aircraft::spawn_breeze),
+        );
+        my_item_systems.0.insert(
+            "setup_j3cub".into(),
+            world.register_system(aircraft::spawn_j3cub),
         );
         my_item_systems.0.insert(
             "spawn_helicopter".into(),
@@ -103,8 +119,18 @@ fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins)
         .add_plugins(PhysicsPlugins::default())
-        // .add_plugins(PhysicsDebugPlugin)
-        // .add_plugins(MeshPickingPlugin)
+        .add_plugins(AircraftFdmPlugin::default())
+        .insert_gizmo_config(
+            FdmGizmos {
+                force_scale: 1.0 / 600.0,
+                total_force_color: None,
+                weight_color: None,
+                ..FdmGizmos::default()
+            },
+            GizmoConfig::default(),
+        )
+        .add_plugins(PhysicsDebugPlugin)
+        .add_plugins(AircraftFdmDebugPlugin)
         .add_plugins(UI)
         .add_plugins(Sse)
         .add_plugins(FpsOverlayPlugin {
@@ -127,6 +153,7 @@ fn main() {
             ground_brakes: 0.0,
         })
         .init_resource::<LoadedChunks>()
+        .init_resource::<ShowColliders>()
         .insert_resource(CameraSettings::default())
         .insert_resource(input::Keymap::default())
         .insert_resource(Settings::fetch())
@@ -164,7 +191,8 @@ fn main() {
                 LandingGear::operate_landing_gear,
                 screenshot_saving,
                 aircraft::screens::update_screens,
-                aircraft::mechanics,
+                aircraft::breeze::mechanics::mechanics,
+                aircraft::breeze::landing_gear::spring_forces,
                 collision_listener,
                 poll_terrain,
                 Chunk::message_reader,

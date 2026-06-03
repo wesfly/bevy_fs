@@ -1,21 +1,18 @@
-use crate::{
-    aircraft::{Aircraft, AircraftState, BothSides, BothSidesExt, mechanics::alpha_deg},
-    input::ControlInputs,
-};
+use crate::aircraft::{Aircraft, AircraftState, BothSides, BothSidesExt, alpha_deg};
 use avian3d::prelude::{Forces, ReadRigidBodyForces};
 use bevy::prelude::*;
 
 pub fn fly_by_wire(
-    input: &ControlInputs,
+    input: &crate::input::ControlInputs,
     state: &mut AircraftState,
-    aircraft: Single<(&GlobalTransform, Forces), With<Aircraft>>,
+    mut aircraft: Single<
+        (&Transform, Forces, &mut avian_fdm::prelude::ControlInputs),
+        With<Aircraft>,
+    >,
 ) {
     let mut cs = state.control_surfaces;
 
-    let velocity = aircraft.1.linear_velocity();
-    let transform = aircraft.0;
-
-    let alpha_deg = alpha_deg(&velocity, transform);
+    let fdm_cs: &mut avian_fdm::prelude::ControlInputs = &mut aircraft.2;
 
     cs.elevator.port = -input.pitch;
     cs.elevator.starboard = -input.pitch;
@@ -23,23 +20,11 @@ pub fn fly_by_wire(
     cs.aileron.port = -input.roll;
     cs.aileron.starboard = input.roll;
 
-    // Flaps
-    {
-        let flap_factor: f32 = if state.landing_gear_deployed {
-            0.07
-        } else {
-            0.05
-        };
-
-        // Fading in flaps smoothly
-        let factor = ((alpha_deg - 5.0) * 5.0).clamp(0.0, 1.0);
-        cs.aileron.port += alpha_deg * flap_factor * factor;
-        cs.aileron.starboard += alpha_deg * flap_factor * factor;
-
-        let elevator_factor = (alpha_deg * flap_factor * factor).clamp(0.0, 0.7);
-        cs.elevator.port += elevator_factor;
-        cs.elevator.starboard += elevator_factor;
-    }
+    // avian_fdm control inputs
+    fdm_cs.aileron = -input.roll;
+    fdm_cs.elevator = input.pitch;
+    fdm_cs.throttle = input.throttle;
+    fdm_cs.rudder = -input.yaw;
 
     cs.ground_brakes = input.ground_brakes;
 
@@ -59,7 +44,7 @@ pub fn fly_by_wire(
 }
 
 pub fn canards_angle(
-    aircraft: Single<(&GlobalTransform, Forces), With<Aircraft>>,
+    aircraft: Single<(&Transform, Forces, &mut avian_fdm::prelude::ControlInputs), With<Aircraft>>,
     state: AircraftState,
 ) -> BothSides<f32> {
     let velocity = aircraft.1.linear_velocity();
@@ -76,7 +61,7 @@ pub fn canards_angle(
     let canards_angle = if velocity.length() <= 20.0 {
         0.0
     } else {
-        (factor + alpha_deg).clamp(-22.0, 50.0).to_radians()
+        ((factor + alpha_deg).clamp(-22.0, 50.0) as f32).to_radians()
     };
 
     canards_angle.both_sides()

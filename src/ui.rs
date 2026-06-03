@@ -206,7 +206,7 @@ impl Menu {
                         (
                             spawn_button(SpawnButton::AircraftSelector(AircraftTypes::Helicopter)),
                             children![(
-                                Text::new("Spawn Helicopter"),
+                                Text::new("Helicopter"),
                                 TextColor(Color::WHITE),
                                 TextFont {
                                     font: font.clone(),
@@ -215,9 +215,20 @@ impl Menu {
                             )]
                         ),
                         (
-                            spawn_button(SpawnButton::AircraftSelector(AircraftTypes::Aeroplane)),
+                            spawn_button(SpawnButton::AircraftSelector(AircraftTypes::Breeze)),
                             children![(
-                                Text::new("Spawn Aeroplane"),
+                                Text::new("Breeze C F3"),
+                                TextColor(Color::WHITE),
+                                TextFont {
+                                    font: font.clone(),
+                                    ..default()
+                                },
+                            ),],
+                        ),
+                        (
+                            spawn_button(SpawnButton::AircraftSelector(AircraftTypes::J3Cub)),
+                            children![(
+                                Text::new("J-3 Cub"),
                                 TextColor(Color::WHITE),
                                 TextFont {
                                     font: font.clone(),
@@ -290,7 +301,8 @@ enum UIMessage {
     SpawnUIHud,
     SpawnScenery,
     SpawnHelicopter,
-    SpawnAeroplane,
+    SpawnBreeze,
+    SpawnJ3Cub,
 }
 
 pub struct UI;
@@ -332,16 +344,22 @@ impl UI {
                     input_focus.set(entity);
 
                     match spawn_button {
-                        SpawnButton::AircraftSelector(AircraftTypes::Aeroplane) => {
-                            *spawn_settings = Some(AircraftTypes::Aeroplane);
+                        SpawnButton::AircraftSelector(AircraftTypes::Breeze) => {
+                            *spawn_settings = Some(AircraftTypes::Breeze);
                             highlighted.0 =
-                                Some(SpawnButton::AircraftSelector(AircraftTypes::Aeroplane));
+                                Some(SpawnButton::AircraftSelector(AircraftTypes::Breeze));
                         }
                         SpawnButton::AircraftSelector(AircraftTypes::Helicopter) => {
                             *spawn_settings = Some(AircraftTypes::Helicopter);
                             highlighted.0 =
                                 Some(SpawnButton::AircraftSelector(AircraftTypes::Helicopter));
                         }
+                        SpawnButton::AircraftSelector(AircraftTypes::J3Cub) => {
+                            *spawn_settings = Some(AircraftTypes::J3Cub);
+                            highlighted.0 =
+                                Some(SpawnButton::AircraftSelector(AircraftTypes::J3Cub));
+                        }
+
                         SpawnButton::Location(l) => {
                             settings.terrain.coordinates = l.clone();
                             highlighted.1 = Some(SpawnButton::Location(l.clone()));
@@ -352,8 +370,11 @@ impl UI {
                                     AircraftTypes::Helicopter => {
                                         messages.write(UIMessage::SpawnHelicopter);
                                     }
-                                    AircraftTypes::Aeroplane => {
-                                        messages.write(UIMessage::SpawnAeroplane);
+                                    AircraftTypes::Breeze => {
+                                        messages.write(UIMessage::SpawnBreeze);
+                                    }
+                                    AircraftTypes::J3Cub => {
+                                        messages.write(UIMessage::SpawnJ3Cub);
                                     }
                                 }
                                 messages.write(UIMessage::SpawnScenery);
@@ -403,8 +424,11 @@ impl UI {
                 UIMessage::SpawnHelicopter => {
                     commands.run_system(systems.0["spawn_helicopter"]);
                 }
-                UIMessage::SpawnAeroplane => {
-                    commands.run_system(systems.0["setup_aeroplane"]);
+                UIMessage::SpawnBreeze => {
+                    commands.run_system(systems.0["setup_breeze"]);
+                }
+                UIMessage::SpawnJ3Cub => {
+                    commands.run_system(systems.0["setup_j3cub"]);
                 }
             }
         }
@@ -465,7 +489,7 @@ impl UI {
                 }
                 UIHudComponent::Velocity => format!(
                     "Velocity: {:?} km/h",
-                    (transform.forward().dot(vel.0) * 3.6) as i32
+                    (transform.local_x().dot(vel.0) * 3.6) as i32
                 ),
             };
             text.0 = string;
