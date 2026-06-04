@@ -479,6 +479,7 @@ pub fn spring_forces(
     mut query: Single<(&Transform, Forces), With<Aircraft>>,
     time: Res<Time>,
     mut state: ResMut<AircraftState>,
+    mut gizmos: Gizmos,
 ) {
     let (transform, force) = query.deref_mut();
 
@@ -501,79 +502,76 @@ pub fn spring_forces(
         } else {
             STRENGTH
         };
+
         let rest = if is_nosewheel { REST + 0.1 } else { REST };
 
         let filter = SpatialQueryFilter::DEFAULT;
         let origin = transform.translation + transform.rotation * gear_pos;
         let ray_dir = transform.local_z();
 
-        info!(
-            "Attempting Cast -> Origin: {:?}, Dir: {:?}, Max Dist: {}",
-            origin, ray_dir, rest
-        );
+        gizmos.sphere(origin, 2.0, Color::BLACK);
 
         if let Some(hit) = spatial_query.cast_ray(origin, ray_dir, rest, true, &filter) {
-            info!("some hit");
-            let spring_dir = transform.up();
-            if hit.distance != 0.0 {
-                info!("hitdistance!=0.0");
-                on_ground_vec[i] = true;
+            info!("hit!");
+            let spring_dir = -transform.local_z();
 
-                // The point where the gear touches the ground
-                let contact_point = origin + ray_dir * hit.distance;
+            on_ground_vec[i] = true;
 
-                //============================== springs ==============================
-                let spring_vel = spring_dir.dot(force.velocity_at_point(contact_point));
+            // The point where the gear touches the ground
+            let contact_point = origin + ray_dir * hit.distance;
 
-                let spring_force = (spring(hit.distance, rest, strength, DAMPING, spring_vel)
-                    * spring_dir)
-                    .clamp_length_max(MAX_FORCE);
+            //============================== springs ==============================
+            let spring_vel = spring_dir.dot(force.velocity_at_point(contact_point));
 
-                // This is applied three times because three rays are cast
-                force.apply_force_at_point(spring_force, origin);
+            let spring_force = (spring(hit.distance, rest, strength, DAMPING, spring_vel)
+                * spring_dir)
+                .clamp_length_max(MAX_FORCE);
 
-                //============================== steering/anti-drift ==============================
-                let steering_dir = if is_nosewheel {
-                    Quat::from_rotation_y(20.0 * state.control_surfaces.rudder.to_radians())
-                        * transform.right()
+            // This is applied three times because three rays are cast
+            force.apply_force_at_point(spring_force, origin);
+
+            //============================== steering/anti-drift ==============================
+            let steering_dir = if is_nosewheel {
+                Quat::from_rotation_y(20.0 * state.control_surfaces.rudder.to_radians())
+                    * transform.local_y()
+            } else {
+                transform.local_y()
+            };
+            let vel_at_contact_point = force.velocity_at_point(contact_point);
+
+            let steering_vel = steering_dir.dot(vel_at_contact_point);
+
+            let tire_grip_factor = if is_nosewheel { 0.02 } else { 0.02 };
+            let desired_vel_change = -steering_vel * tire_grip_factor;
+
+            let desired_accel = desired_vel_change / time.delta_secs();
+            let tire_mass = 3_300.0 / hit.distance; // The mass that rests on each tire
+            force.apply_force_at_point(
+                (steering_dir * tire_mass * desired_accel * 10.0).clamp_length_max(10000.0),
+                contact_point,
+            );
+
+            //============================== brakes ==============================
+
+            if !is_nosewheel {
+                let tire_speed = transform.local_x().dot(vel_at_contact_point);
+                let braking_input = if state.parking_brake {
+                    0.9
                 } else {
-                    transform.right()
+                    state.control_surfaces.ground_brakes * 0.6
                 };
-                let vel_at_contact_point = force.velocity_at_point(contact_point);
+                let braking_coeff = 20.0;
+                let braking_force = (braking_input
+                    * tire_speed.signum()
+                    * tire_mass
+                    * tire_grip_factor
+                    * braking_coeff
+                    * -transform.local_x())
+                .clamp_length_max(MAX_BRAKING_FORCE);
 
-                let steering_vel = steering_dir.dot(vel_at_contact_point);
-
-                let tire_grip_factor = if is_nosewheel { 0.02 } else { 0.02 };
-                let desired_vel_change = -steering_vel * tire_grip_factor;
-
-                let desired_accel = desired_vel_change / time.delta_secs();
-                let tire_mass = 3_300.0 / hit.distance; // The mass that rests on each tire
-                force.apply_force_at_point(
-                    (steering_dir * tire_mass * desired_accel * 10.0).clamp_length_max(10000.0),
-                    contact_point,
-                );
-
-                //============================== brakes ==============================
-
-                if !is_nosewheel {
-                    let tire_speed = transform.forward().dot(vel_at_contact_point);
-                    let braking_input = if state.parking_brake {
-                        0.9
-                    } else {
-                        state.control_surfaces.ground_brakes * 0.6
-                    };
-                    let braking_coeff = 20.0;
-                    let braking_force = (braking_input
-                        * tire_speed.signum()
-                        * tire_mass
-                        * tire_grip_factor
-                        * braking_coeff
-                        * transform.back())
-                    .clamp_length_max(MAX_BRAKING_FORCE);
-
-                    force.apply_force_at_point(braking_force, contact_point);
-                }
+                force.apply_force_at_point(braking_force, contact_point);
             }
+            // }
         }
     }
 
