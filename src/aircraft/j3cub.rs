@@ -121,6 +121,8 @@ use avian3d::math::{Scalar, Vector};
 use avian3d::prelude::{Collider, ColliderDensity, RigidBody};
 use bevy::prelude::*;
 
+use crate::aircraft::Aircraft;
+
 // ── Aircraft reference constants ─────────────────────────────────────────────
 
 /// JSBSim J3Cub reference wing area (m²): 178.50 ft² × 0.0929.
@@ -478,6 +480,7 @@ pub fn spawn(commands: &mut Commands, transform: Transform) -> Entity {
                     "JSBSim:J3Cub.xml: CD_i = CL²×0.0485 -> e = 1/(π×0.0485×AR=6.956) ≈ 0.94"
                 ),
             },
+            Aircraft,
             // No LodDamping. Roll/pitch/yaw damping emerges from zone geometry.
         ))
         .with_children(|parent| {
