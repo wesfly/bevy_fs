@@ -194,7 +194,12 @@ pub fn main(
     >,
     spatial_query: SpatialQuery,
     time: Res<Time>,
+    game_state: Res<GameState>,
 ) {
+    if game_state.running == false {
+        return;
+    }
+
     match state.aircraft_type {
         AircraftTypes::Helicopter => {
             helicopter::mechanics(input, state, gizmos, &mut aircraft);
