@@ -1,5 +1,4 @@
-use crate::aircraft::breeze::landing_gear::RIGHT_POS;
-use crate::{aircraft::Aircraft, bevy_to_aerospace_coords};
+use crate::aircraft::Aircraft;
 use avian_fdm::prelude::AirfoilData;
 use avian_fdm::{
     components::InducedDrag,
@@ -14,7 +13,6 @@ use avian3d::{
     prelude::*,
 };
 use bevy::prelude::*;
-use landing_gear::LEFT_POS;
 
 pub mod fly_by_wire;
 pub mod landing_gear;
@@ -22,14 +20,16 @@ pub mod mechanics;
 
 // ── Aircraft reference constants ─────────────────────────────────────────────
 
-/// JSBSim J3Cub reference wing area (m²): 178.50 ft² × 0.0929.
 pub const WING_AREA_M2: Scalar = sourced!(
-    49.0,
-    "JSBSim:J3Cub.xml: wing_area 178.50 ft² × 0.0929 m²/ft²"
+    45.7,
+    "https://en.wikipedia.org/wiki/Dassault_Rafale#:~:text=Wing%20area%3A%2045.7%C2%A0m2%20(492%C2%A0sq%C2%A0ft)"
 );
 
 /// JSBSim J3Cub wingspan (m): 35.25 ft × 0.3048.
-pub const WING_SPAN_M: Scalar = sourced!(10.0, "JSBSim:J3Cub.xml: wingspan 35.25 ft × 0.3048 m/ft");
+pub const WING_SPAN_M: Scalar = sourced!(
+    10.90,
+    "https://en.wikipedia.org/wiki/Dassault_Rafale#:~:text=Wingspan%3A%2010.90%C2%A0m%20(35%C2%A0ft%209%C2%A0in)"
+);
 
 /// JSBSim J3Cub mean aerodynamic chord (m): 5.25 ft × 0.3048.
 pub const CHORD_M: Scalar = sourced!(1.600, "JSBSim:J3Cub.xml: chord 5.25 ft × 0.3048 m/ft");
@@ -143,40 +143,6 @@ const AILERON_CL_DELTA: Scalar = sourced!(
     "Calibration: CL_ail = Cl_da × S_ref × b / (2 × S_ail × y_arm) = 0.3498 × 16.584 × 10.742 / (2 × 1.376 × 4.05)"
 );
 
-// ── Landing gear geometry ────────────────────────────────────────────────────
-
-/// Gear leg frontal area (m2): exposed axle/bungee strut, approx 0.6m long * 0.04m diameter.
-const GEAR_LEG_AREA_M2: Scalar = sourced!(
-    0.024,
-    "Geometry: J3 Cub gear leg frontal area, 0.6 m × 0.04 m exposed axle + bungee"
-);
-
-/// Gear leg drag coefficient (based on frontal area).
-///
-/// From JSBSim Drag_gear: each leg contributes CD = 0.001 against S_ref.
-/// Physical: CD_leg = 0.001 * S_ref / S_leg = 0.001 * 16.584 / 0.024 = 0.691.
-/// Typical for a partially faired strut (bare cylinder ~ 1.0-1.2).
-const GEAR_LEG_CD: Scalar = sourced!(
-    0.691,
-    "Calibration: CD_leg = 0.001 × S_ref / S_leg = 0.001 × 16.584 / 0.024; partially faired strut"
-);
-
-/// Wheel frontal area (m2): circle with radius 0.15m (8-inch tyre).
-const WHEEL_AREA_M2: Scalar = sourced!(
-    0.0707,
-    "Geometry: J3 Cub main wheel frontal area, pi × 0.15^2"
-);
-
-/// Wheel drag coefficient (based on frontal area).
-///
-/// From JSBSim Drag_gear: each wheel contributes CD = 0.001 against S_ref.
-/// Physical: CD_wheel = 0.001 * S_ref / S_wheel = 0.001 * 16.584 / 0.0707 = 0.235.
-/// Lower than a bare disc (~0.4-0.6) because JSBSim models it as residual drag.
-const WHEEL_CD: Scalar = sourced!(
-    0.235,
-    "Calibration: CD_wheel = 0.001 × S_ref / S_wheel = 0.001 × 16.584 / 0.0707; JSBSim residual"
-);
-
 /// Wing aerodynamic-centre x-offset from entity root (m).
 const WING_AC_X: Scalar = -3.5;
 
@@ -210,8 +176,6 @@ pub fn airfoil() -> AirfoilData {
         .ncrit9
 }
 
-// ── Public API ────────────────────────────────────────────────────────────────
-
 /// Spawn a complete aircraft with all child [`AeroZone`] entities.
 ///
 /// Returns the root entity ID. The aircraft root is spawned at `transform`
@@ -230,13 +194,8 @@ pub fn spawn(
         .spawn((
             SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
             breeze_core_bundle(transform),
-            // Lift-induced drag: J3Cub has a high-wing strut-braced layout.
-            // e = 0.94 from JSBSim: CD_i = CL² × 0.0485, so e = 1/(π × 0.0485 × AR=6.956)
             InducedDrag {
-                oswald_factor: sourced!(
-                    0.94,
-                    "JSBSim:J3Cub.xml: CD_i = CL²×0.0485 -> e = 1/(π×0.0485×AR=6.956) ≈ 0.94"
-                ),
+                oswald_factor: 0.94,
             },
             Aircraft,
             // No LodDamping. Roll/pitch/yaw damping emerges from zone geometry.
@@ -262,32 +221,27 @@ pub fn spawn(
             const ROOT_Y_M: f32 = 1.2;
             const ROOT_OFFSET: f32 = 0.5;
 
+            const TIP_X_M: f32 = -4.5;
+
             // ── Left wing ───────────────────────────────────────────────────
-            // Thin collider (z=0.02 m). See module docs on hybrid approach.
             parent.spawn((wing_zone(
                 "L-root", WING_AC_X + ROOT_OFFSET, WING_AC_X, -ROOT_Y_M, 0.175,
                 airfoil(),
                 Collider::cuboid(ROOT_X_M, 1.88, 0.2),
-                ColliderDensity(sourced!(585.0, "Inertia-calibrated: uniform wing density; total wing mass ~80 kg for Ixx=729")),
+                Mass(100.0),
             ), GizmoShape::Box { x: ROOT_X_M, y: 1.88, z: 0.2 }));
             parent.spawn((wing_zone(
                 "L-mid", WING_AC_X, WING_AC_X, -2.82, 0.175,
                 airfoil(),
                 Collider::cuboid(0.80, 1.88, 0.02),
-                ColliderDensity(sourced!(585.0, "Inertia-calibrated: uniform wing density; total wing mass ~80 kg for Ixx=729")),
+                Mass(80.0),
             ), GizmoShape::Box { x: 0.80, y: 1.88, z: 0.02 }));
 
-            const TIP_X_M: f32 = -4.5;
-
-            // Tip strip (LE portion of chord, outboard alongside the aileron).
-            // Entity at geometric center of the strip (0.075) for correct
-            // collider position; ac_offset inside AeroZone shifts the force
-            // application point to WING_AC_X (25% of the full wing chord).
             parent.spawn((wing_zone(
                 "L-tip", TIP_X_M, WING_AC_X, -4.19, 0.150,
                 airfoil(),
                 Collider::cuboid(0.45, 0.86, 0.02),
-                ColliderDensity(585.0),
+                Mass(50.0),
             ), GizmoShape::Box { x: 0.45, y: 0.86, z: 0.02 }));
 
             // ── Right wing ───────────────────────────────────────────────────
@@ -295,19 +249,19 @@ pub fn spawn(
                 "R-root", WING_AC_X + ROOT_OFFSET, WING_AC_X, ROOT_Y_M, 0.175,
                 airfoil(),
                 Collider::cuboid(ROOT_X_M, 1.88, 0.2),
-                ColliderDensity(585.0),
+                Mass(100.0),
             ), GizmoShape::Box { x: ROOT_X_M, y: 1.88, z: 0.2 }));
             parent.spawn((wing_zone(
                 "R-mid", WING_AC_X, WING_AC_X, 2.82, 0.175,
                 airfoil(),
                 Collider::cuboid(0.80, 1.88, 0.02),
-                ColliderDensity(585.0),
+                Mass(80.0),
             ), GizmoShape::Box { x: 0.80, y: 1.88, z: 0.02 }));
             parent.spawn((wing_zone(
                 "R-tip", TIP_X_M, WING_AC_X, 4.19, 0.150,
                 airfoil(),
                 Collider::cuboid(0.45, 0.86, 0.02),
-                ColliderDensity(585.0),
+                Mass(50.0),
             ), GizmoShape::Box { x: 0.45, y: 0.86, z: 0.02 }));
 
             // ── Ailerons ─────────────────────────────────────────────────────
@@ -335,57 +289,6 @@ pub fn spawn(
                 Collider::cuboid(AILERON_LENGTH, AILERON_SPAN_M, 0.02),
                 ColliderDensity(sourced!(585.0, "Inertia-calibrated: same as wing panels (control surface + structure)")),
             ), GizmoShape::Box { x: AILERON_LENGTH, y:AILERON_SPAN_M, z: 0.02 }));
-
-            // ── Landing gear legs ────────────────────────────────────────────
-            for (sign, name) in [(-1.0_f32, "L-gear"), (1.0, "R-gear")] {
-                let top = Vec3::new(0.50, 0.15 * sign, 0.35);
-                let bottom = Vec3::new(0.50, 0.55 * sign, 0.90);
-                let mid = (top + bottom) * 0.5;
-                let dir = bottom - top;
-                let length = dir.length();
-                let rot = Quat::from_rotation_arc(Vec3::X, dir.normalize());
-                let half = length * 0.5;
-                parent.spawn((
-                    Name::new(name),
-                    AeroZoneBundle {
-                        zone: AeroZone {
-                            cl: AeroCoeff::Scalar(0.0),
-                            cd: AeroCoeff::Scalar(GEAR_LEG_CD),
-                            area_m2: GEAR_LEG_AREA_M2,
-                            ..Default::default()
-                        },
-                        collider: Collider::cuboid(length as Scalar, 0.04, 0.04),
-                        transform: Transform::from_translation(mid).with_rotation(rot),
-                        global_transform: GlobalTransform::default(),
-                    },
-                    ColliderDensity(sourced!(7800.0, "Literature: steel axle/bungee landing gear; standard mild steel density")),
-                    GizmoShape::Strut {
-                        start: Vec3::new(-half, 0.0, 0.0),
-                        end: Vec3::new(half, 0.0, 0.0),
-                    },
-                ));
-            }
-
-            // ── Main wheels ──────────────────────────────────────────────────
-            for (position, name) in [(bevy_to_aerospace_coords() * LEFT_POS, "L-wheel"), (bevy_to_aerospace_coords() * RIGHT_POS, "R-wheel")] {
-                parent.spawn((
-                    Name::new(name),
-                    AeroZoneBundle {
-                        zone: AeroZone {
-                            cl: AeroCoeff::Scalar(0.0),
-                            cd: AeroCoeff::Scalar(WHEEL_CD),
-                            area_m2: WHEEL_AREA_M2,
-                            ..Default::default()
-                        },
-                        collider: Collider::cuboid(0.30, 0.10, 0.30),
-                        transform: Transform::from_translation(position),
-                        global_transform: GlobalTransform::default(),
-                    },
-                    ColliderDensity(sourced!(1200.0, "Estimate: 8-ply tyre + aluminium rim; composite density ≈ rubber 1100 + Al 2700")),
-                    // Wheels roll around Y (spanwise axis); radius 0.15 m, width 0.10 m.
-                    GizmoShape::Cylinder { radius: 0.15, length: 0.10, axis: Vec3::Y },
-                ));
-            }
 
             // ── Elevator ──────────────────────────────────────────────────────
             parent.spawn((
@@ -495,7 +398,7 @@ pub fn wing_zone(
     fraction: Scalar,
     airfoil: AirfoilData,
     collider: Collider,
-    density: ColliderDensity,
+    mass: Mass,
 ) -> impl Bundle {
     let ac_offset = Vec3::new((ac_x_m - x_m) as f32, 0.0, 0.0);
     let z_m = WING_Z - y_m.abs() * WING_DIHEDRAL_RAD.sin();
@@ -517,7 +420,7 @@ pub fn wing_zone(
                 .with_rotation(dihedral_rot),
             global_transform: GlobalTransform::default(),
         },
-        density,
+        mass,
     )
 }
 

@@ -476,12 +476,19 @@ const MAX_BRAKING_FORCE: f32 = 100_000.0;
 // https://www.youtube.com/watch?v=CdPYlj5uZeI
 pub fn spring_forces(
     spatial_query: SpatialQuery,
-    mut query: Single<(&Transform, Forces), With<Aircraft>>,
+    mut query: Single<
+        (
+            &Transform,
+            Forces,
+            Option<&mut avian_fdm::prelude::ControlInputs>,
+        ),
+        With<Aircraft>,
+    >,
     time: Res<Time>,
     mut state: ResMut<AircraftState>,
     mut gizmos: Gizmos,
 ) {
-    let (transform, force) = query.deref_mut();
+    let (transform, force, _) = query.deref_mut();
 
     if (state.landing_gear_deployed && force.linear_velocity().length() <= 200.0) == false {
         return;

@@ -4,9 +4,12 @@ pub mod lights;
 pub mod screens;
 
 pub mod breeze;
+mod helicopter;
 mod j3cub;
 
-use crate::{GameState, Settings, data_from_gltf::load, motion_blur};
+use crate::{
+    GameState, Settings, aircraft, data_from_gltf::load, input::ControlInputs, motion_blur,
+};
 use avian3d::prelude::*;
 use bevy::{
     anti_alias::fxaa::Fxaa,
@@ -177,6 +180,42 @@ impl Damage {
     }
 }
 
+pub fn main(
+    input: Res<ControlInputs>,
+    mut state: ResMut<AircraftState>,
+    gizmos: Gizmos,
+    mut aircraft: Single<
+        (
+            &Transform,
+            Forces,
+            Option<&mut avian_fdm::prelude::ControlInputs>,
+        ),
+        With<Aircraft>,
+    >,
+    spatial_query: SpatialQuery,
+    time: Res<Time>,
+) {
+    match state.aircraft_type {
+        AircraftTypes::Helicopter => {
+            helicopter::mechanics(input, state, gizmos, &mut aircraft);
+        }
+        AircraftTypes::J3Cub => {
+            // TODO
+            aircraft::breeze::mechanics::mechanics(input, &mut state, &mut aircraft);
+        }
+        AircraftTypes::Breeze => {
+            aircraft::breeze::mechanics::mechanics(input, &mut state, &mut aircraft);
+            aircraft::breeze::landing_gear::spring_forces(
+                spatial_query,
+                aircraft,
+                time,
+                state,
+                gizmos,
+            );
+        }
+    }
+}
+
 pub fn collision_listener(
     mut collision_messages: MessageReader<CollisionStart>,
     mut damage_messages: MessageWriter<Damage>,
@@ -218,7 +257,7 @@ pub fn spawn_breeze(
     let level = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
     breeze::spawn(
         &mut commands,
-        Transform::from_xyz(0.0, 1000.0, 0.0).with_rotation(level),
+        Transform::from_xyz(0.0, 100.0, 0.0).with_rotation(level),
         asset_server,
     );
 

@@ -3,41 +3,38 @@ use crate::{
     aircraft::{Aircraft, AircraftState, AircraftTypes},
     input::ControlInputs,
 };
-use avian3d::prelude::{Forces, WriteRigidBodyForces};
+use avian3d::prelude::Forces;
 use bevy::prelude::*;
 
 pub fn mechanics(
     input: Res<ControlInputs>,
-    mut state: ResMut<AircraftState>,
-    _gizmos: Gizmos,
-    mut aircraft: Single<
-        (&Transform, Forces, &mut avian_fdm::prelude::ControlInputs),
+    state: &mut ResMut<AircraftState>,
+    aircraft: &mut Single<
+        (
+            &Transform,
+            Forces,
+            Option<&mut avian_fdm::prelude::ControlInputs>,
+        ),
         With<Aircraft>,
     >,
 ) {
-    let transform = &aircraft.0.clone();
-    let force = &mut aircraft.1;
     match state.aircraft_type {
         AircraftTypes::Helicopter => {
-            if state.engine.on {
-                let thrust_factor = 120_000.;
-                let thrust = transform.up() * thrust_factor * input.throttle;
-                let torque = Vec3::new(input.pitch, input.yaw, input.roll);
-
-                force.apply_force(thrust);
-                force.apply_local_torque(torque * 500.0);
-            }
+            todo!()
         }
         AircraftTypes::Breeze => {
-            fly_by_wire(&*input, &mut state, aircraft);
+            fly_by_wire(&*input, state, aircraft);
         }
         AircraftTypes::J3Cub => {
-            fly_by_wire(&*input, &mut state, aircraft);
+            // TODO
+            fly_by_wire(&*input, state, aircraft);
         }
     }
 }
 
-#[allow(unused)] // TODO
+/*
+
+// TODO (maybe useful for vortex lift)
 fn lift_coeff(alpha_deg: f32, potential_lift_factor: f32, vortex_lift_factor: f32) -> f32 {
     let alpha = alpha_deg.to_radians();
 
@@ -50,3 +47,5 @@ fn lift_coeff(alpha_deg: f32, potential_lift_factor: f32, vortex_lift_factor: f3
 
     cl_potential + cl_vortex
 }
+
+*/

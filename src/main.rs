@@ -129,7 +129,7 @@ fn main() {
             },
             GizmoConfig::default(),
         )
-        .add_plugins(PhysicsDebugPlugin)
+        // .add_plugins(PhysicsDebugPlugin)
         .add_plugins(AircraftFdmDebugPlugin)
         .add_plugins(UI)
         .add_plugins(Sse)
@@ -191,8 +191,7 @@ fn main() {
                 LandingGear::operate_landing_gear,
                 screenshot_saving,
                 aircraft::screens::update_screens,
-                aircraft::breeze::mechanics::mechanics,
-                aircraft::breeze::landing_gear::spring_forces,
+                aircraft::main,
                 collision_listener,
                 poll_terrain,
                 Chunk::message_reader,
