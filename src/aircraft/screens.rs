@@ -1,4 +1,8 @@
-use crate::{M_S_TO_KTS, METRES_TO_FEET, aircraft::Aircraft, input::ControlInputs};
+use crate::{
+    M_S_TO_KTS, METRES_TO_FEET,
+    aircraft::{Aircraft, alpha_deg},
+    input::ControlInputs,
+};
 use avian3d::prelude::LinearVelocity;
 use bevy::{
     asset::RenderAssetUsages,
@@ -283,23 +287,14 @@ pub fn update_screens(
                 ScreenUiElement::AirspeedKts => {
                     *text = Text::new(format!(
                         "{} kts",
-                        (tf.forward().dot(vel.0) * M_S_TO_KTS) as i32
+                        (tf.local_x().dot(vel.0) * M_S_TO_KTS) as i32
                     ))
                 }
                 ScreenUiElement::Altitude => {
                     *text = Text::new(format!("{} ft", (tf.translation.y * METRES_TO_FEET) as i32))
                 }
                 ScreenUiElement::Alpha => {
-                    let velocity_dir = vel_tf.0.to_vec3a().to_vec3();
-
-                    let transform = vel_tf.1;
-                    let sin = transform
-                        .forward()
-                        .cross(velocity_dir)
-                        .dot(transform.right().as_vec3());
-                    let cos = transform.forward().dot(velocity_dir);
-                    let alpha_deg = -sin.atan2(cos).to_degrees();
-
+                    let alpha_deg = alpha_deg(&vel, tf);
                     *text = Text::new(format!("AOA {:.2}", alpha_deg))
                 }
 
