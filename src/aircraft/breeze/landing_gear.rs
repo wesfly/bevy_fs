@@ -467,7 +467,7 @@ impl LandingGear {
 
 const REST: f32 = 1.2;
 const STRENGTH: f32 = 200_000.0;
-const DAMPING: f32 = 5_000.0;
+const DAMPING: f32 = 15_000.0;
 
 const MAX_FORCE: f32 = 1_000_000.0;
 const MAX_BRAKING_FORCE: f32 = 100_000.0;
@@ -504,13 +504,8 @@ pub fn spring_forces(
 
     for (i, gear_pos) in landing_gear.iter().enumerate() {
         let is_nosewheel = i == 2;
-        let strength = if is_nosewheel {
-            STRENGTH * 0.9
-        } else {
-            STRENGTH
-        };
 
-        let rest = if is_nosewheel { REST + 0.1 } else { REST };
+        let rest = if is_nosewheel { REST - 0.1 } else { REST };
 
         let filter = SpatialQueryFilter::DEFAULT;
         let origin = transform.translation + transform.rotation * gear_pos;
@@ -519,7 +514,6 @@ pub fn spring_forces(
         gizmos.sphere(origin, 2.0, Color::BLACK);
 
         if let Some(hit) = spatial_query.cast_ray(origin, ray_dir, rest, true, &filter) {
-            info!("hit!");
             let spring_dir = -transform.local_z();
 
             on_ground_vec[i] = true;
@@ -530,7 +524,7 @@ pub fn spring_forces(
             //============================== springs ==============================
             let spring_vel = spring_dir.dot(force.velocity_at_point(contact_point));
 
-            let spring_force = (spring(hit.distance, rest, strength, DAMPING, spring_vel)
+            let spring_force = (spring(hit.distance, rest, STRENGTH, DAMPING, spring_vel)
                 * spring_dir)
                 .clamp_length_max(MAX_FORCE);
 
@@ -548,7 +542,7 @@ pub fn spring_forces(
 
             let steering_vel = steering_dir.dot(vel_at_contact_point);
 
-            let tire_grip_factor = if is_nosewheel { 0.02 } else { 0.02 };
+            let tire_grip_factor = if is_nosewheel { 0.5 } else { 0.5 };
             let desired_vel_change = -steering_vel * tire_grip_factor;
 
             let desired_accel = desired_vel_change / time.delta_secs();
@@ -567,7 +561,7 @@ pub fn spring_forces(
                 } else {
                     state.control_surfaces.ground_brakes * 0.6
                 };
-                let braking_coeff = 20.0;
+                let braking_coeff = 50.0;
                 let braking_force = (braking_input
                     * tire_speed.signum()
                     * tire_mass
