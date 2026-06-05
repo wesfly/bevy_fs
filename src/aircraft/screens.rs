@@ -277,7 +277,7 @@ pub fn update_screens(
     input_axis: Res<ControlInputs>,
     vel_tf: Single<(&LinearVelocity, &Transform), With<Aircraft>>,
 ) {
-    let (vel, tf) = *vel_tf;
+    let (velocity, transform) = *vel_tf;
     for (text, screen, mut ui_transform) in query {
         if let Some(mut text) = text {
             match screen {
@@ -287,14 +287,17 @@ pub fn update_screens(
                 ScreenUiElement::AirspeedKts => {
                     *text = Text::new(format!(
                         "{} kts",
-                        (tf.local_x().dot(vel.0) * M_S_TO_KTS) as i32
+                        (transform.local_x().dot(velocity.0) * M_S_TO_KTS) as i32
                     ))
                 }
                 ScreenUiElement::Altitude => {
-                    *text = Text::new(format!("{} ft", (tf.translation.y * METRES_TO_FEET) as i32))
+                    *text = Text::new(format!(
+                        "{} ft",
+                        (transform.translation.y * METRES_TO_FEET) as i32
+                    ))
                 }
                 ScreenUiElement::Alpha => {
-                    let alpha_deg = alpha_deg(&vel, tf);
+                    let alpha_deg = alpha_deg(&velocity, transform);
                     *text = Text::new(format!("AOA {:.2}", alpha_deg))
                 }
 
@@ -302,10 +305,10 @@ pub fn update_screens(
             }
         } else {
             if let ScreenUiElement::Horizon = screen {
-                let (_, _, roll) = tf.rotation.to_euler(EulerRot::YXZ);
+                let (_, _, roll) = transform.rotation.to_euler(EulerRot::YXZ);
                 ui_transform.rotation = Rot2::radians(roll);
 
-                let forward = tf.forward();
+                let forward = transform.forward();
                 let pitch = forward.y.asin();
 
                 let px_per_rad = 2800.0;
