@@ -3,6 +3,7 @@ pub mod buttons;
 pub mod lights;
 pub mod screens;
 
+pub mod airfoils;
 pub mod breeze;
 mod helicopter;
 mod j3cub;
@@ -26,16 +27,15 @@ use serde::Deserialize;
 
 pub fn alpha_deg(velocity: &Vec3, transform: &Transform) -> f32 {
     let velocity = velocity.normalize_or_zero();
-    let forward = -transform.local_x();
-    let right = transform.local_z();
+    let forward = transform.local_x();
+    let right = transform.local_y();
 
     let sin = forward.cross(velocity).dot(right.as_vec3());
     let cos = forward.dot(velocity);
 
-    let _alpha = -sin.atan2(cos).to_degrees();
+    let alpha = -sin.atan2(cos).to_degrees();
 
-    // alpha
-    0.0
+    alpha
 }
 
 #[derive(Debug, Deserialize, Component)]
