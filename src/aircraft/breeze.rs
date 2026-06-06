@@ -167,15 +167,6 @@ const ENGINE_RADIUS: f32 = sourced!(
     "https://en.wikipedia.org/wiki/Snecma_M88#:~:text=Diameter%3A%2069.6%C2%A0cm%20(27.4%C2%A0in)"
 );
 
-use avian_fdm::airfoil::foil_tools::parse_foil_tools_csv;
-
-pub fn airfoil() -> AirfoilData {
-    let csv: &str = include_str!("../../assets/aircraft/breeze/c-f3/naca2408_polars.csv");
-    parse_foil_tools_csv(csv)
-        .expect("embedded profile to parse cleanly")
-        .ncrit9
-}
-
 /// Spawn a complete aircraft with all child [`AeroZone`] entities.
 ///
 /// Returns the root entity ID. The aircraft root is spawned at `transform`
@@ -226,20 +217,20 @@ pub fn spawn(
             // ── Left wing ───────────────────────────────────────────────────
             parent.spawn((wing_zone(
                 "L-root", WING_AC_X + ROOT_OFFSET, WING_AC_X, -ROOT_Y_M, 0.175,
-                airfoil(),
+                ag47ct02r(),
                 Collider::cuboid(ROOT_X_M, 1.88, 0.2),
                 Mass(100.0),
             ), GizmoShape::Box { x: ROOT_X_M, y: 1.88, z: 0.2 }));
             parent.spawn((wing_zone(
                 "L-mid", WING_AC_X, WING_AC_X, -2.82, 0.175,
-                airfoil(),
-                Collider::cuboid(0.80, 1.88, 0.02),
+                ag47ct02r(),
+                Collider::cuboid(2.80, 1.88, 0.2),
                 Mass(80.0),
-            ), GizmoShape::Box { x: 0.80, y: 1.88, z: 0.02 }));
+            ), GizmoShape::Box { x: 2.80, y: 1.88, z: 0.2 }));
 
             parent.spawn((wing_zone(
                 "L-tip", TIP_X_M, WING_AC_X, -4.19, 0.150,
-                airfoil(),
+                ag47ct02r(),
                 Collider::cuboid(0.45, 0.86, 0.02),
                 Mass(50.0),
             ), GizmoShape::Box { x: 0.45, y: 0.86, z: 0.02 }));
@@ -247,20 +238,20 @@ pub fn spawn(
             // ── Right wing ───────────────────────────────────────────────────
             parent.spawn((wing_zone(
                 "R-root", WING_AC_X + ROOT_OFFSET, WING_AC_X, ROOT_Y_M, 0.175,
-                airfoil(),
+                ag47ct02r(),
                 Collider::cuboid(ROOT_X_M, 1.88, 0.2),
                 Mass(100.0),
             ), GizmoShape::Box { x: ROOT_X_M, y: 1.88, z: 0.2 }));
             parent.spawn((wing_zone(
                 "R-mid", WING_AC_X, WING_AC_X, 2.82, 0.175,
-                airfoil(),
-                Collider::cuboid(0.80, 1.88, 0.02),
+                ag47ct02r(),
+                Collider::cuboid(2.80, 1.88, 0.2),
                 Mass(80.0),
-            ), GizmoShape::Box { x: 0.80, y: 1.88, z: 0.02 }));
+            ), GizmoShape::Box { x: 2.80, y: 1.88, z: 0.2 }));
             parent.spawn((wing_zone(
-                "R-tip", TIP_X_M, WING_AC_X, 4.19, 0.150,
-                airfoil(),
-                Collider::cuboid(0.45, 0.86, 0.02),
+                "R-tip", TIP_X_M, WING_AC_X, 4.4, 0.150,
+                ag47ct02r(),
+                Collider::cuboid(1.0, 1.5, 0.1),
                 Mass(50.0),
             ), GizmoShape::Box { x: 0.45, y: 0.86, z: 0.02 }));
 

@@ -446,29 +446,11 @@ const CD_DATA: [Scalar; 28] = sourced!(
     "JSBSim:J3Cub.xml: Drag_basic table (profile drag only, parasite; no induced drag)"
 );
 
-pub fn airfoil() -> AirfoilData {
-    let csv: &str = include_str!("../../assets/aircraft/j3cub/airfoil.csv");
-    parse_foil_tools_csv(csv)
-        .expect("embedded USA-35B CSV must parse cleanly")
-        .ncrit9
-}
-
-// ── Public API ────────────────────────────────────────────────────────────────
-
 /// Spawn a complete Piper J-3 Cub aircraft with all child [`AeroZone`] entities.
 ///
 /// Returns the root entity ID. The aircraft root is spawned at `transform`
 /// (typically over the runway at some altitude). Add your own input system that
 /// writes to [`avian_fdm::components::ControlInputs`] on the root entity.
-///
-/// # Example
-/// ```rust,no_run
-/// # use bevy::prelude::*;
-/// # use avian_fdm_j3cub_jsbsim::presets::j3cub;
-/// fn startup(mut commands: Commands) {
-///     j3cub::spawn(&mut commands, Transform::from_xyz(0.0, 300.0, 0.0));
-/// }
-/// ```
 pub fn spawn(commands: &mut Commands, transform: Transform) -> Entity {
     use avian_fdm::components::GizmoShape;
 
@@ -491,13 +473,13 @@ pub fn spawn(commands: &mut Commands, transform: Transform) -> Entity {
             // Thin collider (z=0.02 m). See module docs on hybrid approach.
             parent.spawn((wing_zone(
                 "L-root", WING_AC_X, WING_AC_X, -0.94, 0.175,
-                airfoil(),
+                usa35b(),
                 Collider::cuboid(0.80, 1.88, 0.02),
                 ColliderDensity(sourced!(585.0, "Inertia-calibrated: uniform wing density; total wing mass ~80 kg for Ixx=729")),
             ), GizmoShape::Box { x: 0.80, y: 1.88, z: 0.02 }));
             parent.spawn((wing_zone(
                 "L-mid", WING_AC_X, WING_AC_X, -2.82, 0.175,
-                airfoil(),
+                usa35b(),
                 Collider::cuboid(0.80, 1.88, 0.02),
                 ColliderDensity(sourced!(585.0, "Inertia-calibrated: uniform wing density; total wing mass ~80 kg for Ixx=729")),
             ), GizmoShape::Box { x: 0.80, y: 1.88, z: 0.02 }));
@@ -507,7 +489,7 @@ pub fn spawn(commands: &mut Commands, transform: Transform) -> Entity {
             // application point to WING_AC_X (25% of the full wing chord).
             parent.spawn((wing_zone(
                 "L-tip", 0.075, WING_AC_X, -4.19, 0.150,
-                airfoil(),
+                usa35b(),
                 Collider::cuboid(0.45, 0.86, 0.02),
                 ColliderDensity(sourced!(585.0, "Inertia-calibrated: uniform wing density matches panel for physical consistency")),
             ), GizmoShape::Box { x: 0.45, y: 0.86, z: 0.02 }));
@@ -515,19 +497,19 @@ pub fn spawn(commands: &mut Commands, transform: Transform) -> Entity {
             // ── Right wing ───────────────────────────────────────────────────
             parent.spawn((wing_zone(
                 "R-root", WING_AC_X, WING_AC_X, 0.94, 0.175,
-                airfoil(),
+                usa35b(),
                 Collider::cuboid(0.80, 1.88, 0.02),
                 ColliderDensity(sourced!(585.0, "Inertia-calibrated: uniform wing density; total wing mass ~80 kg for Ixx=729")),
             ), GizmoShape::Box { x: 0.80, y: 1.88, z: 0.02 }));
             parent.spawn((wing_zone(
                 "R-mid", WING_AC_X, WING_AC_X, 2.82, 0.175,
-                airfoil(),
+                usa35b(),
                 Collider::cuboid(0.80, 1.88, 0.02),
                 ColliderDensity(sourced!(585.0, "Inertia-calibrated: uniform wing density; total wing mass ~80 kg for Ixx=729")),
             ), GizmoShape::Box { x: 0.80, y: 1.88, z: 0.02 }));
             parent.spawn((wing_zone(
                 "R-tip", 0.075, WING_AC_X, 4.19, 0.150,
-                airfoil(),
+                usa35b(),
                 Collider::cuboid(0.45, 0.86, 0.02),
                 ColliderDensity(sourced!(585.0, "Inertia-calibrated: uniform wing density matches panel for physical consistency")),
             ), GizmoShape::Box { x: 0.45, y: 0.86, z: 0.02 }));
