@@ -1,9 +1,10 @@
-use crate::aircraft::Aircraft;
-use avian_fdm::prelude::AirfoilData;
+use crate::aircraft::{ControlSurfaces, airfoils::naca0010};
+
+use super::{aircraft::Aircraft, airfoils::ag47ct02r};
 use avian_fdm::{
-    components::InducedDrag,
+    components::{GizmoShape, InducedDrag},
     prelude::{
-        AeroCoeff, AeroZone, AeroZoneBundle, AircraftCoreBundle, AircraftGeometry,
+        AeroCoeff, AeroZone, AeroZoneBundle, AircraftCoreBundle, AircraftGeometry, AirfoilData,
         ControlSurfaceRole, EngineZone,
     },
     sourced,
@@ -25,51 +26,29 @@ pub const WING_AREA_M2: Scalar = sourced!(
     "https://en.wikipedia.org/wiki/Dassault_Rafale#:~:text=Wing%20area%3A%2045.7%C2%A0m2%20(492%C2%A0sq%C2%A0ft)"
 );
 
-/// JSBSim J3Cub wingspan (m): 35.25 ft × 0.3048.
 pub const WING_SPAN_M: Scalar = sourced!(
     10.90,
     "https://en.wikipedia.org/wiki/Dassault_Rafale#:~:text=Wingspan%3A%2010.90%C2%A0m%20(35%C2%A0ft%209%C2%A0in)"
 );
 
-/// JSBSim J3Cub mean aerodynamic chord (m): 5.25 ft × 0.3048.
-pub const CHORD_M: Scalar = sourced!(1.600, "JSBSim:J3Cub.xml: chord 5.25 ft × 0.3048 m/ft");
+/// Mean aerodynamic chord (m)
+pub const CHORD_M: Scalar = sourced!(5.0, "Estimate");
 
-/// Elevator chord (m): ~1.15 ft, trailing edge of h-stab.
-const ELEVATOR_CHORD_M: Scalar = sourced!(
-    0.35,
-    "Geometry: J3 Cub elevator chord, approx 1.15 ft from type certificate drawings"
-);
+/// Elevator chord (m)
+const ELEVATOR_CHORD_M: Scalar = sourced!(0.93, "Measured from model");
 
-const ELEVATOR_AREA_M2: Scalar = 2.0;
+const ELEVATOR_AREA_M2: Scalar = sourced!(1.805, "Measured from model");
 
 /// Elevator CL per radian of deflection.
-///
-/// From JSBSim CM_de = -1.2004/rad. The whole-aircraft pitch moment from
-/// elevator is: M = CM_de * delta * qbar * S_ref * c_ref.
-///
-/// With physical area: M = CL_elev * delta * qbar * S_elev * l_t.
-/// So: CL_elev = CM_de * S_ref * c_ref / (S_elev * l_t)
-///             = 1.2004 * 16.584 * 1.6 / (1.07 * 4.023) = 7.40/rad.
-///
-/// Negative: positive elevator (nose-up stick) produces downward tail force.
-const ELEVATOR_CL_DELTA: Scalar = sourced!(
-    -7.40,
-    "Calibration: CL_elev = |CM_de| × S_ref × c / (S_elev × l_t) = 1.2004 × 16.584 × 1.6 / (1.07 × 4.023); negative for nose-up convention"
-);
+const ELEVATOR_CL_DELTA: Scalar = sourced!(-7.0, "Estimate");
 
 // ── Vertical tail geometry ───────────────────────────────────────────────────
 
-/// Vertical fin height (m): from three-view drawings, root to tip.
-const VFIN_HEIGHT_M: Scalar = sourced!(
-    2.7,
-    "Geometry: J3 Cub vertical fin height from three-view drawings"
-);
+/// Vertical fin height (m)
+const VFIN_HEIGHT_M: Scalar = sourced!(2.7, "Measured from model");
 
-/// Vertical fin mean chord (m): average of root (~0.65m) and tip (~0.35m).
-const VFIN_MEAN_CHORD_M: Scalar = sourced!(
-    2.5,
-    "Geometry: J3 Cub vertical fin mean chord, (root 0.65 + tip 0.35) / 2"
-);
+/// Vertical fin mean chord (m)
+const VFIN_MEAN_CHORD_M: Scalar = sourced!(2.5, "Measured from model");
 
 /// Vertical fin planform area (m2): height * mean chord.
 const VFIN_AREA_M2: Scalar = VFIN_HEIGHT_M * VFIN_MEAN_CHORD_M;
@@ -77,50 +56,19 @@ const VFIN_AREA_M2: Scalar = VFIN_HEIGHT_M * VFIN_MEAN_CHORD_M;
 const VFIN_ARM_M: Scalar = 6.0;
 
 /// Vertical fin CY per radian of sideslip.
-///
-/// From JSBSim CN_beta = 0.0602/rad. The whole-aircraft yaw moment from
-/// sideslip is: N = CN_beta * beta * qbar * S_ref * b.
-///
-/// With physical fin area: N = CY_fin * beta * qbar * S_fin * x_arm.
-/// So: CY_fin = CN_beta * S_ref * b / (S_fin * x_arm)
-///            = 0.0602 * 16.584 * 10.742 / (0.425 * 3.6) = 7.01/rad.
-///
-/// Negative: positive beta (wind from right) produces leftward force at the
-/// tail, restoring the nose toward the wind (weathercock stability).
-const VFIN_CY_BETA: Scalar = sourced!(
-    -7.01,
-    "Calibration: CY_fin = CN_beta × S_ref × b / (S_fin × x_arm) = 0.0602 × 16.584 × 10.742 / (0.425 × 3.6); negative for restoring (weathercock) convention"
-);
+const VFIN_CY_BETA: Scalar = sourced!(-10.0, "Estimate");
 
 /// Rudder height (m): extends slightly beyond the fin (horn balance).
-const RUDDER_HEIGHT_M: Scalar = sourced!(
-    2.0,
-    "Geometry: J3 Cub rudder height from three-view drawings"
-);
+const RUDDER_HEIGHT_M: Scalar = sourced!(2.0, "Measured from model");
 
-/// Rudder mean chord (m): average of root (~0.45m) and tip (~0.30m).
-const RUDDER_MEAN_CHORD_M: Scalar = sourced!(
-    0.8,
-    "Geometry: J3 Cub rudder mean chord, (root 0.45 + tip 0.30) / 2"
-);
+/// Rudder mean chord (m)
+const RUDDER_MEAN_CHORD_M: Scalar = sourced!(0.8, "Measured from model");
 
 /// Rudder planform area (m2): height * mean chord.
-const RUDDER_AREA_M2: Scalar = RUDDER_HEIGHT_M * RUDDER_MEAN_CHORD_M; // 0.356 m2
+const RUDDER_AREA_M2: Scalar = RUDDER_HEIGHT_M * RUDDER_MEAN_CHORD_M;
 
 /// Rudder CY per radian of deflection.
-///
-/// From JSBSim CN_dr = -0.0565/rad. The whole-aircraft yaw moment from
-/// rudder is: N = CN_dr * delta_r * qbar * S_ref * b.
-///
-/// With physical area: N = CY_rud * delta_r * qbar * S_rud * x_arm.
-/// So: CY_rud = CN_dr * S_ref * b / (S_rud * x_arm)
-///            = 0.0565 * 16.584 * 10.742 / (0.356 * 3.6) = 7.86/rad.
-///
-/// Negative: positive rudder (nose-right) produces leftward force at tail.
-const RUDDER_CY_DELTA: Scalar = sourced!(
-    -7.86,
-    "Calibration: CY_rud = |CN_dr| × S_ref × b / (S_rud × x_arm) = 0.0565 × 16.584 × 10.742 / (0.356 × 3.6); negative for −Y force convention"
-);
+const RUDDER_CY_DELTA: Scalar = sourced!(-7.0, "Estimate");
 
 // ── Aileron geometry ─────────────────────────────────────────────────────────
 
@@ -130,33 +78,16 @@ const AILERON_SPAN_M: Scalar = sourced!(2.0, "Measured from model");
 const AILERON_AREA_M2: Scalar = 1.44;
 
 /// Aileron CL per radian of deflection.
-///
-/// From JSBSim Cl_da = 0.3498/rad. The whole-aircraft roll moment from
-/// one aileron: M_roll = CL_ail * delta * qbar * S_ail * y_arm.
-/// Two ailerons (differential): M_total = 2 * CL_ail * qbar * S_ail * y_arm * delta.
-/// JSBSim: M_total = Cl_da * qbar * S_ref * b * delta.
-///
-/// So: CL_ail = Cl_da * S_ref * b / (2 * S_ail * y_arm)
-///            = 0.3498 * 16.584 * 10.742 / (2 * 1.376 * 4.05) = 5.59/rad.
-const AILERON_CL_DELTA: Scalar = sourced!(
-    5.59,
-    "Calibration: CL_ail = Cl_da × S_ref × b / (2 × S_ail × y_arm) = 0.3498 × 16.584 × 10.742 / (2 × 1.376 × 4.05)"
-);
+const AILERON_CL_DELTA: Scalar = sourced!(6.0, "Estimate");
 
 /// Wing aerodynamic-centre x-offset from entity root (m).
-const WING_AC_X: Scalar = -3.5;
+const WING_AC_X: Scalar = -2.8;
 
 /// Wing height above CG in body frame (m, negative = up since +Z = down).
-const WING_Z: Scalar = sourced!(
-    0.0,
-    "JSBSim:J3Cub_FlightGear.xml: CG z = −23.23 in; wing datum z = 0 -> 23.23 in = 0.590 m"
-);
+const WING_Z: Scalar = sourced!(-0.3, "Estimate");
 
 /// Geometric dihedral of each wing panel (radians).
-const WING_DIHEDRAL_RAD: Scalar = sourced!(
-    -0.02,
-    "Geometry: J3 Cub wing dihedral approximately 4 deg; provides Cl_beta lateral stability"
-);
+const WING_DIHEDRAL_RAD: Scalar = sourced!(-4.0_f32.to_radians(), "Measured from model");
 
 const ENGINE_LENGTH: f32 = sourced!(
     3.538,
@@ -177,8 +108,6 @@ pub fn spawn(
     transform: Transform,
     asset_server: Res<AssetServer>,
 ) -> Entity {
-    use avian_fdm::components::GizmoShape;
-
     const PATH: &str = "aircraft/breeze/c-f3/model.gltf";
 
     let root = commands
@@ -192,7 +121,7 @@ pub fn spawn(
             // No LodDamping. Roll/pitch/yaw damping emerges from zone geometry.
         )).observe(crate::data_from_gltf::load)
         .with_children(|parent| {
-            // ── Fuselage aft (tail boom) ─────────────────────────────────────
+            //==== front avionics/cabin fuselage section ====
             parent.spawn((
                 AeroZoneBundle {
                     zone: AeroZone {
@@ -201,11 +130,27 @@ pub fn spawn(
                         ..Default::default()
                     },
                     collider: Collider::cuboid(2.05, 0.40, 0.35),
-                    transform: Transform::from_xyz(1.82, 0.0, 0.0),
+                    transform: Transform::from_xyz(4.0, 0.0, 0.0),
                     global_transform: GlobalTransform::default(),
                 },
-                Mass(sourced!(1000.0, "Estimate")),
+                Mass(1500.0),
                 GizmoShape::Box { x: 2.05, y: 0.40, z: 0.35 }
+            ));
+
+            //==== mid fuselage section ====
+            parent.spawn((
+                AeroZoneBundle {
+                    zone: AeroZone {
+                        cl: AeroCoeff::Scalar(0.0),
+                        cd: AeroCoeff::Scalar(0.0),
+                        ..Default::default()
+                    },
+                    collider: Collider::cuboid(4.0, 2.0, 0.8),
+                    transform: Transform::from_xyz(-2.0, 0.0, 0.0),
+                    global_transform: GlobalTransform::default(),
+                },
+                Mass(5500.0),
+                GizmoShape::Box { x: 4.0, y: 2.0, z: 0.8 }
             ));
 
             const ROOT_X_M: f32 = 4.0;
@@ -357,8 +302,6 @@ pub fn spawn(
             ));
 
             // ── Rudder ────────────────────────────────────────────────────────
-            // LE is the hinge line (matches vtail TE at x = −3.825 body).
-            // Real J3 Cub: root chord ~0.45m, tip ~0.30m, height ~0.95m.
             parent.spawn((rudder_zone(
                     Collider::cuboid(RUDDER_MEAN_CHORD_M, 0.07, RUDDER_HEIGHT_M),
                     ColliderDensity(sourced!(105.0, "Estimate")),
@@ -625,7 +568,7 @@ pub fn engine_zone(collider: Collider, mass: Mass, y_m: f32) -> impl Bundle {
                 "https://wiki.warthunder.com/unit/rafale_c_f3: Afterburner at 100%"
             ),
             thrust_axis_body: Vector::X, // +X = forward
-            zero_thrust_speed_ms: Some(sourced!(80.0, "Estimate")),
+            zero_thrust_speed_ms: Some(sourced!(200.0, "Estimate")),
         },
         collider,
         mass,
