@@ -515,7 +515,7 @@ pub fn spring_forces(
 
         if let Some(hit) = spatial_query.cast_ray(origin, ray_dir, rest, true, &filter) {
             if hit.distance == 0.0 {
-                warn!("Landing gear hit.distance = 0, skipping");
+                // warn!("Landing gear hit.distance = 0, skipping");
                 continue;
             }
 
