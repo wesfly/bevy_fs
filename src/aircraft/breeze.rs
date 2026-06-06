@@ -253,7 +253,52 @@ pub fn spawn(
                 ag47ct02r(),
                 Collider::cuboid(1.0, 1.5, 0.1),
                 Mass(50.0),
-            ), GizmoShape::Box { x: 0.45, y: 0.86, z: 0.02 }));
+            ), GizmoShape::Box { x: 1.0, y: 1.5, z: 0.1 }));
+
+            //=== canards ====
+            const CANARD_AREA_M2: f32 = 1.0;
+
+            parent.spawn((
+                Name::new("L-canard"),
+                ControlSurfaces::CanardPort,
+                AeroZoneBundle {
+                    zone: AeroZone {
+                        cl: naca0010().cl,
+                        cd: naca0010().cd,
+                        area_m2: CANARD_AREA_M2,
+                        chord_m: CHORD_M,
+                        ac_offset: Vec3::new(0.0, 0.0, 0.0),
+                        ..Default::default()
+                    }
+                    .with_post_stall_extension(),
+                    collider: Collider::cuboid(1.0, 1.0, 0.1),
+                    transform: Transform::from_xyz(1.0, -1.8, -0.6),
+                    global_transform: GlobalTransform::default(),
+                },
+                Mass(200.0),
+                GizmoShape::Box { x: 1.0, y: 1.0, z: 0.1 }
+            ));
+
+            parent.spawn((
+                Name::new("R-canard"),
+                ControlSurfaces::CanardStarboard,
+                AeroZoneBundle {
+                    zone: AeroZone {
+                        cl: naca0010().cl,
+                        cd: naca0010().cd,
+                        area_m2: CANARD_AREA_M2,
+                        chord_m: CHORD_M,
+                        ac_offset: Vec3::new(0.0, 0.0, 0.0),
+                        ..Default::default()
+                    }
+                    .with_post_stall_extension(),
+                    collider: Collider::cuboid(1.0, 1.0, 0.1),
+                    transform: Transform::from_xyz(0.8, 1.8, -0.6),
+                    global_transform: GlobalTransform::default(),
+                },
+                Mass(200.0),
+                GizmoShape::Box { x: 1.0, y: 1.0, z: 0.1 }
+            ));
 
             // ── Ailerons ─────────────────────────────────────────────────────
             const AILERON_LENGTH: f32 = 0.72;
