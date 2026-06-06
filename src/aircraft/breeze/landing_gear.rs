@@ -514,6 +514,11 @@ pub fn spring_forces(
         gizmos.sphere(origin, 2.0, Color::BLACK);
 
         if let Some(hit) = spatial_query.cast_ray(origin, ray_dir, rest, true, &filter) {
+            if hit.distance == 0.0 {
+                warn!("Landing gear hit.distance = 0, skipping");
+                continue;
+            }
+
             let spring_dir = -transform.local_z();
 
             on_ground_vec[i] = true;
@@ -572,7 +577,6 @@ pub fn spring_forces(
 
                 force.apply_force_at_point(braking_force, contact_point);
             }
-            // }
         }
     }
 
