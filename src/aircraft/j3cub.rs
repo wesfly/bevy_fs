@@ -110,18 +110,21 @@
 //!
 //! All zones are tiled without collider overlap. No double-counted mass.
 
-use avian_fdm::airfoil::AirfoilData;
-use avian_fdm::airfoil::foil_tools::parse_foil_tools_csv;
-use avian_fdm::components::{
-    AeroCoeff, AeroZone, AeroZoneBundle, AircraftCoreBundle, AircraftGeometry, ControlSurfaceRole,
-    EngineZone, GizmoContours, InducedDrag,
-};
-use avian_fdm::sourced;
-use avian3d::math::{Scalar, Vector};
-use avian3d::prelude::{Collider, ColliderDensity, RigidBody};
-use bevy::prelude::*;
-
+use super::airfoils::usa35b;
 use crate::aircraft::Aircraft;
+use avian_fdm::{
+    airfoil::AirfoilData,
+    components::{
+        AeroCoeff, AeroZone, AeroZoneBundle, AircraftCoreBundle, AircraftGeometry,
+        ControlSurfaceRole, EngineZone, GizmoContours, InducedDrag,
+    },
+    sourced,
+};
+use avian3d::{
+    math::{Scalar, Vector},
+    prelude::{Collider, ColliderDensity, RigidBody},
+};
+use bevy::prelude::*;
 
 // ── Aircraft reference constants ─────────────────────────────────────────────
 
