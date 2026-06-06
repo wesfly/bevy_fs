@@ -36,6 +36,7 @@ use crate::{
     sse::Sse,
     ui::UI,
 };
+#[allow(unused)] // AircraftFdmDebugPlugin, FdmGizmos can be commented out in the main function
 use avian_fdm::{
     plugin::AircraftFdmPlugin,
     prelude::{AircraftFdmDebugPlugin, FdmGizmos, ShowColliders},
@@ -120,17 +121,17 @@ fn main() {
     app.add_plugins(DefaultPlugins)
         .add_plugins(PhysicsPlugins::default())
         .add_plugins(AircraftFdmPlugin::default())
-        .insert_gizmo_config(
-            FdmGizmos {
-                force_scale: 1.0 / 600.0,
-                total_force_color: None,
-                weight_color: None,
-                ..FdmGizmos::default()
-            },
-            GizmoConfig::default(),
-        )
+        // .insert_gizmo_config(
+        //     FdmGizmos {
+        //         force_scale: 1.0 / 600.0,
+        //         total_force_color: None,
+        //         weight_color: None,
+        //         ..FdmGizmos::default()
+        //     },
+        //     GizmoConfig::default(),
+        // )
+        // .add_plugins(AircraftFdmDebugPlugin)
         // .add_plugins(PhysicsDebugPlugin)
-        .add_plugins(AircraftFdmDebugPlugin)
         .add_plugins(UI)
         .add_plugins(Sse)
         .add_plugins(FpsOverlayPlugin {
