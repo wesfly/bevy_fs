@@ -39,7 +39,8 @@ pub fn fly_by_wire(
 
         cs.rudder = input.yaw.clamp(-1.0, 1.0);
 
-        cs.canards = canards_angle(aircraft, *state);
+        let canards_angle = canards_angle(aircraft, *state);
+        cs.canards = canards_angle;
 
         state.control_surfaces = cs;
 
@@ -58,21 +59,21 @@ pub fn canards_angle(
     >,
     state: AircraftState,
 ) -> BothSides<f32> {
-    let velocity = aircraft.1.linear_velocity();
+    let velocity = aircraft.1.linear_velocity(); // (TODO)
     let transform = aircraft.0;
 
     let alpha_deg = alpha_deg(&velocity, transform);
 
     // Canards pitch up while landing gear is deployed, maximising lift
-    let factor = match state.landing_gear_deployed {
+    let offset = match state.landing_gear_deployed {
         false => 0.0,
-        true => -20.0,
+        true => 20.0,
     };
 
-    let canards_angle = if velocity.length() <= 20.0 {
+    let canards_angle = if velocity.length() <= 30.0 {
         0.0
     } else {
-        ((factor + alpha_deg).clamp(-22.0, 50.0) as f32).to_radians()
+        ((offset - alpha_deg).clamp(-22.0, 50.0) as f32).to_radians()
     };
 
     canards_angle.both_sides()
