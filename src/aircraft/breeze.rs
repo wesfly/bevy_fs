@@ -161,20 +161,20 @@ pub fn spawn(
 
             // ── Left wing ───────────────────────────────────────────────────
             parent.spawn((wing_zone(
-                "L-root", WING_AC_X + ROOT_OFFSET, WING_AC_X, -ROOT_Y_M, 0.175,
+                "L-root", WING_AC_X + ROOT_OFFSET, WING_AC_X, -ROOT_Y_M, 0.25,
                 ag47ct02r(),
                 Collider::cuboid(ROOT_X_M, 1.88, 0.2),
                 Mass(100.0),
             ), GizmoShape::Box { x: ROOT_X_M, y: 1.88, z: 0.2 }));
             parent.spawn((wing_zone(
-                "L-mid", WING_AC_X, WING_AC_X, -2.82, 0.175,
+                "L-mid", WING_AC_X, WING_AC_X, -2.82, 0.15,
                 ag47ct02r(),
                 Collider::cuboid(2.80, 1.88, 0.2),
                 Mass(80.0),
             ), GizmoShape::Box { x: 2.80, y: 1.88, z: 0.2 }));
 
             parent.spawn((wing_zone(
-                "L-tip", TIP_X_M, WING_AC_X, -4.19, 0.150,
+                "L-tip", TIP_X_M, WING_AC_X, -4.19, 0.1,
                 ag47ct02r(),
                 Collider::cuboid(0.45, 0.86, 0.02),
                 Mass(50.0),
@@ -182,19 +182,19 @@ pub fn spawn(
 
             // ── Right wing ───────────────────────────────────────────────────
             parent.spawn((wing_zone(
-                "R-root", WING_AC_X + ROOT_OFFSET, WING_AC_X, ROOT_Y_M, 0.175,
+                "R-root", WING_AC_X + ROOT_OFFSET, WING_AC_X, ROOT_Y_M, 0.25,
                 ag47ct02r(),
                 Collider::cuboid(ROOT_X_M, 1.88, 0.2),
                 Mass(100.0),
             ), GizmoShape::Box { x: ROOT_X_M, y: 1.88, z: 0.2 }));
             parent.spawn((wing_zone(
-                "R-mid", WING_AC_X, WING_AC_X, 2.82, 0.175,
+                "R-mid", WING_AC_X, WING_AC_X, 2.82, 0.15,
                 ag47ct02r(),
                 Collider::cuboid(2.80, 1.88, 0.2),
                 Mass(80.0),
             ), GizmoShape::Box { x: 2.80, y: 1.88, z: 0.2 }));
             parent.spawn((wing_zone(
-                "R-tip", TIP_X_M, WING_AC_X, 4.4, 0.150,
+                "R-tip", TIP_X_M, WING_AC_X, 4.4, 0.1,
                 ag47ct02r(),
                 Collider::cuboid(1.0, 1.5, 0.1),
                 Mass(50.0),
