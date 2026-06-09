@@ -210,13 +210,7 @@ pub fn main(
         }
         AircraftTypes::Breeze => {
             aircraft::breeze::mechanics::mechanics(input, &mut state, &mut aircraft);
-            aircraft::breeze::landing_gear::spring_forces(
-                spatial_query,
-                aircraft,
-                time,
-                state,
-                gizmos,
-            );
+            aircraft::breeze::landing_gear::spring_forces(spatial_query, aircraft, time, state);
         }
     }
 }

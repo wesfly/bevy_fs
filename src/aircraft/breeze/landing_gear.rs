@@ -486,7 +486,6 @@ pub fn spring_forces(
     >,
     time: Res<Time>,
     mut state: ResMut<AircraftState>,
-    mut gizmos: Gizmos,
 ) {
     let (transform, force, _) = query.deref_mut();
 
@@ -510,8 +509,6 @@ pub fn spring_forces(
         let filter = SpatialQueryFilter::DEFAULT;
         let origin = transform.translation + transform.rotation * gear_pos;
         let ray_dir = transform.local_z();
-
-        gizmos.sphere(origin, 2.0, Color::BLACK);
 
         if let Some(hit) = spatial_query.cast_ray(origin, ray_dir, rest, true, &filter) {
             if hit.distance == 0.0 {
