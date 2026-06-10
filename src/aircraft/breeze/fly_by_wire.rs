@@ -73,7 +73,7 @@ pub fn canards_angle(
     let canards_angle = if velocity.length() <= 30.0 {
         0.0
     } else {
-        ((offset - alpha_deg).clamp(-22.0, 50.0) as f32).to_radians()
+        (offset - alpha_deg).clamp(-22.0, 50.0).to_radians()
     };
 
     canards_angle.both_sides()

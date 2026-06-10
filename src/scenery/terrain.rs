@@ -47,7 +47,7 @@ pub struct TerrariumCoords {
 pub struct Chunk(u32, u32);
 
 impl Coordinates {
-    fn to_terrarium_coords(self, zoom: u8) -> TerrariumCoords {
+    fn to_terrarium_coords(&self, zoom: u8) -> TerrariumCoords {
         let z = zoom as f32;
         let n = 2.0_f32.powf(z);
 
@@ -75,14 +75,13 @@ static TOKIO_RUNTIME: Lazy<Runtime> =
     Lazy::new(|| Runtime::new().expect("Failed to create Tokio runtime"));
 
 fn chunk_size(lod: &u8) -> f32 {
-    let chunk_size = if *lod <= 14 {
+    if *lod <= 14 {
         let scale_factor = 2.0_f32.powi((14 - lod) as i32);
         BASE_SIZE * scale_factor
     } else {
         let scale_factor = 2.0_f32.powi((lod - 14) as i32);
         BASE_SIZE / scale_factor
-    };
-    chunk_size
+    }
 }
 
 pub fn dynamic_chunks(
@@ -151,7 +150,7 @@ pub fn dynamic_chunks(
 }
 
 pub enum ChunkMessages {
-    Spawn(Vec3, Mesh, Collider, TerrariumCoords),
+    Spawn(Vec3, Box<Mesh>, Collider, TerrariumCoords),
     Despawn(Entity, Chunk),
 }
 
@@ -195,7 +194,7 @@ pub fn poll_terrain(
 
                 messages.write(ChunkMessage(ChunkMessages::Spawn(
                     translation,
-                    mesh,
+                    Box::new(mesh),
                     collider,
                     coord,
                 )));
@@ -225,7 +224,7 @@ impl Chunk {
                             &mut commands,
                             &mut meshes,
                             material,
-                            mesh.clone(),
+                            *mesh.clone(),
                             collider.clone(),
                             translation,
                             coord,

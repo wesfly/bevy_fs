@@ -297,24 +297,22 @@ pub fn update_screens(
                     ))
                 }
                 ScreenUiElement::Alpha => {
-                    let alpha_deg = alpha_deg(&velocity, transform);
+                    let alpha_deg = alpha_deg(velocity, transform);
                     *text = Text::new(format!("AOA {:.2}", alpha_deg))
                 }
 
                 _ => *text = Text::new("todo!()"),
             }
-        } else {
-            if let ScreenUiElement::Horizon = screen {
-                let (_, _, roll) = transform.rotation.to_euler(EulerRot::YXZ);
-                ui_transform.rotation = Rot2::radians(roll);
+        } else if let ScreenUiElement::Horizon = screen {
+            let (_, _, roll) = transform.rotation.to_euler(EulerRot::YXZ);
+            ui_transform.rotation = Rot2::radians(roll);
 
-                let forward = transform.forward();
-                let pitch = forward.y.asin();
+            let forward = transform.forward();
+            let pitch = forward.y.asin();
 
-                let px_per_rad = 2800.0;
-                ui_transform.translation.y = px(pitch * px_per_rad);
-                ui_transform.translation.x = px(0.0);
-            }
+            let px_per_rad = 2800.0;
+            ui_transform.translation.y = px(pitch * px_per_rad);
+            ui_transform.translation.x = px(0.0);
         }
     }
 }

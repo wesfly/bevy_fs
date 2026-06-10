@@ -489,17 +489,17 @@ pub fn spring_forces(
 ) {
     let (transform, force, _) = query.deref_mut();
 
-    if (state.landing_gear_deployed && force.linear_velocity().length() <= 200.0) == false {
+    if !(state.landing_gear_deployed && force.linear_velocity().length() <= 200.0) {
         return;
     }
 
-    let landing_gear = vec![
+    let landing_gear = [
         bevy_to_aerospace_coords() * LEFT_POS,
         bevy_to_aerospace_coords() * RIGHT_POS,
         bevy_to_aerospace_coords() * NOSEWHEEL_POS,
     ];
 
-    let mut on_ground_vec = vec![false; 3];
+    let mut on_ground_vec = [false; 3];
 
     for (i, gear_pos) in landing_gear.iter().enumerate() {
         let is_nosewheel = i == 2;
@@ -544,7 +544,7 @@ pub fn spring_forces(
 
             let steering_vel = steering_dir.dot(vel_at_contact_point);
 
-            let tire_grip_factor = if is_nosewheel { 0.5 } else { 0.5 };
+            let tire_grip_factor = 0.5;
             let desired_vel_change = -steering_vel * tire_grip_factor;
 
             let desired_accel = desired_vel_change / time.delta_secs();
@@ -578,7 +578,7 @@ pub fn spring_forces(
     }
 
     let ldg_gear_on_ground = on_ground_vec.iter().filter(|&&x| x).count();
-    state.on_ground = if ldg_gear_on_ground >= 2 { true } else { false };
+    state.on_ground = ldg_gear_on_ground >= 2;
 }
 
 fn spring(

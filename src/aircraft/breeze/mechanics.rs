@@ -23,11 +23,11 @@ pub fn mechanics(
             todo!()
         }
         AircraftTypes::Breeze => {
-            fly_by_wire(&*input, state, aircraft);
+            fly_by_wire(&input, state, aircraft);
         }
         AircraftTypes::J3Cub => {
             // TODO
-            fly_by_wire(&*input, state, aircraft);
+            fly_by_wire(&input, state, aircraft);
         }
     }
 }

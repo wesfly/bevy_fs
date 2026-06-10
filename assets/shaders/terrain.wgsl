@@ -43,7 +43,7 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
     let slope = length(cross(pbr_input.N, vec3(0.0, 1.0, 0.0)));
 
 
-
+    // Based on mediterranean terrain
     if slope > 0.6 {
         pbr_input.material.base_color.r = 0.55;
         pbr_input.material.base_color.g = 0.5;

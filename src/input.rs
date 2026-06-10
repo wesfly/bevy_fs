@@ -147,10 +147,8 @@ pub fn input_system(
         } else {
             handle_keyboard_input(keys, keymap, input);
         };
-    } else {
-        if keyboard_input.just_pressed(keymap.pause) {
-            game_state.running = true;
-        }
+    } else if keyboard_input.just_pressed(keymap.pause) {
+        game_state.running = true;
     }
 }
 

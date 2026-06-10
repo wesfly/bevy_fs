@@ -111,7 +111,7 @@ pub fn spawn(
 ) -> Entity {
     const PATH: &str = "aircraft/breeze/c-f3/model.gltf";
 
-    let root = commands
+    commands
         .spawn((
             SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
             breeze_core_bundle(transform, initial_velocity),
@@ -331,9 +331,7 @@ pub fn spawn(
                 GizmoShape::Cylinder { radius: ENGINE_RADIUS, length: ENGINE_LENGTH, axis: Vec3::X },
             ));
         })
-        .id();
-
-    root
+        .id()
 }
 
 /// Core [`AircraftCoreBundle`] for the J-3 Cub root entity.
@@ -381,9 +379,9 @@ pub fn wing_zone(
     collider: Collider,
     mass: Mass,
 ) -> impl Bundle {
-    let ac_offset = Vec3::new((ac_x_m - x_m) as f32, 0.0, 0.0);
+    let ac_offset = Vec3::new(ac_x_m - x_m, 0.0, 0.0);
     let z_m = WING_Z - y_m.abs() * WING_DIHEDRAL_RAD.sin();
-    let dihedral_rot = Quat::from_rotation_x(-(WING_DIHEDRAL_RAD * y_m.signum()) as f32);
+    let dihedral_rot = Quat::from_rotation_x(-(WING_DIHEDRAL_RAD * y_m.signum()));
     (
         Name::new(name),
         AeroZoneBundle {
@@ -397,8 +395,7 @@ pub fn wing_zone(
             }
             .with_post_stall_extension(),
             collider,
-            transform: Transform::from_xyz(x_m as f32, y_m as f32, z_m as f32)
-                .with_rotation(dihedral_rot),
+            transform: Transform::from_xyz(x_m, y_m, z_m).with_rotation(dihedral_rot),
             global_transform: GlobalTransform::default(),
         },
         mass,
@@ -413,9 +410,9 @@ pub fn aileron_zone(
     collider: Collider,
     density: ColliderDensity,
 ) -> impl Bundle {
-    let aileron_x = (WING_AC_X - 2.0) as f32;
+    let aileron_x = WING_AC_X - 2.0;
     let z_m = WING_Z - y_m.abs() * WING_DIHEDRAL_RAD.sin();
-    let dihedral_rot = Quat::from_rotation_x(-(WING_DIHEDRAL_RAD * y_m.signum()) as f32);
+    let dihedral_rot = Quat::from_rotation_x(-(WING_DIHEDRAL_RAD * y_m.signum()));
     (
         Name::new(name),
         AeroZoneBundle {
@@ -428,8 +425,7 @@ pub fn aileron_zone(
                 ..Default::default()
             },
             collider,
-            transform: Transform::from_xyz(aileron_x, y_m as f32, z_m as f32)
-                .with_rotation(dihedral_rot),
+            transform: Transform::from_xyz(aileron_x, y_m, z_m).with_rotation(dihedral_rot),
             global_transform: GlobalTransform::default(),
         },
         density,
@@ -450,7 +446,7 @@ pub fn aileron_zone(
 /// so the h-stab stalls realistically at high alpha and produces flat-plate
 /// drag when broadside to the wind. This prevents unrealistic pitch-locking
 /// during tumbles and deep stalls.
-
+///
 /// Elevator zone: pitch control surface.
 ///
 /// Uses the physical elevator area (ELEVATOR_AREA_M2 = 1.07 m2) and an
@@ -460,7 +456,7 @@ pub fn aileron_zone(
 /// Negative CL means: positive elevator (nose-up stick input) produces downward
 /// force at the tail, creating a nose-up pitch moment via the tail arm.
 pub fn elevator_zone(collider: Collider, density: ColliderDensity, y_m: Scalar) -> impl Bundle {
-    let elevator_x = (WING_AC_X - 2.0) as f32;
+    let elevator_x = WING_AC_X - 2.0;
     let z_m = WING_Z - y_m.abs() * WING_DIHEDRAL_RAD.sin();
 
     (
@@ -516,7 +512,7 @@ pub fn vtail_zone(collider: Collider, density: ColliderDensity) -> impl Bundle {
             }
             .with_post_stall_extension(),
             collider,
-            transform: Transform::from_xyz(-(VFIN_ARM_M as f32), 0.0, -2.35),
+            transform: Transform::from_xyz(-VFIN_ARM_M, 0.0, -2.35),
             global_transform: GlobalTransform::default(),
         },
         density,
@@ -548,7 +544,7 @@ pub fn rudder_zone(collider: Collider, density: ColliderDensity) -> impl Bundle 
             // VFIN_MEAN_CHORD_M/2 aft, so rudder LE = -(VFIN_ARM_M + VFIN_MEAN_CHORD_M/2).
             // Rudder center = rudder LE - RUDDER_MEAN_CHORD_M/2.
             transform: Transform::from_xyz(
-                -((VFIN_ARM_M + VFIN_MEAN_CHORD_M / 2.0 + RUDDER_MEAN_CHORD_M / 2.0) as f32),
+                -(VFIN_ARM_M + VFIN_MEAN_CHORD_M / 2.0 + RUDDER_MEAN_CHORD_M / 2.0),
                 0.0,
                 -2.0,
             ),
@@ -566,7 +562,7 @@ pub fn engine_zone(collider: Collider, mass: Mass, y_m: f32) -> impl Bundle {
                 "https://wiki.warthunder.com/unit/rafale_c_f3: Afterburner"
             ),
             throttle_curve: sourced!(
-                vec![[0.0, 0.0], [0.5, 0.5], [0.9, 0.668485675], [1.0, 1.0]],
+                vec![[0.0, 0.0], [0.5, 0.5], [0.9, 0.668_485_7], [1.0, 1.0]],
                 "https://wiki.warthunder.com/unit/rafale_c_f3: Afterburner at 100%"
             ),
             thrust_axis_body: Vector::X, // +X = forward

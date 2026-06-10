@@ -82,7 +82,7 @@ impl Menu {
                 "Hobart, AU",
                 Coordinates {
                     lat: -42.88369,
-                    long: 147.32871,
+                    long: 147.3287,
                 },
             ),
             (
@@ -172,7 +172,7 @@ impl Menu {
             (
                 "Zürich, CH",
                 Coordinates {
-                    lat: 47.374449,
+                    lat: 47.37445,
                     long: 8.541039,
                 },
             ),
@@ -180,7 +180,7 @@ impl Menu {
                 "Lucerne, CH",
                 Coordinates {
                     lat: 47.052099,
-                    long: 8.308990,
+                    long: 8.30899,
                 },
             ),
         ]);
@@ -282,7 +282,7 @@ impl Menu {
                                 (
                                     spawn_button(SpawnButton::Location(loc.1)),
                                     children![(
-                                        Text::new(format!("{}", loc.0)),
+                                        Text::new(loc.0.to_string()),
                                         TextColor(Color::WHITE),
                                         TextFont {
                                             font: font2.clone(),
@@ -298,10 +298,7 @@ impl Menu {
                             children![(
                                 Text::new("Fly"),
                                 TextColor(Color::WHITE),
-                                TextFont {
-                                    font: font,
-                                    ..default()
-                                }
+                                TextFont { font, ..default() }
                             ),],
                         ));
                     });
@@ -379,7 +376,7 @@ impl UI {
                             highlighted.1 = Some(SpawnButton::Location(l.clone()));
                         }
                         SpawnButton::Fly => {
-                            if let Some(aircraft) = spawn_settings.clone() {
+                            if let Some(aircraft) = *spawn_settings {
                                 match aircraft {
                                     AircraftTypes::Helicopter => {
                                         messages.write(UIMessage::SpawnHelicopter);

@@ -454,7 +454,7 @@ const CD_DATA: [Scalar; 28] = sourced!(
 pub fn spawn(commands: &mut Commands, transform: Transform) -> Entity {
     use avian_fdm::components::GizmoShape;
 
-    let root = commands
+    commands
         .spawn((
             j3cub_core_bundle(transform),
             // Lift-induced drag: J3Cub has a high-wing strut-braced layout.
@@ -765,9 +765,7 @@ pub fn spawn(commands: &mut Commands, transform: Transform) -> Entity {
                 engine_contours(),
             ));
         })
-        .id();
-
-    root
+        .id()
 }
 
 /// Core [`AircraftCoreBundle`] for the J-3 Cub root entity.

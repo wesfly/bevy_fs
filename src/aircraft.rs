@@ -33,9 +33,7 @@ pub fn alpha_deg(velocity: &Vec3, transform: &Transform) -> f32 {
     let sin = forward.cross(velocity).dot(right.as_vec3());
     let cos = forward.dot(velocity);
 
-    let alpha = -sin.atan2(cos).to_degrees();
-
-    alpha
+    -sin.atan2(cos).to_degrees()
 }
 
 #[derive(Debug, Deserialize, Component)]
@@ -196,7 +194,7 @@ pub fn main(
     time: Res<Time>,
     game_state: Res<GameState>,
 ) {
-    if game_state.running == false {
+    if !game_state.running {
         return;
     }
 
