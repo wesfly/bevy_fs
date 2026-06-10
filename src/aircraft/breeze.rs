@@ -107,13 +107,14 @@ pub fn spawn(
     commands: &mut Commands,
     transform: Transform,
     asset_server: Res<AssetServer>,
+    initial_velocity: Vec3,
 ) -> Entity {
     const PATH: &str = "aircraft/breeze/c-f3/model.gltf";
 
     let root = commands
         .spawn((
             SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
-            breeze_core_bundle(transform),
+            breeze_core_bundle(transform, initial_velocity),
             InducedDrag {
                 oswald_factor: 0.94,
             },
@@ -342,7 +343,7 @@ pub fn spawn(
 /// Pair with [`InducedDrag`] (already included by [`spawn`]) for lift-induced
 /// drag.  No [`LodDamping`](avian_fdm::components::LodDamping). Roll/pitch/yaw
 /// damping emerges from per-zone local α/β physics.
-pub fn breeze_core_bundle(transform: Transform) -> impl Bundle {
+pub fn breeze_core_bundle(transform: Transform, initial_velocity: Vec3) -> impl Bundle {
     (AircraftCoreBundle {
         geometry: AircraftGeometry {
             wing_area_m2: WING_AREA_M2,
@@ -350,6 +351,7 @@ pub fn breeze_core_bundle(transform: Transform) -> impl Bundle {
             chord_m: CHORD_M,
         },
         rigid_body: RigidBody::Dynamic,
+        linear_velocity: LinearVelocity(initial_velocity),
         transform,
         ..Default::default()
     },)

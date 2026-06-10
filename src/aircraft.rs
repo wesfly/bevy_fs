@@ -256,8 +256,9 @@ pub fn spawn_breeze(
     let level = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
     breeze::spawn(
         &mut commands,
-        Transform::from_xyz(0.0, 100.0, 0.0).with_rotation(level),
+        Transform::from_xyz(0.0, 650.0, 0.0).with_rotation(level),
         asset_server,
+        Vec3::new(100.0, 0.0, 0.0),
     );
 
     let mut camera = commands.spawn((
