@@ -169,6 +169,20 @@ impl Menu {
                     long: 72.8777,
                 },
             ),
+            (
+                "Zürich, CH",
+                Coordinates {
+                    lat: 47.374449,
+                    long: 8.541039,
+                },
+            ),
+            (
+                "Lucerne, CH",
+                Coordinates {
+                    lat: 47.052099,
+                    long: 8.308990,
+                },
+            ),
         ]);
 
         let font = asset_server.load(FONT_PATH);
