@@ -261,7 +261,7 @@ impl Chunk {
             Chunk(coord.x, coord.y),
             MeshMaterial3d(terrain_materials.add(ExtendedMaterial {
                 base: StandardMaterial {
-                    base_color: bevy::color::palettes::css::GREEN.into(),
+                    base_color: Color::BLACK,
                     perceptual_roughness: 1.0,
                     ..Default::default()
                 },

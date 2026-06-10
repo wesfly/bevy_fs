@@ -39,6 +39,26 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
     var pbr_input = pbr_input_from_standard_material(in, is_front);
     // Bump the normal.
     pbr_input.N += sample_noise(in.uv, globals.time);
+
+    let slope = length(cross(pbr_input.N, vec3(0.0, 1.0, 0.0)));
+
+
+
+    if slope > 0.6 {
+        pbr_input.material.base_color.r = 0.55;
+        pbr_input.material.base_color.g = 0.5;
+        pbr_input.material.base_color.b = 0.33;
+    } else if slope > 0.3 {
+        pbr_input.material.base_color.r += 0.08;
+        pbr_input.material.base_color.g += 0.15;
+        pbr_input.material.base_color.b += 0.12;
+    } else {
+        pbr_input.material.base_color.r += 0.25 - slope * 0.4;
+        pbr_input.material.base_color.g += 0.3 - slope * 0.1;
+        pbr_input.material.base_color.b += 0.2 - slope * 0.4;
+    }
+
+
     // Send the rest to the deferred shader.
     return deferred_output(in, pbr_input);
 }
