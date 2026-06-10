@@ -1,9 +1,15 @@
 use crate::{Settings, camera::Camera};
 use avian3d::prelude::{Collider, RigidBody};
 use bevy::{
+    image::{
+        ImageAddressMode, ImageFilterMode, ImageLoaderSettings, ImageSampler,
+        ImageSamplerDescriptor,
+    },
+    pbr::ExtendedMaterial,
     prelude::*,
     tasks::{AsyncComputeTaskPool, Task, futures_lite::future},
 };
+pub use material::TerrainMaterial;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -14,6 +20,8 @@ use std::{
     path::Path,
 };
 use tokio::runtime::Runtime;
+
+mod material;
 
 #[derive(Deserialize)]
 pub struct TerrainSettings {
@@ -203,21 +211,29 @@ impl Chunk {
         mut messages: MessageReader<ChunkMessage>,
         mut commands: Commands,
         mut meshes: ResMut<Assets<Mesh>>,
-        mut materials: ResMut<Assets<StandardMaterial>>,
+        mut terrain_materials: Option<
+            ResMut<Assets<ExtendedMaterial<StandardMaterial, TerrainMaterial>>>,
+        >,
         mut loaded_chunks: ResMut<LoadedChunks>,
+        asset_server: Res<AssetServer>,
     ) {
         for message in messages.read() {
             match &message.0 {
                 ChunkMessages::Spawn(translation, mesh, collider, coord) => {
-                    Chunk::spawn(
-                        &mut commands,
-                        &mut meshes,
-                        &mut materials,
-                        mesh.clone(),
-                        collider.clone(),
-                        translation,
-                        coord,
-                    );
+                    if let Some(ref mut material) = terrain_materials {
+                        Chunk::spawn(
+                            &mut commands,
+                            &mut meshes,
+                            material,
+                            mesh.clone(),
+                            collider.clone(),
+                            translation,
+                            coord,
+                            &asset_server,
+                        );
+                    } else {
+                        warn!("whoops")
+                    }
                 }
                 ChunkMessages::Despawn(entity, coord) => {
                     Self::despawn((entity, coord), &mut commands, &mut loaded_chunks);
@@ -230,23 +246,41 @@ impl Chunk {
     fn spawn(
         commands: &mut Commands<'_, '_>,
         meshes: &mut ResMut<'_, Assets<Mesh>>,
-        materials: &mut ResMut<'_, Assets<StandardMaterial>>,
+        terrain_materials: &mut ResMut<Assets<ExtendedMaterial<StandardMaterial, TerrainMaterial>>>,
         mesh: Mesh,
         collider: Collider,
         translation: &Vec3,
         coord: &TerrariumCoords,
+        asset_server: &Res<AssetServer>,
     ) {
         commands.spawn((
             collider,
             RigidBody::Static,
             Transform::from_translation(*translation),
             Mesh3d(meshes.add(mesh)),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: bevy::color::palettes::css::GREEN.into(),
-                perceptual_roughness: 1.0,
-                ..Default::default()
-            })),
             Chunk(coord.x, coord.y),
+            MeshMaterial3d(terrain_materials.add(ExtendedMaterial {
+                base: StandardMaterial {
+                    base_color: bevy::color::palettes::css::GREEN.into(),
+                    perceptual_roughness: 1.0,
+                    ..Default::default()
+                },
+                extension: TerrainMaterial {
+                    normals: asset_server.load_with_settings::<Image, ImageLoaderSettings>(
+                        "textures/water_normals.png",
+                        |settings| {
+                            settings.is_srgb = false;
+                            settings.sampler = ImageSampler::Descriptor(ImageSamplerDescriptor {
+                                address_mode_u: ImageAddressMode::Repeat,
+                                address_mode_v: ImageAddressMode::Repeat,
+                                mag_filter: ImageFilterMode::Linear,
+                                min_filter: ImageFilterMode::Linear,
+                                ..default()
+                            });
+                        },
+                    ),
+                },
+            })),
         ));
     }
 

@@ -41,7 +41,7 @@ pub struct WaterSettings {
     octave_strengths: Vec4,
 }
 
-const SHADER_ASSET_PATH: &str = "shaders/water_material.wgsl";
+const SHADER_ASSET_PATH: &str = "shaders/water.wgsl";
 
 pub fn spawn_water(
     commands: &mut Commands,

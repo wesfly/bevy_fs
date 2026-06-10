@@ -31,7 +31,8 @@ use crate::{
     camera::{Camera, CameraPosition, CameraSettings, rotate_sun},
     input::ControlInputs,
     scenery::terrain::{
-        Chunk, ChunkMessage, LoadedChunks, TerrainSettings, dynamic_chunks, poll_terrain,
+        Chunk, ChunkMessage, LoadedChunks, TerrainMaterial, TerrainSettings, dynamic_chunks,
+        poll_terrain,
     },
     sse::Sse,
     ui::UI,
@@ -45,6 +46,7 @@ use avian3d::prelude::*;
 use bevy::{
     dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig},
     ecs::system::SystemId,
+    pbr::ExtendedMaterial,
     post_process::motion_blur::MotionBlur,
     prelude::*,
     render::view::screenshot::{Capturing, Screenshot, save_to_disk},
@@ -144,6 +146,9 @@ fn main() {
                 ..default()
             },
         })
+        .add_plugins(MaterialPlugin::<
+            ExtendedMaterial<StandardMaterial, TerrainMaterial>,
+        >::default())
         // Resources
         .insert_resource(GameState { running: false })
         .insert_resource(ControlInputs {
