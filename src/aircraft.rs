@@ -22,7 +22,6 @@ use bevy::{
     prelude::*,
     render::view::Hdr,
 };
-use breeze::landing_gear::LandingGear;
 use serde::Deserialize;
 
 pub fn alpha_deg(velocity: &Vec3, transform: &Transform) -> f32 {
@@ -137,6 +136,7 @@ impl Default for AircraftState {
 pub struct Damage(DamageTypes);
 
 pub enum DamageTypes {
+    #[allow(unused)] // TODO
     Critical,
     // Leak(Vec3),
 }
@@ -209,27 +209,6 @@ pub fn main(
         AircraftTypes::Breeze => {
             aircraft::breeze::mechanics::mechanics(input, &mut state, &mut aircraft);
             aircraft::breeze::landing_gear::spring_forces(spatial_query, aircraft, time, state);
-        }
-    }
-}
-
-pub fn collision_listener(
-    mut collision_messages: MessageReader<CollisionStart>,
-    mut damage_messages: MessageWriter<Damage>,
-    query: Query<Entity, With<LandingGear>>,
-    state: Res<AircraftState>,
-) {
-    for message in collision_messages.read() {
-        let collider = query.get(message.collider1);
-        match collider {
-            Ok(_) => {
-                if !state.landing_gear_deployed {
-                    damage_messages.write(Damage(DamageTypes::Critical));
-                }
-            }
-            Err(_) => {
-                warn!("something happened (collision_listener)")
-            }
         }
     }
 }

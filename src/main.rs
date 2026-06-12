@@ -198,7 +198,6 @@ fn main() {
                 screenshot_saving,
                 aircraft::screens::update_screens,
                 aircraft::main,
-                collision_listener,
                 poll_terrain,
                 Chunk::message_reader,
                 Button::listener,
