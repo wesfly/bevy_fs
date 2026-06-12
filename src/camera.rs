@@ -82,8 +82,8 @@ impl Camera {
     ) {
         let cockpit_default_position = match state.aircraft_type {
             crate::aircraft::AircraftTypes::Helicopter => Vec3 {
-                x: 1.2,
-                y: 0.38,
+                x: 0.38,
+                y: 1.2,
                 z: -2.6,
             },
             crate::aircraft::AircraftTypes::J3Cub => Vec3 {
@@ -119,8 +119,12 @@ impl Camera {
             CameraView::Cockpit => {
                 camera.translation =
                     aircraft.translation + aircraft.rotation * cockpit_default_position;
-                camera.rotation =
-                    aircraft.rotation * bevy_to_aerospace_coords() * camera_pos.0.rotation;
+                camera.rotation = match state.aircraft_type {
+                    crate::aircraft::AircraftTypes::Helicopter => {
+                        aircraft.rotation * camera_pos.0.rotation
+                    }
+                    _ => aircraft.rotation * bevy_to_aerospace_coords() * camera_pos.0.rotation,
+                };
             }
             CameraView::Follow => {
                 let target = camera_settings.follow_default_lookat + aircraft.translation;
@@ -147,9 +151,25 @@ impl Camera {
                 }
             }
             CameraView::Tail => {
-                camera.translation = aircraft.translation
-                    + aircraft.rotation * camera_settings.tail_default_position;
-                camera.rotation = aircraft.rotation * camera_pos.0.rotation;
+                camera.translation = match state.aircraft_type {
+                    crate::aircraft::AircraftTypes::Helicopter => {
+                        aircraft.translation
+                            + aircraft.rotation * camera_settings.tail_default_position
+                    }
+                    _ => {
+                        aircraft.translation
+                            + aircraft.rotation
+                                * bevy_to_aerospace_coords()
+                                * camera_settings.tail_default_position
+                    }
+                };
+
+                camera.rotation = match state.aircraft_type {
+                    crate::aircraft::AircraftTypes::Helicopter => {
+                        aircraft.rotation * camera_pos.0.rotation
+                    }
+                    _ => aircraft.rotation * bevy_to_aerospace_coords() * camera_pos.0.rotation,
+                };
             }
         }
 
