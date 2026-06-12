@@ -6,6 +6,7 @@ use crate::{
         buttons::{ButtonMessages, InterfaceOperation},
     },
     camera::CameraView,
+    ui::UIMessage,
 };
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -48,6 +49,7 @@ pub struct Keymap {
     anti_col_lights: KeyCode,
 
     pause: KeyCode,
+    menu: KeyCode,
 }
 
 impl Default for Keymap {
@@ -77,6 +79,7 @@ impl Default for Keymap {
             anti_col_lights: KeyCode::Digit4,
 
             pause: KeyCode::KeyP,
+            menu: KeyCode::Escape,
         }
     }
 }
@@ -92,6 +95,7 @@ pub fn input_system(
     mut ldg_gear_messages: MessageWriter<LandingGearCommand>,
     mut button_messages: MessageWriter<ButtonMessages>,
     mut game_state: ResMut<GameState>,
+    mut messages: MessageWriter<UIMessage>,
 ) {
     if keyboard_input.just_pressed(keymap.change_camera) {
         match camera_settings.view {
@@ -99,6 +103,10 @@ pub fn input_system(
             CameraView::Cockpit => camera_settings.view = CameraView::Tail,
             CameraView::Tail => camera_settings.view = CameraView::Follow,
         }
+    }
+
+    if keyboard_input.just_pressed(keymap.menu) {
+        messages.write(UIMessage::SpawnMenu);
     }
 
     // Only read input for flight dynamics when the game is running

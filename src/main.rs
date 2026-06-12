@@ -84,6 +84,7 @@ impl Settings {
 
 #[derive(Resource)]
 pub struct GameState {
+    pub in_menu: bool,
     pub running: bool,
 }
 
@@ -92,29 +93,33 @@ pub struct RunOnceSystemList(HashMap<String, SystemId>);
 
 impl FromWorld for RunOnceSystemList {
     fn from_world(world: &mut World) -> Self {
-        let mut my_item_systems = RunOnceSystemList(HashMap::new());
-        my_item_systems.0.insert(
+        let mut run_once_systems = RunOnceSystemList(HashMap::new());
+        run_once_systems.0.insert(
             "setup_scene".into(),
             world.register_system(scenery::setup_scene),
         );
-        my_item_systems.0.insert(
+        run_once_systems.0.insert(
             "setup_breeze".into(),
             world.register_system(aircraft::spawn_breeze),
         );
-        my_item_systems.0.insert(
+        run_once_systems.0.insert(
             "setup_j3cub".into(),
             world.register_system(aircraft::spawn_j3cub),
         );
-        my_item_systems.0.insert(
+        run_once_systems.0.insert(
             "spawn_helicopter".into(),
             world.register_system(aircraft::spawn_helicopter),
         );
-        my_item_systems.0.insert(
+        run_once_systems.0.insert(
             "spawn_ui_hud".into(),
             world.register_system(UI::setup_ui_hud),
         );
 
-        my_item_systems
+        run_once_systems
+            .0
+            .insert("spawn_menu".into(), world.register_system(Menu::spawn));
+
+        run_once_systems
     }
 }
 
@@ -150,7 +155,10 @@ fn main() {
             ExtendedMaterial<StandardMaterial, TerrainMaterial>,
         >::default())
         // Resources
-        .insert_resource(GameState { running: false })
+        .insert_resource(GameState {
+            running: false,
+            in_menu: false,
+        })
         .insert_resource(ControlInputs {
             pitch: 0.0,
             yaw: 0.0,

@@ -1,5 +1,5 @@
 use crate::{
-    ControlInputs, RunOnceSystemList, Settings,
+    ControlInputs, GameState, RunOnceSystemList, Settings,
     aircraft::{Aircraft, AircraftTypes},
     scenery::terrain::Coordinates,
 };
@@ -17,7 +17,7 @@ use std::collections::HashMap;
 pub struct MenuCamera;
 
 #[derive(Component)]
-enum UIHudComponent {
+pub enum UIHudComponent {
     Altitude,
     Throttle,
     Velocity,
@@ -31,18 +31,40 @@ enum SpawnButton {
 }
 
 #[derive(Component)]
-struct Menu;
+pub struct Menu;
 
 const FONT_PATH: &str = "fonts/Geist-VariableFont_wght.ttf";
 
 impl Menu {
-    fn despawn(commands: &mut Commands, menu_query: Query<Entity, With<Menu>>) {
+    fn despawn(
+        commands: &mut Commands,
+        menu_query: Query<Entity, With<Menu>>,
+        game_state: &mut ResMut<GameState>,
+    ) {
+        game_state.in_menu = true;
         for entity in menu_query {
             commands.entity(entity).despawn();
         }
     }
 
-    fn spawn(mut commands: Commands, asset_server: Res<AssetServer>) {
+    pub fn spawn(
+        mut commands: Commands,
+        asset_server: Res<AssetServer>,
+        mut game_state: ResMut<GameState>,
+        scene_query: Query<Entity, With<GlobalTransform>>, // all 3d objects
+        ui_hud_query: Query<Entity, With<UIHudComponent>>,
+    ) {
+        commands.spawn((Camera3d::default(), MenuCamera, IsDefaultUiCamera));
+
+        for entity in &scene_query {
+            commands.entity(entity).despawn();
+        }
+
+        for entity in &ui_hud_query {
+            commands.entity(entity).despawn();
+        }
+
+        game_state.in_menu = true;
         let spawn_button = |spawn_button_type: SpawnButton| {
             (
                 Button,
@@ -183,6 +205,13 @@ impl Menu {
                     long: 8.30899,
                 },
             ),
+            (
+                "Nürnberg, DE",
+                Coordinates {
+                    lat: 49.45387,
+                    long: 11.0773,
+                },
+            ),
         ]);
 
         let font = asset_server.load(FONT_PATH);
@@ -307,7 +336,8 @@ impl Menu {
 }
 
 #[derive(Message)]
-enum UIMessage {
+pub enum UIMessage {
+    SpawnMenu,
     DespawnMenu,
     SpawnUIHud,
     SpawnScenery,
@@ -319,9 +349,9 @@ enum UIMessage {
 pub struct UI;
 impl Plugin for UI {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (Self::ui_main_setup, Menu::spawn))
-            .init_resource::<InputFocus>()
+        app.init_resource::<InputFocus>()
             .add_message::<UIMessage>()
+            .add_systems(Startup, Menu::spawn)
             .add_systems(
                 Update,
                 (Self::update_ui_hud, Self::ui_main_loop, Scroll::send_events),
@@ -424,10 +454,14 @@ impl UI {
         mut messages: MessageReader<UIMessage>,
         menu_query: Query<Entity, With<Menu>>,
         systems: Res<RunOnceSystemList>,
+        mut game_state: ResMut<GameState>,
     ) {
         for message in messages.read() {
             match message {
-                UIMessage::DespawnMenu => Menu::despawn(&mut commands, menu_query),
+                UIMessage::DespawnMenu => Menu::despawn(&mut commands, menu_query, &mut game_state),
+                UIMessage::SpawnMenu => {
+                    commands.run_system(systems.0["spawn_menu"]);
+                }
                 UIMessage::SpawnUIHud => commands.run_system(systems.0["spawn_ui_hud"]),
                 UIMessage::SpawnScenery => {
                     commands.run_system(systems.0["setup_scene"]);
@@ -443,10 +477,6 @@ impl UI {
                 }
             }
         }
-    }
-
-    fn ui_main_setup(mut commands: Commands) {
-        commands.spawn((Camera3d::default(), MenuCamera, IsDefaultUiCamera));
     }
 
     pub fn setup_ui_hud(mut commands: Commands) {
