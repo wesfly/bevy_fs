@@ -112,6 +112,7 @@
 
 use super::airfoils::usa35b;
 use crate::aircraft::Aircraft;
+use crate::data_from_gltf::load;
 use avian_fdm::{
     airfoil::AirfoilData,
     components::{
@@ -451,11 +452,18 @@ const CD_DATA: [Scalar; 28] = sourced!(
 /// Returns the root entity ID. The aircraft root is spawned at `transform`
 /// (typically over the runway at some altitude). Add your own input system that
 /// writes to [`avian_fdm::components::ControlInputs`] on the root entity.
-pub fn spawn(commands: &mut Commands, transform: Transform) -> Entity {
+pub fn spawn(
+    commands: &mut Commands,
+    transform: Transform,
+    asset_server: Res<AssetServer>,
+) -> Entity {
     use avian_fdm::components::GizmoShape;
 
+    const PATH: &str = "aircraft/j3cub/model.glb";
     commands
         .spawn((
+            SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
+            Visibility::default(),
             j3cub_core_bundle(transform),
             // Lift-induced drag: J3Cub has a high-wing strut-braced layout.
             // e = 0.94 from JSBSim: CD_i = CL² × 0.0485, so e = 1/(π × 0.0485 × AR=6.956)
@@ -764,7 +772,7 @@ pub fn spawn(commands: &mut Commands, transform: Transform) -> Entity {
                 GizmoShape::Cylinder { radius: 0.20, length: 0.50, axis: Vec3::X },
                 engine_contours(),
             ));
-        })
+        }).observe(load)
         .id()
 }
 

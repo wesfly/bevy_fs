@@ -285,20 +285,21 @@ pub fn spawn_breeze(
 
 pub fn spawn_j3cub(
     mut commands: Commands,
-    _asset_server: Res<AssetServer>,
+    asset_server: Res<AssetServer>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     settings: Res<Settings>,
     mut state: ResMut<AircraftState>,
 ) {
-    state.aircraft_type = AircraftTypes::Breeze;
+    state.aircraft_type = AircraftTypes::J3Cub;
     state.engine.on = true;
-    state.anti_col_lts_on = true;
-    state.ldg_lts_on = true;
+    // state.anti_col_lts_on = true;
+    // state.ldg_lts_on = true;
 
     let level = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
     j3cub::spawn(
         &mut commands,
         Transform::from_xyz(0.0, 1000.0, 0.0).with_rotation(level),
+        asset_server,
     );
 
     let mut camera = commands.spawn((

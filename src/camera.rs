@@ -86,6 +86,11 @@ impl Camera {
                 y: 0.38,
                 z: -2.6,
             },
+            crate::aircraft::AircraftTypes::J3Cub => Vec3 {
+                x: 0.2,
+                y: 0.0,
+                z: -0.5,
+            },
             _ => Vec3 {
                 x: 2.8,
                 y: 0.0,
