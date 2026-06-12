@@ -35,12 +35,7 @@ use crate::{
         poll_terrain,
     },
     sse::Sse,
-    ui::UI,
-};
-#[allow(unused)] // AircraftFdmDebugPlugin, FdmGizmos can be commented out in the main function
-use avian_fdm::{
-    plugin::AircraftFdmPlugin,
-    prelude::{AircraftFdmDebugPlugin, FdmGizmos, ShowColliders},
+    ui::{Menu, UI},
 };
 use avian3d::prelude::*;
 use bevy::{
@@ -54,6 +49,12 @@ use bevy::{
 };
 use serde::Deserialize;
 use std::{collections::HashMap, fs};
+
+#[allow(unused)] // AircraftFdmDebugPlugin, FdmGizmos can be commented out in the main function
+use avian_fdm::{
+    plugin::AircraftFdmPlugin,
+    prelude::{AircraftFdmDebugPlugin, FdmGizmos, ShowColliders},
+};
 
 pub fn bevy_to_aerospace_coords() -> Quat {
     Quat::from_mat3(&Mat3::from_cols(
