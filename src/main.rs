@@ -25,7 +25,6 @@ use crate::{
         animations::{update_control_surfaces, update_rotors},
         breeze::landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
         buttons::{Button, ButtonMessages},
-        collision_listener,
         lights::{ACOL_OFF_DURATION, Light, LightsTimers, STROBE_OFF_DURATION},
     },
     camera::{Camera, CameraPosition, CameraSettings, rotate_sun},
