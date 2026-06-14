@@ -1,6 +1,6 @@
 use crate::{
     ControlInputs, GameState, RunOnceSystemList, Settings,
-    aircraft::{Aircraft, AircraftTypes},
+    aircraft::{Aircraft, AircraftState, AircraftTypes},
     scenery::terrain::Coordinates,
 };
 use avian3d::prelude::LinearVelocity;
@@ -515,11 +515,16 @@ impl UI {
 
     fn update_ui_hud(
         query: Query<(&mut Text, &UIHudComponent)>,
+        state: Res<AircraftState>,
         transform: Single<&Transform, With<Aircraft>>,
         input: Res<ControlInputs>,
         vel: Single<&LinearVelocity, With<Aircraft>>,
     ) {
         for (mut text, ui_hud_component) in query {
+            let forward = match state.aircraft_type {
+                AircraftTypes::Helicopter => -transform.local_z(),
+                _ => transform.local_x(),
+            };
             let string = match ui_hud_component {
                 UIHudComponent::Altitude => format!(
                     "Altitude: {}m",
@@ -528,10 +533,9 @@ impl UI {
                 UIHudComponent::Throttle => {
                     format!("Throttle: {}%", (input.throttle * 100.0).round())
                 }
-                UIHudComponent::Velocity => format!(
-                    "Velocity: {:?} km/h",
-                    (transform.local_x().dot(vel.0) * 3.6) as i32
-                ),
+                UIHudComponent::Velocity => {
+                    format!("Velocity: {:?} km/h", (forward.dot(vel.0) * 3.6) as i32)
+                }
             };
             text.0 = string;
         }
