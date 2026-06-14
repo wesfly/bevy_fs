@@ -64,18 +64,20 @@ Terrain data will be stored in the `terrain_cache` folder after the first fetch 
 
 Note that high resolutions will result in high RAM usage, to tackle this issue, turn down the maximum render distance in the settings.
 
-You can control the sun position using `HJKL`.
-
 ## Controls
 
-You can change input methods in the settings.
-
+### General
 - `F3` to take a screenshot (output: `screenshots/user`)
 - `ESC` to return to menu
+- `HJKL` to control the sun position
+
+### Camera
 - `RMB + drag` to orbit camera
 - `C` to switch the camera view
 - Mouse wheel to zoom camera
 - `R` to reset camera
+
+### Aircraft
 - `G` to raise or lower landing gear
 - `Z` to brake
 - `=` to toggle parking brake
@@ -84,7 +86,9 @@ You can change input methods in the settings.
 - `3` for formation lights
 - `4` for anti-collision lights
 
-### Some additional bindings for different configs
+You can change the steering device in the settings.
+
+### Some additional bindings for different steering devices
 
 #### Controller
 
