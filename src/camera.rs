@@ -129,7 +129,10 @@ impl Camera {
             CameraView::Follow => {
                 let target = camera_settings.follow_default_lookat + aircraft.translation;
 
-                let forward = -aircraft.local_x();
+                let forward = match state.aircraft_type {
+                    crate::aircraft::AircraftTypes::Helicopter => aircraft.local_z(),
+                    _ => -aircraft.local_x(),
+                };
                 let flat_forward = Vec3::new(forward.x, 0.0, forward.z).normalize();
 
                 // Ignoring roll to create a MSFS-like camera
