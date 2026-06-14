@@ -11,7 +11,6 @@ use bevy::{
     prelude::*,
     window::WindowMode,
 };
-use std::collections::HashMap;
 
 #[derive(Component)]
 pub struct MenuCamera;
@@ -92,7 +91,7 @@ impl Menu {
             )
         };
 
-        let locations = HashMap::from([
+        let locations = vec![
             (
                 "Toulon, FR",
                 Coordinates {
@@ -212,7 +211,7 @@ impl Menu {
                     long: 11.0773,
                 },
             ),
-        ]);
+        ];
 
         let font = asset_server.load(FONT_PATH);
 
@@ -297,30 +296,33 @@ impl Menu {
                     ))
                     .with_children(|parent| {
                         let font2 = font.clone(); // hecky borrow checker things
-                        parent.spawn((
-                            Name::new("Location Menu"),
-                            Node {
-                                display: Display::Flex,
-                                flex_direction: FlexDirection::Column,
-                                align_self: AlignSelf::Stretch,
-                                height: percent(100),
-                                overflow: Overflow::scroll_y(),
-                                ..default()
-                            },
-                            Children::spawn(SpawnIter(locations.into_iter().map(move |loc| {
-                                (
-                                    spawn_button(SpawnButton::Location(loc.1)),
-                                    children![(
-                                        Text::new(loc.0.to_string()),
-                                        TextColor(Color::WHITE),
-                                        TextFont {
-                                            font: font2.clone(),
-                                            ..default()
-                                        },
-                                    )],
-                                )
-                            }))),
-                        ));
+                        parent
+                            .spawn((
+                                Name::new("Location Menu"),
+                                Node {
+                                    display: Display::Flex,
+                                    flex_direction: FlexDirection::Column,
+                                    align_self: AlignSelf::Stretch,
+                                    height: percent(100),
+                                    overflow: Overflow::scroll_y(),
+                                    ..default()
+                                },
+                            ))
+                            .with_children(|parent| {
+                                for (text, location) in locations {
+                                    parent.spawn((
+                                        spawn_button(SpawnButton::Location(location)),
+                                        children![(
+                                            Text::new(text.to_string()),
+                                            TextColor(Color::WHITE),
+                                            TextFont {
+                                                font: font2.clone(),
+                                                ..default()
+                                            },
+                                        )],
+                                    ));
+                                }
+                            });
 
                         parent.spawn((
                             spawn_button(SpawnButton::Fly),
