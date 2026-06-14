@@ -4,6 +4,8 @@ This is a little flight sim made in Bevy.
 
 ![(Stored in Git LFS)](screenshots/1.png)
 ![(Stored in Git LFS)](screenshots/2.png)
+![(Stored in Git LFS)](screenshots/3.png)
+
 
 [Discord server](https://discord.gg/epMBz5m2Ad)
 
