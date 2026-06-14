@@ -70,6 +70,7 @@ You can control the sun position using `HJKL`.
 You can change input methods in the settings.
 
 - `F3` to take a screenshot (output: `screenshots/user`)
+- `ESC` to return to menu
 - `RMB + drag` to orbit camera
 - `C` to switch the camera view
 - Mouse wheel to zoom camera
