@@ -14,7 +14,7 @@ This is a little flight sim made in Bevy.
 - Terrain with real-world elevation data and collisions
 - Loading data from GLTF with custom properties
 - 3D cockpit
-- Collisions using `avian3d`
+- Collisions using `avian3d` and the flight dynamics model crate [`avian_fdm`](https://github.com/viccuad/avian_fdm)
 - Water with screen space reflections
 - A settings file (settings.json)
 
@@ -52,7 +52,7 @@ You can start the engines by pressing `M`. If you now bring the throttle to 100%
 
 ### Aeroplane
 
-You will start in the air, you just need to throttle up.
+You will start in the air with the engine already on, you just need to throttle up.
 
 ## Settings
 
@@ -62,7 +62,7 @@ The settings are located in `settings.json` at the root of this project.
 
 Terrain data will be stored in the `terrain_cache` folder after the first fetch (the game window will be unresponsive while fetching). To change the coordinates or the resolution, change `terrain.coordinates` or `terrain.level_of_detail` in the settings. Note that the general maximum level of detail is 15, but in most regions 14 or even less. Here is an interactive map for different resolutions: https://mapterhorn.com/coverage/
 
-Note that high resolutions will result in high RAM usage, to mitigate this issue, turn down the maximum render distance in the settings.
+Note that high resolutions will result in high RAM usage, to tackle this issue, turn down the maximum render distance in the settings.
 
 You can control the sun position using `HJKL`.
 
