@@ -211,6 +211,13 @@ impl Menu {
                     long: 11.0773,
                 },
             ),
+            (
+                "Guăngzhōu Shì, CN",
+                Coordinates {
+                    lat: 23.128864,
+                    long: 113.259009,
+                },
+            ),
         ];
 
         let font = asset_server.load(FONT_PATH);
