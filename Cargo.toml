@@ -8,7 +8,7 @@ edition = "2024"
 [dependencies]
 avian_fdm = { git = "https://github.com/viccuad/avian_fdm.git", tag = "v0.1.0" }
 avian3d = "0.6"
-bevy = { version = "0.18", default-features = false, features = [
+bevy = { version = "0.18.1", default-features = false, features = [
     "bevy_dev_tools",
     "3d",
 ] }
