@@ -1,5 +1,10 @@
-art/bevy_fs_logo.svg filter=lfs diff=lfs merge=lfs -text
-art/FerrisACRegistration.svg filter=lfs diff=lfs merge=lfs -text
-*.glb filter=lfs diff=lfs merge=lfs -text
-*.gltf filter=lfs diff=lfs merge=lfs -text
-*.bin filter=lfs diff=lfs merge=lfs -text
+[attr]lfs filter=lfs diff=lfs merge=lfs -text
+
+* text=auto eol=lf
+
+*.glb  lfs
+*.gltf lfs
+*.png  lfs
+*.jpg  lfs
+*.otf  lfs
+*.ttf  lfs
