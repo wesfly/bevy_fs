@@ -1,0 +1,11 @@
+#:schema https://www.schemastore.org/rustfmt.json
+
+style_edition = "2024"
+max_width = 100
+comment_width = 100
+struct_lit_single_line = false
+group_imports = "StdExternalCrate"
+imports_granularity = "Module"
+use_field_init_shorthand = true
+use_small_heuristics = "Default"
+merge_derives = false
