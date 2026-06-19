@@ -1,3 +1,5 @@
+#:schema https://www.schemastore.org/cargo.json
+
 [package]
 name = "bevy_fs"
 version = "0.2.0"
