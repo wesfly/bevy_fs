@@ -1,5 +1,18 @@
-art/bevy_fs_logo.svg filter=lfs diff=lfs merge=lfs -text
-art/FerrisACRegistration.svg filter=lfs diff=lfs merge=lfs -text
-*.glb filter=lfs diff=lfs merge=lfs -text
-*.gltf filter=lfs diff=lfs merge=lfs -text
-*.bin filter=lfs diff=lfs merge=lfs -text
+[attr]rust text eol=lf whitespace=tab-in-indent,trailing-space,tabwidth=4
+[attr]lfs filter=lfs diff=lfs merge=lfs -text
+
+* text=auto eol=lf
+
+*.glb  lfs
+*.gltf lfs
+*.png  lfs
+*.jpg  lfs
+*.otf  lfs
+*.ttf  lfs
+
+*.json     linguist-detectable
+*.rs       linguist-language=Rust rust diff=rust
+*.toml     linguist-detectable
+*.svg      linguist-detectable
+.git*      linguist-language=Shell
+Cargo.lock linguist-language=TOML

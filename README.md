@@ -29,14 +29,14 @@ This is a little flight sim made in Bevy.
 ### Installation steps
 
 1. Clone the repository and get large assets
-   ```sh
+   ```bash
    git clone https://github.com/wesfly/bevy_fs.git
    cd bevy_fs
    git lfs pull
    ```
 
 2. Build and run the project
-   ```sh
+   ```bash
    cargo run --release
    ```
 
@@ -67,17 +67,20 @@ Note that high resolutions will result in high RAM usage, to tackle this issue, 
 ## Controls
 
 ### General
+
 - `F3` to take a screenshot (output: `screenshots/user`)
 - `ESC` to return to menu
 - `HJKL` to control the sun position
 
 ### Camera
+
 - `RMB + drag` to orbit camera
 - `C` to switch the camera view
 - Mouse wheel to zoom camera
 - `R` to reset camera
 
 ### Aircraft
+
 - `G` to raise or lower landing gear
 - `Z` to brake
 - `=` to toggle parking brake
@@ -104,8 +107,6 @@ You can change the steering device in the settings.
 
 - `WASDQE` to steer
 - `PgUp` and `PgDown` to throttle up and down respectively
-
----
 
 ## Contributing
 
