@@ -3,7 +3,7 @@ use crate::{
     aircraft::{Aircraft, alpha_deg},
     input::ControlInputs,
 };
-use avian3d::prelude::LinearVelocity;
+use avian3d::{math::PI, prelude::LinearVelocity};
 use bevy::{
     asset::RenderAssetUsages,
     camera::RenderTarget,
@@ -202,10 +202,10 @@ pub fn get_material_handle(
                         });
                 });
 
-            let brt = 60.0;
+            let brightness = 60.0;
             materials.add(StandardMaterial {
                 emissive_texture: Some(image_handle),
-                emissive: LinearRgba::new(brt, brt, brt, 1.0),
+                emissive: LinearRgba::new(brightness, brightness, brightness, 1.0),
                 base_color: Color::linear_rgba(0.3, 0.15, 0.3, 0.4),
                 perceptual_roughness: 0.2,
                 alpha_mode: AlphaMode::Premultiplied,
@@ -304,10 +304,12 @@ pub fn update_screens(
                 _ => *text = Text::new("todo!()"),
             }
         } else if let ScreenUiElement::Horizon = screen {
-            let (_, _, roll) = transform.rotation.to_euler(EulerRot::YXZ);
-            ui_transform.rotation = Rot2::radians(roll);
+            let up = transform.rotation.inverse() * Vec3::Y;
 
-            let forward = transform.forward();
+            let roll = f32::atan2(-up.z, up.y);
+            ui_transform.rotation = Rot2::radians(-roll + 1.0 / 2.0 * PI);
+
+            let forward = transform.local_x();
             let pitch = forward.y.asin();
 
             let px_per_rad = 2800.0;
