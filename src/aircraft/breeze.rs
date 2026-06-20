@@ -410,7 +410,7 @@ pub fn aileron_zone(
     collider: Collider,
     density: ColliderDensity,
 ) -> impl Bundle {
-    let aileron_x = WING_AC_X - 2.0;
+    let aileron_x = WING_AC_X - 2.8;
     let z_m = WING_Z - y_m.abs() * WING_DIHEDRAL_RAD.sin();
     let dihedral_rot = Quat::from_rotation_x(-(WING_DIHEDRAL_RAD * y_m.signum()));
     (
@@ -432,13 +432,6 @@ pub fn aileron_zone(
     )
 }
 
-/// Horizontal stabiliser zone: provides pitch stability via tail-arm moment.
-///
-/// Uses the physical h-stab planform area (HSTAB_AREA_M2 = 1.86 m2) and an
-/// effective lift curve slope (HSTAB_CL_ALPHA = 7.2/rad) calibrated to match
-/// JSBSim CM_alpha. The CL vs alpha relationship is linear (symmetric airfoil):
-///   CL = HSTAB_CL_ALPHA * alpha
-///
 /// At alpha > 0 (nose up), the h-stab produces positive CL (upward force),
 /// which at the aft arm creates a nose-down restoring moment.
 ///
@@ -449,14 +442,10 @@ pub fn aileron_zone(
 ///
 /// Elevator zone: pitch control surface.
 ///
-/// Uses the physical elevator area (ELEVATOR_AREA_M2 = 1.07 m2) and an
-/// effective CL per radian of deflection (ELEVATOR_CL_DELTA = -7.40/rad)
-/// calibrated to match JSBSim CM_de.
-///
 /// Negative CL means: positive elevator (nose-up stick input) produces downward
 /// force at the tail, creating a nose-up pitch moment via the tail arm.
 pub fn elevator_zone(collider: Collider, density: ColliderDensity, y_m: Scalar) -> impl Bundle {
-    let elevator_x = WING_AC_X - 2.0;
+    let elevator_x = WING_AC_X - 2.8;
     let z_m = WING_Z - y_m.abs() * WING_DIHEDRAL_RAD.sin();
 
     (
@@ -478,10 +467,6 @@ pub fn elevator_zone(collider: Collider, density: ColliderDensity, y_m: Scalar) 
 }
 
 /// Vertical tail zone: structural mass and weathercock stability.
-///
-/// Uses the physical fin planform area (VFIN_AREA_M2 = 0.425 m2) and an
-/// effective CY per radian of sideslip (VFIN_CY_BETA = -7.01/rad) calibrated
-/// to match JSBSim CN_beta.
 ///
 /// Negative CY_beta: positive sideslip (wind from right) produces a leftward
 /// force at the aft tail, generating a restoring (nose-right) yaw moment.
@@ -521,10 +506,6 @@ pub fn vtail_zone(collider: Collider, density: ColliderDensity) -> impl Bundle {
 
 /// Rudder zone: yaw control surface.
 ///
-/// Uses the physical rudder planform area (RUDDER_AREA_M2 = 0.356 m2) and an
-/// effective CY per radian of deflection (RUDDER_CY_DELTA = -7.86/rad)
-/// calibrated to match JSBSim CN_dr.
-///
 /// Negative CY: positive rudder (nose-right) produces leftward force at the
 /// tail, generating positive (nose-right) yaw torque.
 pub fn rudder_zone(collider: Collider, density: ColliderDensity) -> impl Bundle {
@@ -540,9 +521,6 @@ pub fn rudder_zone(collider: Collider, density: ColliderDensity) -> impl Bundle 
                 ..Default::default()
             },
             collider,
-            // Rudder LE is at the fin TE. Fin center at -VFIN_ARM_M, fin extends
-            // VFIN_MEAN_CHORD_M/2 aft, so rudder LE = -(VFIN_ARM_M + VFIN_MEAN_CHORD_M/2).
-            // Rudder center = rudder LE - RUDDER_MEAN_CHORD_M/2.
             transform: Transform::from_xyz(
                 -(VFIN_ARM_M + VFIN_MEAN_CHORD_M / 2.0 + RUDDER_MEAN_CHORD_M / 2.0),
                 0.0,
@@ -566,7 +544,7 @@ pub fn engine_zone(collider: Collider, mass: Mass, y_m: f32) -> impl Bundle {
                 "https://wiki.warthunder.com/unit/rafale_c_f3: Afterburner at 100%"
             ),
             thrust_axis_body: Vector::X, // +X = forward
-            zero_thrust_speed_ms: Some(sourced!(200.0, "Estimate")),
+            zero_thrust_speed_ms: Some(sourced!(400.0, "Estimate")),
         },
         collider,
         mass,
