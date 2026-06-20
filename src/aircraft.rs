@@ -216,7 +216,7 @@ pub fn main(
 #[derive(Component)]
 pub struct Aircraft;
 
-const CAM_EXPOSURE: Exposure = Exposure::SUNLIGHT;
+const CAM_EXPOSURE: Exposure = Exposure { ev100: 13.0 };
 
 pub fn spawn_breeze(
     mut commands: Commands,
@@ -245,7 +245,7 @@ pub fn spawn_breeze(
         AtmosphereSettings::default(),
         MeshPickingCamera,
         CAM_EXPOSURE,
-        Tonemapping::AgX,
+        Tonemapping::AcesFitted,
         Bloom::NATURAL,
         Projection::from(PerspectiveProjection {
             fov: 50.0_f32.to_radians(),
@@ -288,7 +288,7 @@ pub fn spawn_j3cub(
         AtmosphereEnvironmentMapLight::default(),
         AtmosphereSettings::default(),
         CAM_EXPOSURE,
-        Tonemapping::AgX,
+        Tonemapping::AcesFitted,
         Bloom::NATURAL,
         Projection::from(PerspectiveProjection {
             fov: 50.0_f32.to_radians(),
@@ -339,7 +339,7 @@ pub fn spawn_helicopter(
         AtmosphereEnvironmentMapLight::default(),
         AtmosphereSettings::default(),
         CAM_EXPOSURE,
-        Tonemapping::AgX,
+        Tonemapping::AcesFitted,
         Bloom::NATURAL,
         Projection::from(PerspectiveProjection {
             fov: 50.0_f32.to_radians(),
