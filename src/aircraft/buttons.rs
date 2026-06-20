@@ -3,7 +3,7 @@ use crate::aircraft::breeze::landing_gear::LandingGearStatus;
 use bevy::prelude::*;
 use serde::Deserialize;
 
-#[derive(Component, Debug, Deserialize, PartialEq)]
+#[derive(Component, Clone, Debug, Deserialize, PartialEq)]
 pub enum InterfaceOperation {
     AntiColLt,
     Engine,
@@ -33,6 +33,16 @@ pub struct Button {
 pub struct ButtonMessages(pub InterfaceOperation);
 
 impl Button {
+    pub fn observer(
+        press: On<Pointer<Press>>,
+        function_comps: Query<&Button>,
+        mut messages: MessageWriter<ButtonMessages>,
+    ) {
+        info!("calling");
+        let button = function_comps.get(press.entity.entity()).unwrap();
+        messages.write(ButtonMessages(button.operation.clone().unwrap()));
+    }
+
     pub fn listener(
         mut query_tf_button: Query<(&mut Transform, &Button)>,
         mut state: ResMut<AircraftState>,

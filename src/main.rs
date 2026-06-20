@@ -127,6 +127,7 @@ fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins)
         .add_plugins(PhysicsPlugins::default())
+        .add_plugins(MeshPickingPlugin)
         .add_plugins(AircraftFdmPlugin::default())
         // .insert_gizmo_config(
         //     FdmGizmos {
@@ -155,6 +156,9 @@ fn main() {
             ExtendedMaterial<StandardMaterial, TerrainMaterial>,
         >::default())
         // Resources
+        .insert_resource(PhysicsPickingSettings {
+            require_markers: true,
+        })
         .insert_resource(GameState {
             running: false,
             in_menu: false,
