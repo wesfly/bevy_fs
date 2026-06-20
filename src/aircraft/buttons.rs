@@ -1,6 +1,11 @@
 use super::AircraftState;
 use crate::aircraft::breeze::landing_gear::LandingGearStatus;
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
+use bevy::{
+    picking::{hover::HoverMap, pointer::PointerId},
+    window::CursorIcon,
+};
 use serde::Deserialize;
 
 #[derive(Component, Clone, Debug, Deserialize, PartialEq)]
@@ -32,13 +37,49 @@ pub struct Button {
 #[derive(Message)]
 pub struct ButtonMessages(pub InterfaceOperation);
 
+pub fn update_cursor(
+    hover_map: Res<HoverMap>,
+    mouse_input: Res<ButtonInput<MouseButton>>,
+    window_query: Query<Entity, With<PrimaryWindow>>,
+    mut commands: Commands,
+    grabbable_query: Query<&Button>,
+) {
+    let Ok(window_entity) = window_query.single() else {
+        return;
+    };
+
+    let hovered_target = hover_map
+        .get(&PointerId::Mouse)
+        .and_then(|hovered_entities| hovered_entities.iter().next())
+        .map(|(entity, _depth)| *entity);
+
+    let is_hovering_target = hovered_target
+        .map(|entity| grabbable_query.contains(entity))
+        .unwrap_or(false);
+
+    if is_hovering_target {
+        if mouse_input.pressed(MouseButton::Left) {
+            commands
+                .entity(window_entity)
+                .insert(CursorIcon::System(bevy::window::SystemCursorIcon::Grab));
+        } else {
+            commands
+                .entity(window_entity)
+                .insert(CursorIcon::System(bevy::window::SystemCursorIcon::Pointer));
+        }
+    } else {
+        commands
+            .entity(window_entity)
+            .insert(CursorIcon::System(bevy::window::SystemCursorIcon::Default));
+    }
+}
+
 impl Button {
-    pub fn observer(
+    pub fn press_observer(
         press: On<Pointer<Press>>,
         function_comps: Query<&Button>,
         mut messages: MessageWriter<ButtonMessages>,
     ) {
-        info!("calling");
         let button = function_comps.get(press.entity.entity()).unwrap();
         messages.write(ButtonMessages(button.operation.clone().unwrap()));
     }

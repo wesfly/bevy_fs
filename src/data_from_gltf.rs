@@ -110,15 +110,21 @@ pub fn load(
             if let Ok(button_data) = serde_json::from_str::<Button>(&gltf_mesh_extras.value) {
                 match button_data.interface_type {
                     InterfaceType::Button | InterfaceType::Switch => {
-                        let bundle = (Button {
-                            interface_type: button_data.interface_type,
-                            inverse: button_data.inverse,
-                            operation: button_data.operation,
-                        },);
+                        let bundle = (
+                            Button {
+                                interface_type: button_data.interface_type,
+                                inverse: button_data.inverse,
+                                operation: button_data.operation,
+                            },
+                            Pickable {
+                                should_block_lower: true,
+                                is_hoverable: true,
+                            },
+                        );
                         commands
                             .entity(entity)
                             .insert(bundle)
-                            .observe(Button::observer);
+                            .observe(Button::press_observer);
                     }
                     e => {
                         warn!("{e:?} not handled yet")

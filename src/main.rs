@@ -197,7 +197,12 @@ fn main() {
         // Systems
         .add_systems(
             Update,
-            (update_rotors, Camera::controller, input::input_system),
+            (
+                update_rotors,
+                Camera::controller,
+                input::input_system,
+                aircraft::buttons::update_cursor,
+            ),
         )
         .add_systems(
             FixedUpdate,

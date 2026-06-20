@@ -243,6 +243,7 @@ pub fn spawn_breeze(
         Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
         AtmosphereEnvironmentMapLight::default(),
         AtmosphereSettings::default(),
+        MeshPickingCamera,
         CAM_EXPOSURE,
         Tonemapping::AgX,
         Bloom::NATURAL,
