@@ -23,7 +23,6 @@ not_shadow_caster: bool
 Landing Gear:
 ldg_gear_element: LandingGearElements
 */
-
 use crate::aircraft::{
     self, ControlSurface, Rotor,
     breeze::landing_gear::{LandingGearElement, LandingGearElements},
@@ -31,7 +30,6 @@ use crate::aircraft::{
     lights::Light,
     screens::Screen,
 };
-use avian3d::prelude::{ColliderDisabled, Mass, RigidBodyDisabled};
 use bevy::{gltf::GltfMeshExtras, light::NotShadowCaster, prelude::*, scene::SceneInstanceReady};
 use serde::Deserialize;
 
@@ -89,23 +87,17 @@ pub fn load(
             if let Ok(ldg_gear_data) =
                 serde_json::from_str::<LandingGearElementFromGltf>(&gltf_mesh_extras.value)
             {
-                commands.entity(entity).insert((
-                    LandingGearElement {
-                        ldg_gear_element: ldg_gear_data.ldg_gear_element,
-                    },
-                    RigidBodyDisabled,
-                    ColliderDisabled,
-                ));
+                commands.entity(entity).insert((LandingGearElement {
+                    ldg_gear_element: ldg_gear_data.ldg_gear_element,
+                },));
             };
 
             if let Ok(ctrl_surface_data) =
                 serde_json::from_str::<ControlSurface>(&gltf_mesh_extras.value)
             {
-                commands.entity(entity).insert((
-                    ctrl_surface_data.control_surface,
-                    Mass::from(0.0),
-                    ColliderDisabled,
-                ));
+                commands
+                    .entity(entity)
+                    .insert(ctrl_surface_data.control_surface);
             };
 
             if let Ok(shading_data) =
@@ -118,15 +110,15 @@ pub fn load(
             if let Ok(button_data) = serde_json::from_str::<Button>(&gltf_mesh_extras.value) {
                 match button_data.interface_type {
                     InterfaceType::Button | InterfaceType::Switch => {
-                        let bundle = (
-                            Pickable::default(),
-                            Button {
-                                interface_type: button_data.interface_type,
-                                inverse: button_data.inverse,
-                                operation: button_data.operation,
-                            },
-                        );
-                        commands.entity(entity).insert(bundle);
+                        let bundle = (Button {
+                            interface_type: button_data.interface_type,
+                            inverse: button_data.inverse,
+                            operation: button_data.operation,
+                        },);
+                        commands
+                            .entity(entity)
+                            .insert(bundle)
+                            .observe(Button::observer);
                     }
                     e => {
                         warn!("{e:?} not handled yet")
