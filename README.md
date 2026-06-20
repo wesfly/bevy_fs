@@ -26,7 +26,7 @@ This is a little flight sim made in Bevy.
 
 ### Installation steps
 
-1. Clone the repository and get large assets
+1. Clone the repository
    ```bash
    git clone https://github.com/wesfly/bevy_fs.git
    cd bevy_fs
