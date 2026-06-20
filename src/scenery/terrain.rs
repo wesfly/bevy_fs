@@ -129,12 +129,7 @@ pub fn dynamic_chunks(
                     let tokio_handle =
                         TOKIO_RUNTIME.spawn(get_terrain(chunk_coord.clone(), chunk_size));
 
-                    let task = thread_pool.spawn(async move {
-                        match tokio_handle.await {
-                            Ok(terrain) => terrain,
-                            Err(e) => panic!("make this an issue pls thx:\n {:#?}", e),
-                        }
-                    });
+                    let task = thread_pool.spawn(async move { tokio_handle.await.unwrap() });
 
                     commands.spawn(SpawnTerrain(task, chunk_coord.clone()));
                     loaded_chunks.0.insert(chunk_key);
