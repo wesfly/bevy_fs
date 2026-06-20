@@ -43,7 +43,7 @@ pub struct TerrariumCoords {
     y: u32,
 }
 
-#[derive(Component, Clone, Debug)]
+#[derive(Component, Clone, Debug, PartialEq)]
 pub struct Chunk(u32, u32);
 
 impl Coordinates {
@@ -89,7 +89,7 @@ pub fn dynamic_chunks(
     settings: Res<Settings>,
     camera: Single<&Transform, With<Camera>>, // This system runs as soon as there's a Camera
     mut loaded_chunks: ResMut<LoadedChunks>,
-    chunks: Query<(Entity, &Chunk, &Transform)>,
+    chunks: Query<(Entity, &Chunk)>,
     mut messages: MessageWriter<ChunkMessage>,
 ) {
     let chunk_size = chunk_size(&settings.terrain.level_of_detail);
@@ -105,46 +105,49 @@ pub fn dynamic_chunks(
     let camera_chunk_y = (camera.translation.z / chunk_size) as i32;
 
     let radius = (settings.terrain.max_render_distance / chunk_size) as i32; // The radius where the system considers to spawn chunks, but it's filtered in poll_terrain
+    let radius_range = -radius..radius;
 
-    for x in -radius..radius {
-        for y in -radius..radius {
+    let radius_range_plus_1 = -(radius + 1)..(radius + 1);
+
+    for x in radius_range_plus_1.clone() {
+        for y in radius_range_plus_1.clone() {
             let coord_x = coords.x.wrapping_add((camera_chunk_x + x) as u32);
             let coord_y = coords.y.wrapping_add((camera_chunk_y + y) as u32);
 
             let chunk_key = (coord_x, coord_y);
 
-            if !loaded_chunks.0.contains(&chunk_key) {
-                let thread_pool = AsyncComputeTaskPool::get();
+            if radius_range.contains(&x) && radius_range.contains(&y) {
+                if !loaded_chunks.0.contains(&chunk_key) {
+                    let thread_pool = AsyncComputeTaskPool::get();
 
-                let chunk_coord = TerrariumCoords {
-                    z: settings.terrain.level_of_detail,
-                    x: coord_x,
-                    y: coord_y,
-                };
+                    let chunk_coord = TerrariumCoords {
+                        z: settings.terrain.level_of_detail,
+                        x: coord_x,
+                        y: coord_y,
+                    };
 
-                let tokio_handle =
-                    TOKIO_RUNTIME.spawn(get_terrain(chunk_coord.clone(), chunk_size));
+                    let tokio_handle =
+                        TOKIO_RUNTIME.spawn(get_terrain(chunk_coord.clone(), chunk_size));
 
-                let task = thread_pool.spawn(async move {
-                    match tokio_handle.await {
-                        Ok(terrain) => terrain,
-                        Err(e) => panic!("make this an issue pls thx:\n {:#?}", e),
+                    let task = thread_pool.spawn(async move {
+                        match tokio_handle.await {
+                            Ok(terrain) => terrain,
+                            Err(e) => panic!("make this an issue pls thx:\n {:#?}", e),
+                        }
+                    });
+
+                    commands.spawn(SpawnTerrain(task, chunk_coord.clone()));
+                    loaded_chunks.0.insert(chunk_key);
+                }
+            } else {
+                // Despawn old chunks
+                for (entity, chunk) in chunks {
+                    let chunk_key_fmtd = Chunk(chunk_key.0, chunk_key.1);
+                    if &chunk_key_fmtd == chunk {
+                        messages.write(ChunkMessage(ChunkMessages::Despawn(entity, chunk.clone())));
                     }
-                });
-
-                commands.spawn(SpawnTerrain(task, chunk_coord.clone()));
-                loaded_chunks.0.insert(chunk_key);
+                }
             }
-        }
-    }
-
-    // Despawn old chunks
-    for (entity, chunk, transform) in chunks {
-        // To end spawn/despawn wars with chunk_size added
-        if transform.translation.distance(camera.translation)
-            >= settings.terrain.max_render_distance + chunk_size
-        {
-            messages.write(ChunkMessage(ChunkMessages::Despawn(entity, chunk.clone())));
         }
     }
 }
