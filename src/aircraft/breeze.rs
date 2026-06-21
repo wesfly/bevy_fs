@@ -113,7 +113,7 @@ pub fn spawn(
 
     commands
         .spawn((
-            SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
+            WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
             breeze_core_bundle(transform, initial_velocity),
             InducedDrag {
                 oswald_factor: 0.94,

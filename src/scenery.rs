@@ -8,7 +8,9 @@ use avian3d::prelude::{
     SweptCcd,
 };
 use bevy::{
-    light::{CascadeShadowConfigBuilder, light_consts::lux},
+    light::{
+        Atmosphere, CascadeShadowConfigBuilder, atmosphere::ScatteringMedium, light_consts::lux,
+    },
     pbr::ExtendedMaterial,
     prelude::*,
 };
@@ -23,6 +25,7 @@ pub fn setup_scene(
     mut meshes: ResMut<Assets<Mesh>>,
     water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, Water>>>>,
     camera: Single<Entity, With<MenuCamera>>,
+    mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
 ) {
     commands.entity(*camera).despawn();
 
@@ -32,7 +35,7 @@ pub fn setup_scene(
 
     // runway
     commands.spawn((
-        SceneRoot(asset_server.load("scenery/rwy/rwy.gltf#Scene0")),
+        WorldAssetRoot(asset_server.load("scenery/rwy/rwy.gltf#Scene0")),
         ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
         RigidBody::Static,
         Restitution::new(0.0),
@@ -44,7 +47,7 @@ pub fn setup_scene(
     let hospital_spawn_pos = Vec3::new(0.0, 0.0, 0.0);
 
     commands.spawn((
-        SceneRoot(asset_server.load("scenery/hospital/hospital.gltf#Scene0")),
+        WorldAssetRoot(asset_server.load("scenery/hospital/hospital.gltf#Scene0")),
         RigidBody::Static,
         ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
         Transform::from_translation(hospital_spawn_pos),
@@ -56,14 +59,31 @@ pub fn setup_scene(
     }
     .build();
 
+    spawn_atmosphere(&mut commands, &mut scattering_mediums);
+
     let sun_position = settings.sun_position;
     commands.spawn((
         DirectionalLight {
-            shadows_enabled: true,
+            shadow_maps_enabled: true,
+            contact_shadows_enabled: true,
             illuminance: lux::RAW_SUNLIGHT,
             ..default()
         },
         Transform::from_translation(sun_position).looking_at(Vec3::ZERO, Vec3::Y),
         cascade,
+    ));
+}
+
+fn spawn_atmosphere(
+    commands: &mut Commands,
+    scattering_mediums: &mut ResMut<Assets<ScatteringMedium>>,
+) {
+    let earth_medium = ScatteringMedium::default();
+    let earth_atmosphere = Atmosphere::earth(scattering_mediums.add(earth_medium));
+
+    commands.spawn((
+        earth_atmosphere.clone(),
+        Transform::from_scale(Vec3::splat(1.0))
+            .with_translation(-Vec3::Y * earth_atmosphere.inner_radius),
     ));
 }

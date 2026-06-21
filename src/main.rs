@@ -21,7 +21,7 @@ mod ui;
 
 use crate::{
     aircraft::{
-        AircraftState, Damage,
+        AircraftState,
         animations::{update_control_surfaces, update_rotors},
         breeze::landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
         buttons::{Button, ButtonMessages},
@@ -41,7 +41,6 @@ use bevy::{
     dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig},
     ecs::system::SystemId,
     pbr::ExtendedMaterial,
-    post_process::motion_blur::MotionBlur,
     prelude::*,
     render::view::screenshot::{Capturing, Screenshot, save_to_disk},
     window::{CursorIcon, SystemCursorIcon},
@@ -66,7 +65,6 @@ pub fn bevy_to_aerospace_coords() -> Quat {
 #[derive(Resource, Deserialize)]
 pub struct Settings {
     gamepad: input::Gamepad,
-    motion_blur_enabled: bool,
     shadow_distance: f32,
     terrain: TerrainSettings,
     sun_position: Vec3,
@@ -191,7 +189,6 @@ fn main() {
         }))
         // Messages
         .add_message::<LandingGearCommand>()
-        .add_message::<Damage>()
         .add_message::<ChunkMessage>()
         .add_message::<ButtonMessages>()
         // Systems
@@ -222,20 +219,8 @@ fn main() {
                 dynamic_chunks,
                 game_state,
             ),
-        )
-        .add_systems(FixedPostUpdate, Damage::handler);
+        );
     app.run();
-}
-
-fn motion_blur(settings: &Res<Settings>) -> Option<MotionBlur> {
-    if settings.motion_blur_enabled {
-        Some(MotionBlur {
-            shutter_angle: 0.5,
-            samples: 2,
-        })
-    } else {
-        None
-    }
 }
 
 fn screenshot(mut commands: Commands, input: Res<ButtonInput<KeyCode>>) {

@@ -30,7 +30,10 @@ use crate::aircraft::{
     lights::Light,
     screens::Screen,
 };
-use bevy::{gltf::GltfMeshExtras, light::NotShadowCaster, prelude::*, scene::SceneInstanceReady};
+use bevy::{
+    gltf::GltfMeshExtras, light::NotShadowCaster, prelude::*,
+    world_serialization::WorldInstanceReady,
+};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -44,7 +47,7 @@ struct LandingGearElementFromGltf {
 }
 
 pub fn load(
-    trigger: On<SceneInstanceReady>,
+    trigger: On<WorldInstanceReady>,
     mut commands: Commands,
     children: Query<&Children>,
     mesh_extras: Query<&GltfMeshExtras>,

@@ -462,7 +462,7 @@ pub fn spawn(
     const PATH: &str = "aircraft/j3cub/model.glb";
     commands
         .spawn((
-            SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
+            WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
             Visibility::default(),
             j3cub_core_bundle(transform),
             // Lift-induced drag: J3Cub has a high-wing strut-braced layout.

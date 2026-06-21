@@ -4,7 +4,13 @@ use crate::{
     input::Keymap,
 };
 use bevy::{
+    anti_alias::taa::TemporalAntiAliasing,
+    camera::{Exposure, Hdr},
+    core_pipeline::tonemapping::Tonemapping,
     input::mouse::{AccumulatedMouseMotion, MouseScrollUnit, MouseWheel},
+    light::AtmosphereEnvironmentMapLight,
+    pbr::{AtmosphereSettings, ScreenSpaceReflections},
+    post_process::{bloom::Bloom, motion_blur::MotionBlur},
     prelude::*,
 };
 use std::{
@@ -63,10 +69,39 @@ impl Default for CameraSettings {
     }
 }
 
+const CAM_EXPOSURE: Exposure = Exposure { ev100: 13.0 };
+
 #[derive(Resource)]
 pub struct CameraPosition(pub Transform);
 
 impl Camera {
+    pub fn spawn(commands: &mut Commands) {
+        commands.spawn((
+            Camera3d::default(),
+            AtmosphereSettings::default(),
+            AtmosphereEnvironmentMapLight::default(),
+            CAM_EXPOSURE,
+            Tonemapping::AcesFitted,
+            Bloom::NATURAL,
+            Projection::from(PerspectiveProjection {
+                fov: 50.0_f32.to_radians(),
+                ..default()
+            }),
+            Msaa::Off,
+            TemporalAntiAliasing::default(),
+            ScreenSpaceReflections {
+                min_perceptual_roughness: 0.0..0.0,
+                ..default()
+            },
+            Hdr,
+            MotionBlur {
+                shutter_angle: 0.5,
+                samples: 2,
+            },
+            crate::camera::Camera,
+        ));
+    }
+
     pub fn controller(
         mut camera: Single<&mut Transform, (With<Camera>, Without<Aircraft>)>,
         camera_settings: Res<CameraSettings>,

@@ -81,8 +81,8 @@ pub fn get_material_handle(
 
             let text_bundle = (
                 TextFont {
-                    font_size: 32.0,
-                    font: asset_server.load("fonts/SourceCodePro-Bold.ttf"),
+                    font_size: FontSize::Px(32.0),
+                    font: asset_server.load("fonts/SourceCodePro-Bold.ttf").into(),
                     ..default()
                 },
                 TextColor(HUD_COLOUR),
@@ -202,7 +202,7 @@ pub fn get_material_handle(
                         });
                 });
 
-            let brightness = 60.0;
+            let brightness = 200.0;
             materials.add(StandardMaterial {
                 emissive_texture: Some(image_handle),
                 emissive: LinearRgba::new(brightness, brightness, brightness, 1.0),
@@ -253,17 +253,19 @@ pub fn get_material_handle(
                                 label,
                                 Text::new("loading..."),
                                 TextFont {
-                                    font_size: 64.0,
+                                    font_size: FontSize::Px(64.0),
                                     ..default()
                                 },
                                 TextColor::WHITE,
                             ));
                         });
                 });
+
+            let brightness = 100.0;
             // This material has the texture that has been rendered.
             materials.add(StandardMaterial {
                 emissive_texture: Some(image_handle),
-                emissive: LinearRgba::new(1.0, 1.0, 1.0, 1.0),
+                emissive: LinearRgba::new(brightness, brightness, brightness, 1.0),
                 base_color: Color::BLACK,
                 perceptual_roughness: 0.2,
                 ..default()

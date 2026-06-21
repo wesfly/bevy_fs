@@ -8,20 +8,9 @@ pub mod breeze;
 mod helicopter;
 mod j3cub;
 
-use crate::{
-    GameState, Settings, aircraft, data_from_gltf::load, input::ControlInputs, motion_blur,
-};
+use crate::{GameState, aircraft, camera::Camera, data_from_gltf::load, input::ControlInputs};
 use avian3d::prelude::*;
-use bevy::{
-    anti_alias::fxaa::Fxaa,
-    camera::Exposure,
-    core_pipeline::tonemapping::Tonemapping,
-    light::AtmosphereEnvironmentMapLight,
-    pbr::{Atmosphere, AtmosphereSettings, ScatteringMedium, ScreenSpaceReflections},
-    post_process::bloom::Bloom,
-    prelude::*,
-    render::view::Hdr,
-};
+use bevy::prelude::*;
 use serde::Deserialize;
 
 pub fn alpha_deg(velocity: &Vec3, transform: &Transform) -> f32 {
@@ -132,52 +121,6 @@ impl Default for AircraftState {
     }
 }
 
-#[derive(Message)]
-pub struct Damage(DamageTypes);
-
-pub enum DamageTypes {
-    #[allow(unused)] // TODO
-    Critical,
-    // Leak(Vec3),
-}
-
-impl Damage {
-    pub fn handler(
-        mut commands: Commands,
-        mut messages: MessageReader<Self>,
-        mut game_state: ResMut<GameState>,
-    ) {
-        for message in messages.read() {
-            match message.0 {
-                DamageTypes::Critical => {
-                    game_state.running = false;
-                    commands.spawn((
-                        Node {
-                            position_type: PositionType::Absolute,
-                            width: Val::Percent(100.0),
-                            top: px(50),
-                            align_content: AlignContent::Center,
-                            justify_content: JustifyContent::Center,
-
-                            ..default()
-                        },
-                        children![(
-                            Text::new("Crashed"),
-                            TextFont {
-                                font_size: 64.0,
-                                weight: FontWeight(1000),
-                                ..default()
-                            },
-                            TextColor(Color::hsv(0.0, 1.0, 1.0)),
-                            TextShadow::default()
-                        )],
-                    ));
-                } // DamageTypes::Leak(_) => todo!(),
-            }
-        }
-    }
-}
-
 pub fn main(
     input: Res<ControlInputs>,
     mut state: ResMut<AircraftState>,
@@ -216,13 +159,9 @@ pub fn main(
 #[derive(Component)]
 pub struct Aircraft;
 
-const CAM_EXPOSURE: Exposure = Exposure { ev100: 13.0 };
-
 pub fn spawn_breeze(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
-    settings: Res<Settings>,
     mut state: ResMut<AircraftState>,
 ) {
     state.aircraft_type = AircraftTypes::Breeze;
@@ -237,37 +176,12 @@ pub fn spawn_breeze(
         asset_server,
         Vec3::new(100.0, 0.0, 0.0),
     );
-
-    let mut camera = commands.spawn((
-        Camera3d::default(),
-        Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
-        AtmosphereEnvironmentMapLight::default(),
-        AtmosphereSettings::default(),
-        MeshPickingCamera,
-        CAM_EXPOSURE,
-        Tonemapping::AcesFitted,
-        Bloom::NATURAL,
-        Projection::from(PerspectiveProjection {
-            fov: 50.0_f32.to_radians(),
-            ..default()
-        }),
-        Fxaa::default(),
-        Msaa::Off,
-        ScreenSpaceReflections::default(),
-        Hdr,
-        crate::camera::Camera,
-    ));
-
-    if let Some(mb) = motion_blur(&settings) {
-        camera.insert(mb);
-    }
+    Camera::spawn(&mut commands);
 }
 
 pub fn spawn_j3cub(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
-    settings: Res<Settings>,
     mut state: ResMut<AircraftState>,
 ) {
     state.aircraft_type = AircraftTypes::J3Cub;
@@ -275,42 +189,19 @@ pub fn spawn_j3cub(
     // state.anti_col_lts_on = true;
     // state.ldg_lts_on = true;
 
+    Camera::spawn(&mut commands);
+
     let level = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
     j3cub::spawn(
         &mut commands,
         Transform::from_xyz(0.0, 1000.0, 0.0).with_rotation(level),
         asset_server,
     );
-
-    let mut camera = commands.spawn((
-        Camera3d::default(),
-        Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
-        AtmosphereEnvironmentMapLight::default(),
-        AtmosphereSettings::default(),
-        CAM_EXPOSURE,
-        Tonemapping::AcesFitted,
-        Bloom::NATURAL,
-        Projection::from(PerspectiveProjection {
-            fov: 50.0_f32.to_radians(),
-            ..default()
-        }),
-        Fxaa::default(),
-        Msaa::Off,
-        ScreenSpaceReflections::default(),
-        Hdr,
-        crate::camera::Camera,
-    ));
-
-    if let Some(mb) = motion_blur(&settings) {
-        camera.insert(mb);
-    }
 }
 
 pub fn spawn_helicopter(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
-    settings: Res<Settings>,
     mut state: ResMut<AircraftState>,
 ) {
     state.aircraft_type = AircraftTypes::Helicopter;
@@ -323,7 +214,7 @@ pub fn spawn_helicopter(
     // Aircraft model
     commands
         .spawn((
-            SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(path))),
+            WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(path))),
             Aircraft,
             RigidBody::Dynamic,
             ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh),
@@ -333,29 +224,7 @@ pub fn spawn_helicopter(
         ))
         .observe(load);
 
-    let mut camera = commands.spawn((
-        Camera3d::default(),
-        Atmosphere::earthlike(scattering_mediums.add(ScatteringMedium::default())),
-        AtmosphereEnvironmentMapLight::default(),
-        AtmosphereSettings::default(),
-        CAM_EXPOSURE,
-        Tonemapping::AcesFitted,
-        Bloom::NATURAL,
-        Projection::from(PerspectiveProjection {
-            fov: 50.0_f32.to_radians(),
-            ..default()
-        }),
-        Hdr,
-        crate::camera::Camera,
-        // SSR
-        ScreenSpaceReflections::default(),
-        Msaa::Off,
-        Fxaa::default(),
-    ));
-
-    if let Some(mb) = motion_blur(&settings) {
-        camera.insert(mb);
-    }
+    Camera::spawn(&mut commands);
 }
 
 #[derive(Clone, Copy, Debug)]

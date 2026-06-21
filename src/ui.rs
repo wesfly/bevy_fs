@@ -1,3 +1,5 @@
+use core::convert::Into;
+
 use crate::{
     ControlInputs, GameState, RunOnceSystemList, Settings,
     aircraft::{Aircraft, AircraftState, AircraftTypes},
@@ -6,7 +8,7 @@ use crate::{
 use avian3d::prelude::LinearVelocity;
 use bevy::{
     input::mouse::{MouseScrollUnit, MouseWheel},
-    input_focus::InputFocus,
+    input_focus::{FocusCause, InputFocus},
     picking::hover::HoverMap,
     prelude::*,
     window::WindowMode,
@@ -258,7 +260,7 @@ impl Menu {
                                 Text::new("Helicopter"),
                                 TextColor(Color::WHITE),
                                 TextFont {
-                                    font: font.clone(),
+                                    font: FontSource::Handle(font.clone()),
                                     ..default()
                                 }
                             )]
@@ -269,7 +271,7 @@ impl Menu {
                                 Text::new("Breeze C F3"),
                                 TextColor(Color::WHITE),
                                 TextFont {
-                                    font: font.clone(),
+                                    font: FontSource::Handle(font.clone()),
                                     ..default()
                                 },
                             ),],
@@ -280,7 +282,7 @@ impl Menu {
                                 Text::new("J-3 Cub"),
                                 TextColor(Color::WHITE),
                                 TextFont {
-                                    font: font.clone(),
+                                    font: FontSource::Handle(font.clone()),
                                     ..default()
                                 }
                             )],
@@ -323,7 +325,7 @@ impl Menu {
                                             Text::new(text.to_string()),
                                             TextColor(Color::WHITE),
                                             TextFont {
-                                                font: font2.clone(),
+                                                font: FontSource::Handle(font2.clone()),
                                                 ..default()
                                             },
                                         )],
@@ -336,7 +338,10 @@ impl Menu {
                             children![(
                                 Text::new("Fly"),
                                 TextColor(Color::WHITE),
-                                TextFont { font, ..default() }
+                                TextFont {
+                                    font: FontSource::Handle(font),
+                                    ..default()
+                                }
                             ),],
                         ));
                     });
@@ -391,7 +396,7 @@ impl UI {
         {
             match *interaction {
                 Interaction::Pressed => {
-                    input_focus.set(entity);
+                    input_focus.set(entity, FocusCause::Navigated);
 
                     match spawn_button {
                         SpawnButton::AircraftSelector(AircraftTypes::Breeze) => {
@@ -437,7 +442,7 @@ impl UI {
                     *color = Color::srgb(0.15, 0.15, 0.15).into();
                 }
                 Interaction::Hovered => {
-                    input_focus.set(entity);
+                    input_focus.set(entity, FocusCause::Navigated);
                     *color = Color::srgb(0.15, 0.15, 0.15).into();
                     *border_color = BorderColor::all(Color::WHITE);
                 }

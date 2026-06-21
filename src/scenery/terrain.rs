@@ -256,28 +256,31 @@ impl Chunk {
             Transform::from_translation(*translation),
             Mesh3d(meshes.add(mesh)),
             Chunk(coord.x, coord.y),
-            MeshMaterial3d(terrain_materials.add(ExtendedMaterial {
-                base: StandardMaterial {
-                    base_color: Color::BLACK,
-                    perceptual_roughness: 1.0,
-                    ..Default::default()
-                },
-                extension: TerrainMaterial {
-                    normals: asset_server.load_with_settings::<Image, ImageLoaderSettings>(
-                        "textures/water_normals.png",
-                        |settings| {
-                            settings.is_srgb = false;
-                            settings.sampler = ImageSampler::Descriptor(ImageSamplerDescriptor {
-                                address_mode_u: ImageAddressMode::Repeat,
-                                address_mode_v: ImageAddressMode::Repeat,
-                                mag_filter: ImageFilterMode::Linear,
-                                min_filter: ImageFilterMode::Linear,
-                                ..default()
-                            });
-                        },
-                    ),
-                },
-            })),
+            MeshMaterial3d(
+                terrain_materials.add(ExtendedMaterial {
+                    base: StandardMaterial {
+                        base_color: Color::BLACK,
+                        perceptual_roughness: 1.0,
+                        ..Default::default()
+                    },
+                    extension: TerrainMaterial {
+                        normals: asset_server
+                            .load_builder()
+                            .with_settings(|settings: &mut ImageLoaderSettings| {
+                                settings.is_srgb = false;
+                                settings.sampler =
+                                    ImageSampler::Descriptor(ImageSamplerDescriptor {
+                                        address_mode_u: ImageAddressMode::Repeat,
+                                        address_mode_v: ImageAddressMode::Repeat,
+                                        mag_filter: ImageFilterMode::Linear,
+                                        min_filter: ImageFilterMode::Linear,
+                                        ..default()
+                                    });
+                            })
+                            .load("textures/water_normals.png"),
+                    },
+                }),
+            ),
         ));
     }
 

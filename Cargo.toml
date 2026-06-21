@@ -2,16 +2,17 @@
 
 [package]
 name = "bevy_fs"
-version = "0.2.0"
+version = "0.3.0"
 license-file = "LICENSE.md"
 readme = "README.md"
 edition = "2024"
 
 [dependencies]
-avian_fdm = { git = "https://github.com/viccuad/avian_fdm.git", tag = "v0.1.0" }
-avian3d = "0.6"
-bevy = { version = "0.18.1", default-features = false, features = [
+avian_fdm = { git = "https://github.com/wesfly/avian_fdm.git" }
+avian3d = "0.7"
+bevy = { version = "0.19.0", default-features = false, features = [
     "bevy_dev_tools",
+    "ui",
     "3d",
 ] }
 chrono = "0.4"

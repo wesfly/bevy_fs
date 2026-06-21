@@ -70,7 +70,7 @@ impl Light {
         timer: ResMut<LightsTimers>,
     ) {
         for material_handle in material_handles.iter() {
-            if let Some(material) = materials.get_mut(material_handle.0) {
+            if let Some(mut material) = materials.get_mut(material_handle.0) {
                 let LinearRgba {
                     ref mut red,
                     ref mut green,
