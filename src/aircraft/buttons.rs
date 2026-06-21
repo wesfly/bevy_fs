@@ -1,5 +1,5 @@
 use super::AircraftState;
-use crate::aircraft::breeze::landing_gear::LandingGearStatus;
+use crate::aircraft::breeze::landing_gear::{LandingGearCommand, LandingGearStatus};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy::{
@@ -89,6 +89,7 @@ impl Button {
         mut state: ResMut<AircraftState>,
         mut messages: MessageReader<ButtonMessages>,
         ldg_gear_status: Res<LandingGearStatus>,
+        mut landing_gear_messages: MessageWriter<LandingGearCommand>,
     ) {
         for message in messages.read() {
             let interface_op = &message.0;
@@ -113,12 +114,16 @@ impl Button {
                 ),
                 InterfaceOperation::LdgGear => (
                     match *ldg_gear_status {
-                        LandingGearStatus::Deploying => None,
+                        LandingGearStatus::Deploying => Some(true),
                         LandingGearStatus::Deployed => Some(state.landing_gear_deployed),
-                        LandingGearStatus::Retracting => None,
+                        LandingGearStatus::Retracting => Some(false),
                         LandingGearStatus::Retracted => Some(state.landing_gear_deployed),
                     },
-                    (),
+                    {
+                        landing_gear_messages.write(LandingGearCommand(
+                            super::breeze::landing_gear::LandingGearCommands::Toggle,
+                        ));
+                    },
                 ),
                 InterfaceOperation::ParkBrk => (
                     Some(state.parking_brake),
@@ -126,6 +131,7 @@ impl Button {
                 ),
                 _ => (None, ()),
             };
+
             for (mut transform, button) in &mut query_tf_button {
                 const SWITCH_ANGLE_LIMIT: f32 = 70.0;
                 if let InterfaceType::Switch = button.interface_type

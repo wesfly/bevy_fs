@@ -1,10 +1,6 @@
 use crate::{
     CameraSettings, GameState, Settings,
-    aircraft::{
-        self,
-        breeze::landing_gear::LandingGearCommand,
-        buttons::{ButtonMessages, InterfaceOperation},
-    },
+    aircraft::buttons::{ButtonMessages, InterfaceOperation},
     camera::CameraView,
     ui::UIMessage,
 };
@@ -92,7 +88,6 @@ pub fn input_system(
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
     gp: Option<Single<&bevy::prelude::Gamepad>>,
     mut camera_settings: ResMut<CameraSettings>,
-    mut ldg_gear_messages: MessageWriter<LandingGearCommand>,
     mut button_messages: MessageWriter<ButtonMessages>,
     mut game_state: ResMut<GameState>,
     mut messages: MessageWriter<UIMessage>,
@@ -116,9 +111,6 @@ pub fn input_system(
         }
 
         if keyboard_input.just_pressed(keymap.toggle_gear) {
-            ldg_gear_messages.write(LandingGearCommand(
-                aircraft::breeze::landing_gear::LandingGearCommands::Toggle,
-            ));
             button_messages.write(ButtonMessages(InterfaceOperation::LdgGear));
         }
         if keyboard_input.just_pressed(keymap.formation_lights) {
