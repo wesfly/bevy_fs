@@ -10,6 +10,7 @@ pub const ACOL_ON_DURATION: f32 = 0.1;
 
 #[derive(Deserialize, Debug, Component)]
 pub enum Lights {
+    CockpitGearInd,
     AntiCol,
     Strobe,
     PositionPort,
@@ -142,6 +143,15 @@ impl Light {
                             *red = 0.;
                             *green = 0.;
                             *blue = 0.
+                        }
+                    }
+                    Lights::CockpitGearInd => {
+                        if state.landing_gear_deployed {
+                            *green = 50.0
+                        } else {
+                            *red = 0.0;
+                            *green = 0.0;
+                            *blue = 0.0;
                         }
                     }
                 }

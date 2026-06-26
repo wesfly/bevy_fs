@@ -23,11 +23,12 @@ not_shadow_caster: bool
 Landing Gear:
 ldg_gear_element: LandingGearElements
 */
+
 use crate::aircraft::{
     self, ControlSurface, Rotor,
     breeze::landing_gear::{LandingGearElement, LandingGearElements},
     buttons::{Button, InterfaceType},
-    lights::Light,
+    lights::{Light, Lights},
     screens::Screen,
 };
 use bevy::{
@@ -59,12 +60,23 @@ pub fn load(
     for entity in children.iter_descendants(trigger.entity.entity()) {
         if let Ok(gltf_mesh_extras) = mesh_extras.get(entity) {
             if let Ok(light_mesh_data) = serde_json::from_str::<Light>(&gltf_mesh_extras.value) {
-                let material_emissive = materials.add(StandardMaterial {
-                    perceptual_roughness: 0.1,
-                    specular_transmission: 1.0,
-                    base_color: Color::LinearRgba(LinearRgba::rgb(0.5, 0.5, 0.5).with_alpha(0.5)),
-                    ..default()
-                });
+                let material_emissive = match light_mesh_data.light {
+                    Lights::CockpitGearInd => materials.add(StandardMaterial {
+                        perceptual_roughness: 0.0,
+                        emissive: LinearRgba::rgb(0.0, 50.0, 0.0),
+                        base_color: Color::LinearRgba(LinearRgba::rgb(0.0, 0.0, 0.0)),
+                        ..default()
+                    }),
+                    _ => materials.add(StandardMaterial {
+                        perceptual_roughness: 0.1,
+                        specular_transmission: 1.0,
+                        base_color: Color::LinearRgba(
+                            LinearRgba::rgb(0.5, 0.5, 0.5).with_alpha(0.5),
+                        ),
+                        ..default()
+                    }),
+                };
+
                 commands
                     .entity(entity)
                     .insert((MeshMaterial3d(material_emissive), light_mesh_data.light));
