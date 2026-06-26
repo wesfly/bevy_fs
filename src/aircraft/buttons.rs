@@ -112,19 +112,34 @@ impl Button {
                     Some(state.form_lts_on),
                     state.form_lts_on = !state.form_lts_on,
                 ),
-                InterfaceOperation::LdgGear => (
-                    match *ldg_gear_status {
-                        LandingGearStatus::Deploying => Some(true),
-                        LandingGearStatus::Deployed => Some(state.landing_gear_deployed),
-                        LandingGearStatus::Retracting => Some(false),
-                        LandingGearStatus::Retracted => Some(state.landing_gear_deployed),
-                    },
-                    {
+                InterfaceOperation::LdgGear => {
+                    let do_not_change_lever_pos;
+                    let (a1, _) = match *ldg_gear_status {
+                        LandingGearStatus::Deploying => {
+                            (Some(true), do_not_change_lever_pos = true)
+                        }
+                        LandingGearStatus::Deployed => (
+                            Some(state.landing_gear_deployed),
+                            do_not_change_lever_pos = false,
+                        ),
+                        LandingGearStatus::Retracting => {
+                            (Some(true), do_not_change_lever_pos = true)
+                        }
+                        LandingGearStatus::Retracted => (
+                            Some(state.landing_gear_deployed),
+                            do_not_change_lever_pos = false,
+                        ),
+                    };
+                    if do_not_change_lever_pos {
+                        continue;
+                    }
+                    (a1, {
                         landing_gear_messages.write(LandingGearCommand(
                             super::breeze::landing_gear::LandingGearCommands::Toggle,
                         ));
-                    },
-                ),
+                    })
+                }
+
                 InterfaceOperation::ParkBrk => (
                     Some(state.parking_brake),
                     state.parking_brake = !state.parking_brake,
