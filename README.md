@@ -7,6 +7,7 @@ This is a little flight sim made in Bevy.
 ![(Stored in screenshots folder)](screenshots/screenshot_3.png)
 
 [Discord server](https://discord.gg/epMBz5m2Ad)
+[Fluxer server](https://fluxer.gg/6OosduvZ)
 
 ## Highlights
 
