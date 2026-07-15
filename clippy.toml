@@ -1,0 +1,5 @@
+#:schema https://catalog.lintel.tools/schemas/rust/clippy/latest.json
+
+type-complexity-threshold = 500
+too-many-arguments-threshold = 12
+enum-variant-size-threshold = 1000

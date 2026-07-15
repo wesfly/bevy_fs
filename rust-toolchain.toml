@@ -1,0 +1,5 @@
+#:schema https://www.schemastore.org/rust-toolchain.json
+
+[toolchain]
+channel = "1.96.1"
+components = ["rustfmt", "clippy", "rust-analyzer"]
