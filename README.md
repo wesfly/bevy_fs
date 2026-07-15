@@ -118,9 +118,23 @@ You can change the steering device in the settings.
 - `WASDQE` to steer
 - `PgUp` and `PgDown` to throttle up and down respectively
 
+## Troubleshooting
+
+### Broken Git LFS on Codeberg
+
+```bash
+Error downloading object: <some object>: Smudge error: Error downloading <some file path>: [<some commit>] Not Found: [404] Not Found
+```
+
+```bash
+GIT_LFS_SKIP_SMUDGE=1 git reset --hard HEAD
+git clean -fd
+git lfs pull # You might need to download git-lfs first
+```
+
 ## Contributing
 
 PRs welcome.
 
 If you have any problems regarding this repository, please report them as an
-issue. Thanks!
+issue. Thank you!
