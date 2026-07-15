@@ -4,15 +4,15 @@
 * text=auto eol=lf
 
 *.glb  lfs
-*.gltf lfs
 *.png  lfs
 *.jpg  lfs
 *.otf  lfs
 *.ttf  lfs
 
+*.gltf     linguist-language=JSON linguist-generated
 *.json     linguist-detectable
 *.rs       linguist-language=Rust rust diff=rust
 *.toml     linguist-detectable
 *.svg      linguist-detectable
 .git*      linguist-language=Shell
-Cargo.lock linguist-language=TOML
+Cargo.lock linguist-language=TOML linguist-generated
