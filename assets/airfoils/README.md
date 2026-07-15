@@ -1,1 +1,3 @@
-All profiles obtained from https://foil.tools/
+# airfoils
+
+All profiles obtained from <https://foil.tools>.
