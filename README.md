@@ -2,25 +2,29 @@
 
 This is a little flight sim made in Bevy.
 
-![(Stored in screenshots folder)](screenshots/screenshot_1.png)
-![(Stored in screenshots folder)](screenshots/screenshot_2.png)
-![(Stored in screenshots folder)](screenshots/screenshot_3.png)
-
-[Discord server](https://discord.gg/epMBz5m2Ad)
-[Fluxer server](https://fluxer.gg/6OosduvZ)
-
 ## Highlights
 
-- Support for both keyboard and gamepad, but gamepad is recommended
-- Terrain with real-world elevation data and collisions
-- Loading data from GLTF with custom properties
-- 3D cockpit
-- Collisions using `avian3d` and the flight dynamics model crate
-  [`avian_fdm`](https://github.com/viccuad/avian_fdm)
-- Water with screen space reflections
-- A settings file (settings.json)
+- Support for both keyboard and gamepad (gamepad is recommended).
+- Terrain with real-world elevation data and collisions.
+- Loading data from glTF with custom properties.
+- 3D cockpit.
+- Collisions using `avian3d` and the flight dynamics model crate.
+  [`avian_fdm`](https://github.com/viccuad/avian_fdm).
+- Water with screen space reflections.
+- A settings file - `settings.json`.
 
-## Running `bevy_fs`
+## Preview
+
+![(bevy_fs: preview 1)](./docs/preview-1.png)
+![(bevy_fs: preview 2)](./docs/preview-2.png)
+![(bevy_fs: preview 3)](./docs/preview-3.png)
+
+## Community
+
+- [Discord](https://discord.gg/epMBz5m2Ad)
+- [Fluxer](https://fluxer.gg/6OosduvZ)
+
+## Run
 
 ### Prerequisites
 
@@ -31,8 +35,7 @@ This is a little flight sim made in Bevy.
 1. Clone the repository
 
    ```bash
-   git clone https://github.com/wesfly/bevy_fs.git
-   cd bevy_fs
+   git clone https://github.com/wesfly/bevy_fs.git && cd bevy_fs
    ```
 
 2. Build and run the project
@@ -41,26 +44,8 @@ This is a little flight sim made in Bevy.
    cargo run --release
    ```
 
-   This will build and launch bevy_fs. The first startup fetches terrain data
+   This will build and launch `bevy_fs`. The first startup fetches terrain data
    and can take some time.
-
-## Flying
-
-Press `P` to unpause the sim.
-
-### Helicopter
-
-You can start the engines by pressing `M`. If you now bring the throttle to
-100%, you will start flying.
-
-### Aeroplane
-
-You will start in the air with the engine already on, you just need to throttle
-up.
-
-## Settings
-
-The settings are located in `settings.json` at the root of this project.
 
 ## Terrain
 
@@ -69,12 +54,28 @@ Terrain data will be stored in the `terrain_cache` folder after the first fetch
 or the resolution, change `terrain.coordinates` or `terrain.level_of_detail` in
 the settings. Note that the general maximum level of detail is 15, but in most
 regions 14 or even less. Here is an interactive map for different resolutions:
-https://mapterhorn.com/coverage/
+<https://mapterhorn.com/coverage>
 
 Note that high resolutions will result in high RAM usage, to tackle this issue,
 turn down the maximum render distance in the settings.
 
 ## Controls
+
+### Tips
+
+#### Helicopter
+
+You can start the engines by pressing `M`. If you now bring the throttle to
+100%, you will start flying.
+
+#### Aeroplane
+
+You will start in the air with the engine already on, you just need to throttle
+up.
+
+### Pause
+
+Press `P` to unpause the sim.
 
 ### General
 
