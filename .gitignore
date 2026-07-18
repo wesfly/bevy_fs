@@ -1,4 +1,6 @@
-/target
 .direnv
 .envrc
 shell.nix
+/target
+/terrain_cache/*
+!/terrain_cache/.gitkeep
