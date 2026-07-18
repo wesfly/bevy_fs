@@ -7,8 +7,8 @@
   "shadow_distance": 10000.0,
   "sun_position": [-1.0, 1.2, 2.0],
   "terrain": {
-    "coordinates": { "lat": 43.12103, "long": 6.12908 },
+    "coord": { "lat": 43.12103, "long": 6.12908 },
     "max_render_distance": 20000.0,
-    "level_of_detail": 12
+    "level_of_detail": 14
   }
 }
