@@ -2,8 +2,6 @@
 I made a little flight simulator here. Check out the README for further information.
 If you have fixes or want to contribute, just make a pull request.
 
-TODO: Add big_space someday
-
 Spatial units are in metres
 Default for speed is m/s
 */
@@ -21,7 +19,7 @@ mod ui;
 
 use crate::{
     aircraft::{
-        AircraftState,
+        Aircraft, AircraftState,
         animations::{update_control_surfaces, update_rotors},
         breeze::landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
         buttons::{Button, ButtonMessages},
@@ -29,30 +27,27 @@ use crate::{
     },
     camera::{Camera, CameraPosition, CameraSettings, rotate_sun},
     input::ControlInputs,
-    scenery::terrain::{
-        Chunk, ChunkMessage, LoadedChunks, TerrainMaterial, TerrainSettings, dynamic_chunks,
-        poll_terrain,
-    },
+    scenery::terrain::{TerrainCacheResource, TerrainMaterial, TerrainSettings, poll_terrain},
     sse::Sse,
     ui::{Menu, UI},
 };
 use avian3d::prelude::*;
 use bevy::{
-    dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig},
+    dev_tools::diagnostics_overlay::DiagnosticsOverlayPlugin,
+    diagnostic::FrameTimeDiagnosticsPlugin,
     ecs::system::SystemId,
+    math::DVec3,
     pbr::ExtendedMaterial,
     prelude::*,
     render::view::screenshot::{Capturing, Screenshot, save_to_disk},
     window::{CursorIcon, SystemCursorIcon},
 };
+use big_space::prelude::*;
 use serde::Deserialize;
 use std::{collections::HashMap, fs};
 
 #[allow(unused)] // AircraftFdmDebugPlugin, FdmGizmos can be commented out in the main function
-use avian_fdm::{
-    plugin::AircraftFdmPlugin,
-    prelude::{AircraftFdmDebugPlugin, FdmGizmos, ShowColliders},
-};
+use avian_fdm::plugin::AircraftFdmPlugin;
 
 pub fn bevy_to_aerospace_coords() -> Quat {
     Quat::from_mat3(&Mat3::from_cols(
@@ -123,103 +118,112 @@ impl FromWorld for RunOnceSystemList {
 
 fn main() {
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins)
-        .add_plugins(PhysicsPlugins::default())
-        .add_plugins(MeshPickingPlugin)
-        .add_plugins(AircraftFdmPlugin::default())
-        // .insert_gizmo_config(
-        //     FdmGizmos {
-        //         force_scale: 1.0 / 600.0,
-        //         total_force_color: None,
-        //         weight_color: None,
-        //         ..FdmGizmos::default()
-        //     },
-        //     GizmoConfig::default(),
-        // )
-        // .add_plugins(AircraftFdmDebugPlugin)
-        // .add_plugins(PhysicsDebugPlugin)
-        .add_plugins(UI)
-        .add_plugins(Sse)
-        .add_plugins(FpsOverlayPlugin {
-            config: FpsOverlayConfig {
-                frame_time_graph_config: FrameTimeGraphConfig {
-                    enabled: true,
-                    min_fps: 40.0,
-                    target_fps: 100.0,
-                },
-                ..default()
-            },
-        })
-        .add_plugins(MaterialPlugin::<
-            ExtendedMaterial<StandardMaterial, TerrainMaterial>,
-        >::default())
-        // Resources
-        .insert_resource(PhysicsPickingSettings {
-            require_markers: true,
-        })
-        .insert_resource(GameState {
-            running: false,
-            in_menu: false,
-        })
-        .insert_resource(ControlInputs {
-            pitch: 0.0,
-            yaw: 0.0,
-            roll: 0.0,
-            throttle: 0.0,
-            ground_brakes: 0.0,
-        })
-        .init_resource::<LoadedChunks>()
-        .init_resource::<ShowColliders>()
-        .insert_resource(CameraSettings::default())
-        .insert_resource(input::Keymap::default())
-        .insert_resource(Settings::fetch())
-        .insert_resource(LightsTimers {
-            acol: Timer::from_seconds(ACOL_OFF_DURATION, TimerMode::Repeating),
-            acol_on_cycle: false,
-            strobe: Timer::from_seconds(STROBE_OFF_DURATION, TimerMode::Repeating),
-            strobe_on_cycle: false,
-        })
-        .init_resource::<RunOnceSystemList>()
-        .insert_resource(ClearColor(Color::BLACK))
-        .insert_resource(AircraftState::default())
-        .insert_resource(LandingGearStatus::Retracted)
-        .insert_resource(CameraPosition(Transform {
-            translation: Vec3::ZERO,
-            ..default()
-        }))
-        // Messages
-        .add_message::<LandingGearCommand>()
-        .add_message::<ChunkMessage>()
-        .add_message::<ButtonMessages>()
-        // Systems
-        .add_systems(
-            Update,
-            (
-                update_rotors,
-                Camera::controller,
-                input::input_system,
-                aircraft::buttons::update_cursor,
-            ),
-        )
-        .add_systems(
-            FixedUpdate,
-            (
-                screenshot,
-                update_control_surfaces,
-                Light::update_light_cycle,
-                (Light::update_mesh_lights, Light::update_lights).after(Light::update_light_cycle),
-                LandingGear::operate_landing_gear,
-                screenshot_saving,
-                aircraft::screens::update_screens,
-                aircraft::main,
-                poll_terrain,
-                Chunk::message_reader,
-                Button::listener,
-                rotate_sun,
-                dynamic_chunks,
-                game_state,
-            ),
-        );
+    let default_plugins = DefaultPlugins.build().disable::<TransformPlugin>();
+    app.add_plugins((
+        default_plugins,
+        PhysicsPlugins::default(),
+        MeshPickingPlugin,
+        UI,
+        AircraftFdmPlugin::default(),
+        FrameTimeDiagnosticsPlugin::default(),
+        DiagnosticsOverlayPlugin,
+        Sse,
+        BigSpaceDefaultPlugins,
+        bevy::camera_controller::free_camera::FreeCameraPlugin,
+    ))
+    .add_plugins(MaterialPlugin::<
+        ExtendedMaterial<StandardMaterial, TerrainMaterial>,
+    >::default())
+    // .insert_gizmo_config(
+    //     FdmGizmos {
+    //         force_scale: 1.0 / 600.0,
+    //         total_force_color: None,
+    //         weight_color: None,
+    //         ..FdmGizmos::default()
+    //     },
+    //     GizmoConfig::default(),
+    // )
+    // .add_plugins(AircraftFdmDebugPlugin)
+    // .add_plugins(PhysicsDebugPlugin)
+    // Resources
+    .insert_resource(PhysicsPickingSettings {
+        require_markers: true,
+    })
+    .insert_resource(GameState {
+        running: false,
+        in_menu: false,
+    })
+    .insert_resource(ControlInputs {
+        pitch: 0.0,
+        yaw: 0.0,
+        roll: 0.0,
+        throttle: 0.0,
+        ground_brakes: 0.0,
+    })
+    // .init_resource::<ShowColliders>()
+    .insert_resource(CameraSettings::default())
+    .insert_resource(input::Keymap::default())
+    .insert_resource(Settings::fetch())
+    .insert_resource(LightsTimers {
+        acol: Timer::from_seconds(ACOL_OFF_DURATION, TimerMode::Repeating),
+        acol_on_cycle: false,
+        strobe: Timer::from_seconds(STROBE_OFF_DURATION, TimerMode::Repeating),
+        strobe_on_cycle: false,
+    })
+    .init_resource::<RunOnceSystemList>()
+    .insert_resource(ClearColor(Color::BLACK))
+    .insert_resource(TerrainCacheResource::default())
+    .insert_resource(AircraftState::default())
+    .insert_resource(LandingGearStatus::Retracted)
+    .insert_resource(CameraPosition(Transform {
+        translation: Vec3::ZERO,
+        ..default()
+    }))
+    .insert_resource(avian3d::physics_transform::PhysicsTransformConfig {
+        propagate_before_physics: false,
+        transform_to_position: false,
+        position_to_transform: false,
+        transform_to_collider_scale: true,
+    })
+    // Messages
+    .add_message::<LandingGearCommand>()
+    .add_message::<ButtonMessages>()
+    // Systems
+    .add_systems(
+        Update,
+        (
+            update_rotors,
+            Camera::controller,
+            input::input_system,
+            aircraft::buttons::update_cursor,
+        ),
+    )
+    .add_systems(
+        FixedPostUpdate,
+        sync_to_avian.in_set(PhysicsSystems::Prepare),
+    )
+    .add_systems(
+        PostUpdate,
+        sync_from_avian.before(bevy::transform::TransformSystems::Propagate),
+    )
+    .add_systems(
+        FixedUpdate,
+        (
+            screenshot,
+            update_control_surfaces,
+            Light::update_light_cycle,
+            (Light::update_mesh_lights, Light::update_lights).after(Light::update_light_cycle),
+            LandingGear::operate_landing_gear,
+            screenshot_saving,
+            aircraft::screens::update_screens,
+            aircraft::main,
+            poll_terrain,
+            Button::listener,
+            rotate_sun,
+            game_state,
+            // track_position,
+        ),
+    );
     app.run();
 }
 
@@ -255,5 +259,94 @@ fn game_state(mut physics_time: ResMut<Time<Physics>>, game_state: Res<GameState
     match game_state.running {
         false => physics_time.pause(),
         true => physics_time.unpause(),
+    }
+}
+
+pub const CELL_SIZE: f64 = 500.0;
+
+fn write_avian_position(
+    mut bodies: Query<(
+        &RigidBody,
+        &CellCoord,
+        &Transform,
+        &mut Position,
+        &mut Rotation,
+    )>,
+) {
+    for (rb, cell, transform, mut pos, mut rot) in &mut bodies {
+        if *rb != RigidBody::Kinematic {
+            continue;
+        }
+        let cell_diff = bevy::math::DVec3::new(cell.x as f64, cell.y as f64, cell.z as f64);
+        pos.0 = transform.translation.as_dvec3() + cell_diff * CELL_SIZE;
+        rot.0 = transform.rotation.as_dquat().normalize();
+    }
+}
+
+fn read_avian_position(
+    mut bodies: Query<(&Position, &Rotation, &mut CellCoord, &mut Transform), With<RigidBody>>,
+) {
+    for (pos, rot, mut cell, mut transform) in &mut bodies {
+        let cell_origin =
+            bevy::math::DVec3::new(cell.x as f64, cell.y as f64, cell.z as f64) * CELL_SIZE;
+        let mut local = pos.0 - cell_origin;
+
+        if local.x > CELL_SIZE {
+            cell.x += 1;
+            local.x -= CELL_SIZE;
+        } else if local.x < -CELL_SIZE {
+            cell.x -= 1;
+            local.x += CELL_SIZE;
+        }
+        if local.y > CELL_SIZE {
+            cell.y += 1;
+            local.y -= CELL_SIZE;
+        } else if local.y < -CELL_SIZE {
+            cell.y -= 1;
+            local.y += CELL_SIZE;
+        }
+        if local.z > CELL_SIZE {
+            cell.z += 1;
+            local.z -= CELL_SIZE;
+        } else if local.z < -CELL_SIZE {
+            cell.z -= 1;
+            local.z += CELL_SIZE;
+        }
+
+        transform.translation = local.as_vec3();
+        transform.rotation = rot.0.as_quat().normalize();
+    }
+}
+
+fn sync_to_avian(mut bodies: Query<(&CellCoord, &Transform, &mut Position, &mut Rotation)>) {
+    for (cell, transform, mut pos, mut rot) in &mut bodies {
+        let cell_diff = DVec3::new((cell.x) as f64, (cell.y) as f64, (cell.z) as f64);
+        let position = transform.translation.as_dvec3() + cell_diff * CELL_SIZE;
+        let rotation = transform.rotation.as_dquat().normalize();
+
+        pos.0 = position;
+        rot.0 = rotation;
+    }
+}
+
+fn sync_from_avian(mut bodies: Query<(&Position, &mut CellCoord, &mut Transform, &Rotation)>) {
+    for (pos, mut cell, mut transform, rot) in &mut bodies {
+        let relative_pos = pos.0;
+
+        let cell_offset_x = (relative_pos.x / CELL_SIZE).round() as i64;
+        let cell_offset_y = (relative_pos.y / CELL_SIZE).round() as i64;
+        let cell_offset_z = (relative_pos.z / CELL_SIZE).round() as i64;
+
+        cell.x = cell_offset_x;
+        cell.y = cell_offset_y;
+        cell.z = cell_offset_z;
+        transform.translation = (relative_pos
+            - DVec3::new(
+                cell_offset_x as f64 * CELL_SIZE,
+                cell_offset_y as f64 * CELL_SIZE,
+                cell_offset_z as f64 * CELL_SIZE,
+            ))
+        .as_vec3();
+        transform.rotation = rot.as_quat().normalize();
     }
 }

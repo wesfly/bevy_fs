@@ -1,5 +1,5 @@
-use crate::aircraft::{Aircraft, AircraftState, BothSides, BothSidesExt, alpha_deg};
-use avian3d::prelude::{Forces, ReadRigidBodyForces};
+use crate::aircraft::{Aircraft, AircraftState, BothSides, BothSidesF32, alpha_deg};
+use avian3d::prelude::{Forces, Position, ReadRigidBodyForces};
 use bevy::prelude::*;
 
 pub fn fly_by_wire(
@@ -7,6 +7,7 @@ pub fn fly_by_wire(
     state: &mut AircraftState,
     aircraft: &mut Single<
         (
+            &Position,
             &Transform,
             Forces,
             Option<&mut avian_fdm::prelude::ControlInputs>,
@@ -16,7 +17,7 @@ pub fn fly_by_wire(
 ) {
     let mut cs = state.control_surfaces;
 
-    if let Some(fdm_cs) = &mut aircraft.2 {
+    if let Some(fdm_cs) = &mut aircraft.3 {
         cs.elevator.port = -input.pitch;
         cs.elevator.starboard = -input.pitch;
 
