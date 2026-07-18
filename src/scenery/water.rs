@@ -8,6 +8,7 @@ use bevy::{
     render::render_resource::{AsBindGroup, ShaderType},
     shader::ShaderRef,
 };
+use big_space::prelude::*;
 
 // A custom [`ExtendedMaterial`] that creates animated water ripples.
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
@@ -44,12 +45,12 @@ pub struct WaterSettings {
 const SHADER_ASSET_PATH: &str = "shaders/water.wgsl";
 
 pub fn spawn_water(
-    commands: &mut Commands,
+    commands: &mut GridCommands,
     asset_server: &Res<AssetServer>,
     meshes: &mut ResMut<Assets<Mesh>>,
     mut water_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, Water>>>,
 ) {
-    commands.spawn((
+    commands.spawn_spatial((
         Mesh3d(meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(20000.0)))),
         Transform::from_xyz(0.0, 0.1, 0.0),
         MeshMaterial3d(
