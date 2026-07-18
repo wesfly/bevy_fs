@@ -1,6 +1,5 @@
-use crate::{Settings, camera::Camera};
-use avian3d::prelude::{Collider, RigidBody};
 use bevy::{
+    color::palettes::css::GREEN,
     image::{
         ImageAddressMode, ImageFilterMode, ImageLoaderSettings, ImageSampler,
         ImageSamplerDescriptor,
@@ -9,31 +8,452 @@ use bevy::{
     prelude::*,
     tasks::{AsyncComputeTaskPool, Task, futures_lite::future},
 };
+use big_space::prelude::*;
+use dashmap::DashMap;
 pub use material::TerrainMaterial;
 use once_cell::sync::Lazy;
-use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashSet,
-    f32::consts::PI,
-    fs::{self, File},
-    io::Write,
-    path::Path,
-};
+use reqwest::Client;
+use serde::Deserialize;
+use std::fs::File;
+use std::{collections::HashSet, f32::consts::PI, io::Write, path::Path, sync::Arc};
 use tokio::runtime::Runtime;
+use tokio::sync::Semaphore;
 
 mod material;
+pub const EARTH_RADIUS: f32 = 6_360_000.0;
 
-#[derive(Deserialize)]
+const SIZE: f32 = 2.0;
+const SUBDIV: u32 = 4096 * 4;
+const CHUNKS: u32 = SUBDIV.pow(2);
+const SUBDIV_PER_TILE: u32 = 64;
+
+#[derive(Resource, Clone)]
+pub struct TerrainCacheResource {
+    pub cache: TileCache,
+}
+impl Default for TerrainCacheResource {
+    fn default() -> Self {
+        return Self {
+            cache: Arc::new(DashMap::new()),
+        };
+    }
+}
+
+#[derive(Deserialize, Clone, Copy, Debug)]
 pub struct TerrainSettings {
-    pub coordinates: Coordinates,
+    pub coord: Coord,
     max_render_distance: f32,
     pub level_of_detail: u8,
 }
+#[derive(Component)]
+struct TerrainFaces;
 
-#[derive(Serialize, Deserialize, Clone, PartialEq)]
-pub struct Coordinates {
+#[derive(Component)]
+pub struct SpawnTerrain(Task<Option<Mesh>>, (CellCoord, Vec3));
+
+#[derive(Copy, Clone, PartialEq, Deserialize, Debug)]
+pub struct Coord {
     pub lat: f32,
     pub long: f32,
+}
+
+pub fn spawn_chunk(
+    commands: &mut GridCommands,
+    normal: Dir3,
+    client: &Client,
+    semaphore: Arc<Semaphore>,
+    cache: TileCache,
+    terrain: TerrainSettings,
+) {
+    let thread_pool = AsyncComputeTaskPool::get();
+
+    let chunk_size = SIZE / SUBDIV as f32;
+    let centre_offset = (SUBDIV as f32 - 1.0) * 0.5;
+
+    // left to right,
+    // top to bottom
+    for i in 0..CHUNKS {
+        let ix = (i % SUBDIV) as f32;
+        let iy = (i / SUBDIV) as f32;
+
+        let a = (ix - centre_offset) * chunk_size;
+        let b = (iy - centre_offset) * chunk_size;
+
+        let mut translation_per_chunk = Vec3::ZERO;
+        if normal == Dir3::NEG_X || normal == Dir3::X {
+            translation_per_chunk.y = a;
+            translation_per_chunk.z = b;
+        }
+        if normal == Dir3::NEG_Y || normal == Dir3::Y {
+            translation_per_chunk.x = a;
+            translation_per_chunk.z = b;
+        }
+        if normal == Dir3::NEG_Z || normal == Dir3::Z {
+            translation_per_chunk.x = a;
+            translation_per_chunk.y = b;
+        }
+
+        let chunk_translation = Vec3 {
+            x: normal.x,
+            y: normal.y,
+            z: normal.z,
+        } + translation_per_chunk;
+
+        let translation = coord_to_pos(terrain.coord);
+
+        let projected_chunk_center = to_sphere_pos(&chunk_translation.to_array());
+
+        if projected_chunk_center.normalize().distance(translation)
+            > terrain.max_render_distance / EARTH_RADIUS
+        {
+            continue;
+        }
+
+        let client_clone = client.clone();
+        let semaphore_clone = Arc::clone(&semaphore);
+
+        let tokio_handle = TOKIO_RUNTIME.spawn(build_mesh(
+            normal,
+            chunk_translation,
+            client_clone,
+            semaphore_clone,
+            Arc::clone(&cache),
+            terrain.clone(),
+        ));
+
+        let task = thread_pool.spawn(async move { tokio_handle.await.unwrap() });
+        // let (cell_coord, cell_offset) = commands.grid().translation_to_grid(chunk_translation);
+        let (cell_coord, cell_offset) = commands.grid().translation_to_grid(projected_chunk_center);
+        commands.spawn(SpawnTerrain(task, (cell_coord, cell_offset)));
+    }
+}
+
+pub fn coord_to_pos(target_coord: Coord) -> Vec3 {
+    let lat_rad = target_coord.lat.to_radians();
+    let long_rad = target_coord.long.to_radians();
+
+    let y = lat_rad.sin();
+    let x = lat_rad.cos() * long_rad.sin();
+    let z = lat_rad.cos() * long_rad.cos();
+    Vec3::new(x, y, z)
+}
+
+fn to_sphere_pos(pos: &[f32; 3]) -> Vec3 {
+    let p = Vec3 {
+        x: pos[0],
+        y: pos[1],
+        z: pos[2],
+    };
+
+    let x2 = p.x * p.x;
+    let y2 = p.y * p.y;
+    let z2 = p.z * p.z;
+
+    // Even spacing of vertices on sphere
+    let x = p.x * (1.0 - (y2 + z2) / 2.0 + (y2 * z2 / 3.0)).sqrt();
+    let y = p.y * (1.0 - (z2 + x2) / 2.0 + (z2 * x2 / 3.0)).sqrt();
+    let z = p.z * (1.0 - (x2 + y2) / 2.0 + (x2 * y2 / 3.0)).sqrt();
+    let even_spaced_pos = Vec3::new(x, y, z);
+
+    even_spaced_pos * EARTH_RADIUS
+}
+
+// type TileCache = Arc<RwLock<HashMap<(u8, u32, u32), Arc<RgbImage>>>>;
+type TileCache = Arc<DashMap<(u8, u32, u32), Arc<image::RgbImage>>>;
+pub fn init_terrain_cache() -> TileCache {
+    Arc::new(DashMap::new())
+}
+
+static DUMMY_TILE: Lazy<Arc<image::RgbImage>> = Lazy::new(|| {
+    let mut dummy = image::RgbImage::new(512, 512);
+    for pixel in dummy.pixels_mut() {
+        *pixel = image::Rgb([128, 0, 0]);
+    }
+    Arc::new(dummy)
+});
+
+fn coord_to_tile(coord: Coord, n: f32) -> (u32, u32) {
+    // Longitude to Tile X
+    let x = n * ((coord.long + 180.0) / 360.0);
+
+    // Latitude to Tile Y (clamped to protect against tangents approaching infinity near poles)
+    let lat_rad = coord
+        .lat
+        .to_radians()
+        .clamp(-85.05112_f32.to_radians(), 85.05112_f32.to_radians());
+    let y = (1.0 - (lat_rad.tan() + (1.0 / lat_rad.cos())).ln() / std::f32::consts::PI) / 2.0 * n;
+
+    (x.floor() as u32, y.floor() as u32)
+}
+
+async fn ensure_tiles_loaded(
+    client: &Client,
+    semaphore: Arc<tokio::sync::Semaphore>,
+    cache: TileCache,
+    required_tiles: Vec<(u8, u32, u32)>,
+) {
+    let mut fetch_tasks = vec![];
+
+    for (zoom, x, y) in required_tiles {
+        if cache.contains_key(&(zoom, x, y)) {
+            continue;
+        }
+
+        let client = client.clone();
+        let semaphore = Arc::clone(&semaphore);
+        let cache = Arc::clone(&cache);
+
+        let task = tokio::spawn(async move {
+            let path = format!("terrain_cache/{}_{}_{}.webp", zoom, x, y);
+
+            match get_tile(&client, semaphore, &TerrariumCoords { z: zoom, x, y }).await {
+                Ok(_) => {}
+                Err(e) => {
+                    warn!("Missing tile {}/{}/{}: {}", zoom, x, y, e);
+                }
+            }
+
+            let img_result = tokio::task::spawn_blocking(move || {
+                let bytes = std::fs::read(&path).unwrap_or_else(|_| vec![]);
+
+                if bytes.is_empty() {
+                    return Ok::<Arc<image::RgbImage>, String>(Arc::clone(&DUMMY_TILE));
+                }
+
+                match image::load_from_memory_with_format(&bytes, image::ImageFormat::WebP) {
+                    Ok(img) => Ok(Arc::new(img.to_rgb8())),
+                    Err(_) => Ok(Arc::clone(&DUMMY_TILE)),
+                }
+            })
+            .await
+            .expect("Task panicked");
+
+            let final_image = img_result.unwrap_or_else(|_| Arc::clone(&DUMMY_TILE));
+            cache.insert((zoom, x, y), final_image);
+        });
+
+        fetch_tasks.push(task);
+    }
+
+    futures::future::join_all(fetch_tasks).await;
+}
+
+fn get_height_at_coord(coord_: Coord, zoom: u8, cache: &TileCache) -> f32 {
+    //--------------------- coords to terrarium coords ---------------------
+
+    // because coordinates are from elliptic sphere (geodetic coords)
+    // const FLATTENING_SQ: f32 = 0.99330562;
+
+    // let geocentric_lat_rad = coord.lat.to_radians();
+
+    // // Convert geocentric latitude to geodetic latitude
+    // let geodetic_lat_rad = (geocentric_lat_rad.tan() / FLATTENING_SQ).atan();
+    // let geodetic_lat = geodetic_lat_rad.to_degrees();
+
+    // if geodetic_lat < -85.05113 || coord.lat > 85.05113 {
+    //     error!(
+    //         "Latitude {} is out of Web Mercator bounds (-85.05113..85.05113)",
+    //         coord.lat
+    //     );
+    //     return 0.0;
+    // }
+    let coord = coord_;
+    if coord.long < -180.0 || coord.long > 180.0 {
+        error!("Longitude {} is out of bounds (-180.0..180.0)", coord.long);
+        return 0.0;
+    }
+
+    let z = zoom as f32;
+    let n = 2.0_f32.powf(z);
+
+    let x = n * ((coord.long + 180.0) / 360.0);
+    let y = (1.0 - (coord.lat.to_radians().tan() + (1.0 / coord.lat.to_radians().cos())).ln() / PI)
+        / 2.0
+        * n;
+
+    // rounding down
+    let tile_x = x.floor() as u32;
+    let tile_y = y.floor() as u32;
+
+    // we do all of this instead of calling the function for these two values
+    let offset_x = x - tile_x as f32;
+    let offset_y = y - tile_y as f32;
+
+    //--------------------- sample elevation  ---------------------
+
+    let px_offset_x = (offset_x * 512.0) as u32;
+    let px_offset_y = (offset_y * 512.0) as u32;
+
+    if let Some(img) = cache.get(&(zoom, tile_x, tile_y)) {
+        // Double check bounds just in case of float precision weirdness
+        if px_offset_x < 512 && px_offset_y < 512 {
+            let pixel = img[(px_offset_x, px_offset_y)];
+            let r = pixel[0] as f32;
+            let g = pixel[1] as f32;
+            let b = pixel[2] as f32;
+
+            return (r * 256.0 + g + b / 256.0) - 32768.0;
+        }
+    }
+
+    0.0
+}
+
+static TOKIO_RUNTIME: Lazy<Runtime> =
+    Lazy::new(|| Runtime::new().expect("Failed to create tokio runtime"));
+
+async fn build_mesh(
+    normal: Dir3,
+    chunk_translation: Vec3,
+    client: Client,
+    semaphore: Arc<Semaphore>,
+    cache: TileCache,
+    terrain: TerrainSettings,
+) -> Option<Mesh> {
+    let n = 2.0_f32.powf(terrain.level_of_detail as f32);
+    let required_tiles = calculate_required_tiles_for_chunk(chunk_translation, normal, n, &terrain);
+    ensure_tiles_loaded(
+        &client,
+        Arc::clone(&semaphore),
+        Arc::clone(&cache),
+        required_tiles,
+    )
+    .await;
+    let mut earth_mesh = Mesh::from(
+        Plane3d::default()
+            .mesh()
+            .size(SIZE / SUBDIV as f32, SIZE / SUBDIV as f32)
+            .normal(normal)
+            .subdivisions(SUBDIV_PER_TILE),
+    )
+    .translated_by(chunk_translation);
+
+    let projected_chunk_center = to_sphere_pos(&chunk_translation.to_array());
+
+    // make the planes a sphere
+    if let bevy::mesh::VertexAttributeValues::Float32x3(positions) = earth_mesh
+        .try_attribute_mut(Mesh::ATTRIBUTE_POSITION)
+        .unwrap()
+    {
+        for pos in positions.iter_mut() {
+            let mut even_spaced_pos = to_sphere_pos(&pos);
+            *pos = (even_spaced_pos).to_array();
+
+            let coord = pos_to_coord(*pos);
+
+            let factor =
+                1.0 + (0.0000001 * get_height_at_coord(coord, terrain.level_of_detail, &cache));
+            // pos[0] *= factor;
+            // pos[1] *= factor;
+            // pos[2] *= factor;
+            even_spaced_pos.x *= factor;
+            even_spaced_pos.y *= factor;
+            even_spaced_pos.z *= factor;
+
+            *pos = (even_spaced_pos - projected_chunk_center).to_array();
+        }
+    } else {
+        return None;
+    }
+
+    earth_mesh.compute_normals();
+
+    return Some(earth_mesh);
+}
+
+fn calculate_required_tiles_for_chunk(
+    chunk_translation: Vec3,
+    normal: Dir3,
+    n: f32,
+    terrain: &TerrainSettings,
+) -> Vec<(u8, u32, u32)> {
+    let mut unique_tiles = HashSet::new();
+
+    let chunk_size = SIZE / SUBDIV as f32;
+    let rotation = Quat::from_rotation_arc(Vec3::Y, *normal);
+
+    let steps = SUBDIV_PER_TILE + 1;
+
+    for i in 0..steps {
+        for j in 0..steps {
+            let pct_x = (i as f32 / (steps - 1) as f32) - 0.5;
+            let pct_z = (j as f32 / (steps - 1) as f32) - 0.5;
+
+            let local_pos = Vec3::new(pct_x * chunk_size, 0.0, pct_z * chunk_size);
+
+            let world_plane_pos = rotation * local_pos + chunk_translation;
+            let even_spaced_pos = to_sphere_pos(&world_plane_pos.to_array());
+            let coord = pos_to_coord(even_spaced_pos.to_array());
+
+            let (tx, ty) = coord_to_tile(coord, n);
+
+            unique_tiles.insert((terrain.level_of_detail, tx, ty));
+        }
+    }
+
+    let max_tile_limit = (2.0_f32.powi(terrain.level_of_detail as i32) as u32).saturating_sub(1);
+
+    let mut final_tiles = Vec::new();
+    for (z, tx, ty) in unique_tiles {
+        // Clamp tiles to valid map ranges just in case of edge precision issues
+        let clamped_x = tx.min(max_tile_limit);
+        let clamped_y = ty.min(max_tile_limit);
+        final_tiles.push((z, clamped_x, clamped_y));
+    }
+
+    final_tiles
+}
+
+fn pos_to_coord(pos: [f32; 3]) -> Coord {
+    let distance_h = (pos[0].powi(2) + pos[2].powi(2)).sqrt();
+
+    let bearing = pos[0].atan2(pos[2]).to_degrees();
+
+    let elevation = pos[1]
+        .atan2(distance_h)
+        .to_degrees()
+        .clamp(-85.05113, 85.05113);
+
+    let coord = Coord {
+        lat: elevation,
+        long: bearing,
+    };
+    coord
+}
+
+async fn get_tile(
+    client: &Client,
+    semaphore: Arc<Semaphore>,
+    coord: &TerrariumCoords,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let file_name = format!("terrain_cache/{}_{}_{}.webp", coord.z, coord.x, coord.y);
+
+    if !Path::new(&file_name).exists() {
+        let _permit = semaphore.acquire().await?;
+
+        let url = format!(
+            "https://tiles.mapterhorn.com/{}/{}/{}.webp",
+            coord.z, coord.x, coord.y
+        );
+
+        let response = client.get(&url).send().await?;
+
+        if !response.status().is_success() {
+            return Err(format!(
+                "Server responded to {} with status: {}",
+                &url,
+                response.status()
+            )
+            .into());
+        }
+
+        let bytes = response.bytes().await?;
+
+        let mut file = File::create(file_name)?;
+        file.write_all(&bytes)?;
+    }
+
+    Ok(())
 }
 
 #[derive(Clone, Debug)]
@@ -43,324 +463,63 @@ pub struct TerrariumCoords {
     y: u32,
 }
 
-#[derive(Component, Clone, Debug, PartialEq)]
-pub struct Chunk(u32, u32);
-
-impl Coordinates {
-    fn to_terrarium_coords(&self, zoom: u8) -> TerrariumCoords {
-        let z = zoom as f32;
-        let n = 2.0_f32.powf(z);
-
-        let x = n * ((self.long + 180.0) / 360.0);
-        let lat_rad = (self.lat).to_radians();
-        let y = (1.0 - (lat_rad.tan() + (1.0 / lat_rad.cos())).ln() / PI) / 2.0 * n;
-
-        let tile_x = x.floor() as u32;
-        let tile_y = y.floor() as u32;
-
-        TerrariumCoords {
-            z: zoom,
-            x: tile_x,
-            y: tile_y,
-        }
-    }
-}
-
-const BASE_SIZE: f32 = 2048.0;
-
-#[derive(Component)]
-pub struct SpawnTerrain(Task<Option<(Mesh, Collider)>>, TerrariumCoords);
-
-static TOKIO_RUNTIME: Lazy<Runtime> =
-    Lazy::new(|| Runtime::new().expect("Failed to create Tokio runtime"));
-
-fn chunk_size(lod: &u8) -> f32 {
-    if *lod <= 14 {
-        let scale_factor = 2.0_f32.powi((14 - lod) as i32);
-        BASE_SIZE * scale_factor
-    } else {
-        let scale_factor = 2.0_f32.powi((lod - 14) as i32);
-        BASE_SIZE / scale_factor
-    }
-}
-
-pub fn dynamic_chunks(
-    mut commands: Commands,
-    settings: Res<Settings>,
-    camera: Single<&Transform, With<Camera>>, // This system runs as soon as there's a Camera
-    mut loaded_chunks: ResMut<LoadedChunks>,
-    chunks: Query<(Entity, &Chunk)>,
-    mut messages: MessageWriter<ChunkMessage>,
-) {
-    let chunk_size = chunk_size(&settings.terrain.level_of_detail);
-
-    let coords = settings
-        .terrain
-        .coordinates
-        .clone()
-        .to_terrarium_coords(settings.terrain.level_of_detail);
-
-    // The chunk where the camera is
-    let camera_chunk_x = (camera.translation.x / chunk_size) as i32;
-    let camera_chunk_y = (camera.translation.z / chunk_size) as i32;
-
-    let radius = (settings.terrain.max_render_distance / chunk_size) as i32; // The radius where the system considers to spawn chunks, but it's filtered in poll_terrain
-    let radius_range = -radius..radius;
-
-    let radius_range_plus_1 = -(radius + 1)..(radius + 1);
-
-    for x in radius_range_plus_1.clone() {
-        for y in radius_range_plus_1.clone() {
-            let coord_x = coords.x.wrapping_add((camera_chunk_x + x) as u32);
-            let coord_y = coords.y.wrapping_add((camera_chunk_y + y) as u32);
-
-            let chunk_key = (coord_x, coord_y);
-
-            if radius_range.contains(&x) && radius_range.contains(&y) {
-                if !loaded_chunks.0.contains(&chunk_key) {
-                    let thread_pool = AsyncComputeTaskPool::get();
-
-                    let chunk_coord = TerrariumCoords {
-                        z: settings.terrain.level_of_detail,
-                        x: coord_x,
-                        y: coord_y,
-                    };
-
-                    let tokio_handle =
-                        TOKIO_RUNTIME.spawn(get_terrain(chunk_coord.clone(), chunk_size));
-
-                    let task = thread_pool.spawn(async move { tokio_handle.await.unwrap() });
-
-                    commands.spawn(SpawnTerrain(task, chunk_coord.clone()));
-                    loaded_chunks.0.insert(chunk_key);
-                }
-            } else {
-                // Despawn old chunks
-                for (entity, chunk) in chunks {
-                    let chunk_key_fmtd = Chunk(chunk_key.0, chunk_key.1);
-                    if &chunk_key_fmtd == chunk {
-                        messages.write(ChunkMessage(ChunkMessages::Despawn(entity, chunk.clone())));
-                    }
-                }
-            }
-        }
-    }
-}
-
-pub enum ChunkMessages {
-    Spawn(Vec3, Box<Mesh>, Collider, TerrariumCoords),
-    Despawn(Entity, Chunk),
-}
-
-#[derive(Message)]
-pub struct ChunkMessage(ChunkMessages);
-
-#[derive(Resource, Default)]
-pub struct LoadedChunks(pub HashSet<(u32, u32)>);
-
 pub fn poll_terrain(
-    mut commands: Commands,
     mut tasks: Query<(Entity, &mut SpawnTerrain)>,
-    settings: Res<Settings>,
-    mut messages: MessageWriter<ChunkMessage>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut terrain_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, TerrainMaterial>>>,
+    asset_server: Res<AssetServer>,
+    big_space: Single<Entity, With<BigSpace>>,
 ) {
-    let chunk_size = chunk_size(&settings.terrain.level_of_detail);
-
-    let base_coords = settings
-        .terrain
-        .coordinates
-        .clone()
-        .to_terrarium_coords(settings.terrain.level_of_detail);
-
-    let base_world_x = base_coords.x as f32 * chunk_size;
-    let base_world_y = base_coords.y as f32 * chunk_size;
-
     for (entity, mut task) in &mut tasks {
-        if let Some(mesh_collider) = future::block_on(future::poll_once(&mut task.0)) {
-            if let Some((mesh, collider)) = mesh_collider {
-                let coord = task.1.clone();
+        if let Some(mesh_intermediary) = future::block_on(future::poll_once(&mut task.0)) {
+            if let Some(earth_mesh) = mesh_intermediary {
+                let (cell_coord, cell_offset) = task.1;
 
-                // Calculate world position of this chunk
-                let chunk_world_x = coord.x as f32 * chunk_size;
-                let chunk_world_y = coord.y as f32 * chunk_size;
+                let chunk = commands
+                    .spawn((
+                        TerrainFaces,
+                        Mesh3d(meshes.add(earth_mesh)),
+                        MeshMaterial3d(
+                            terrain_materials.add(ExtendedMaterial {
+                                base: StandardMaterial {
+                                    base_color: Color::Srgba(GREEN),
+                                    perceptual_roughness: 1.0,
+                                    ..Default::default()
+                                },
+                                extension: TerrainMaterial {
+                                    normals: asset_server
+                                        .load_builder()
+                                        .with_settings(|settings: &mut ImageLoaderSettings| {
+                                            settings.is_srgb = false;
+                                            settings.sampler =
+                                                ImageSampler::Descriptor(ImageSamplerDescriptor {
+                                                    address_mode_u: ImageAddressMode::Repeat,
+                                                    address_mode_v: ImageAddressMode::Repeat,
+                                                    mag_filter: ImageFilterMode::Linear,
+                                                    min_filter: ImageFilterMode::Linear,
+                                                    ..default()
+                                                });
+                                        })
+                                        .load("textures/water_normals.png"),
+                                },
+                            }),
+                        ),
+                        Transform::from_translation(
+                            cell_offset
+                                + Vec3 {
+                                    x: 0.0,
+                                    y: 0.0,
+                                    z: 0.0,
+                                },
+                        ),
+                        cell_coord,
+                    ))
+                    .id();
 
-                let translation = Vec3::new(
-                    (chunk_world_x - base_world_x) + chunk_size * 0.5,
-                    0.0,
-                    (chunk_world_y - base_world_y) + chunk_size * 0.5,
-                );
-
-                messages.write(ChunkMessage(ChunkMessages::Spawn(
-                    translation,
-                    Box::new(mesh),
-                    collider,
-                    coord,
-                )));
+                commands.entity(*big_space).add_child(chunk);
             }
-
             commands.entity(entity).remove::<SpawnTerrain>();
         }
-    }
-}
-
-impl Chunk {
-    pub fn message_reader(
-        mut messages: MessageReader<ChunkMessage>,
-        mut commands: Commands,
-        mut meshes: ResMut<Assets<Mesh>>,
-        mut terrain_materials: Option<
-            ResMut<Assets<ExtendedMaterial<StandardMaterial, TerrainMaterial>>>,
-        >,
-        mut loaded_chunks: ResMut<LoadedChunks>,
-        asset_server: Res<AssetServer>,
-    ) {
-        for message in messages.read() {
-            match &message.0 {
-                ChunkMessages::Spawn(translation, mesh, collider, coord) => {
-                    if let Some(ref mut material) = terrain_materials {
-                        Chunk::spawn(
-                            &mut commands,
-                            &mut meshes,
-                            material,
-                            *mesh.clone(),
-                            collider.clone(),
-                            translation,
-                            coord,
-                            &asset_server,
-                        );
-                    } else {
-                        warn!("whoops")
-                    }
-                }
-                ChunkMessages::Despawn(entity, coord) => {
-                    Self::despawn((entity, coord), &mut commands, &mut loaded_chunks);
-                    info!("Despawning chunks: {coord:?}")
-                }
-            };
-        }
-    }
-
-    fn spawn(
-        commands: &mut Commands<'_, '_>,
-        meshes: &mut ResMut<'_, Assets<Mesh>>,
-        terrain_materials: &mut ResMut<Assets<ExtendedMaterial<StandardMaterial, TerrainMaterial>>>,
-        mesh: Mesh,
-        collider: Collider,
-        translation: &Vec3,
-        coord: &TerrariumCoords,
-        asset_server: &Res<AssetServer>,
-    ) {
-        commands.spawn((
-            collider,
-            RigidBody::Static,
-            Transform::from_translation(*translation),
-            Mesh3d(meshes.add(mesh)),
-            Chunk(coord.x, coord.y),
-            MeshMaterial3d(
-                terrain_materials.add(ExtendedMaterial {
-                    base: StandardMaterial {
-                        base_color: Color::BLACK,
-                        perceptual_roughness: 1.0,
-                        ..Default::default()
-                    },
-                    extension: TerrainMaterial {
-                        normals: asset_server
-                            .load_builder()
-                            .with_settings(|settings: &mut ImageLoaderSettings| {
-                                settings.is_srgb = false;
-                                settings.sampler =
-                                    ImageSampler::Descriptor(ImageSamplerDescriptor {
-                                        address_mode_u: ImageAddressMode::Repeat,
-                                        address_mode_v: ImageAddressMode::Repeat,
-                                        mag_filter: ImageFilterMode::Linear,
-                                        min_filter: ImageFilterMode::Linear,
-                                        ..default()
-                                    });
-                            })
-                            .load("textures/water_normals.png"),
-                    },
-                }),
-            ),
-        ));
-    }
-
-    fn despawn(
-        entity: (&Entity, &Chunk),
-        commands: &mut Commands,
-        loaded_chunks: &mut ResMut<LoadedChunks>,
-    ) {
-        loaded_chunks.0.remove(&(entity.1.0, entity.1.1));
-        commands.entity(*entity.0).despawn();
-    }
-}
-
-async fn get_terrain(coord: TerrariumCoords, chunk_size: f32) -> Option<(Mesh, Collider)> {
-    data_from_file(&coord).await;
-
-    let path = format!("terrain_cache/{}_{}_{}.webp", coord.z, coord.x, coord.y);
-    let img = match image::load_from_memory_with_format(
-        &fs::read(&path).expect("file to be fetched"),
-        image::ImageFormat::WebP,
-    ) {
-        Ok(img) => img,
-        Err(_) => {
-            warn!("Failed to load WebP image, skipping");
-            return None;
-        }
-    };
-
-    let rgb_img = img.to_rgb8();
-    let (width, height) = rgb_img.dimensions();
-    let mut heights: std::vec::Vec<f32> = Vec::with_capacity((width * height) as usize);
-
-    for pixel in rgb_img.pixels() {
-        let r = pixel[0] as f32;
-        let g = pixel[1] as f32;
-        let b = pixel[2] as f32;
-
-        let h = (r * 256.0 + g + b / 256.0) - 32768.0;
-        heights.push(h);
-    }
-    if !heights.windows(2).all(|w| w[0] == w[1]) {
-        let mut terrain = Mesh::from(
-            Plane3d::default()
-                .mesh()
-                .size(chunk_size, chunk_size)
-                .subdivisions(width - 2),
-        );
-
-        if let bevy::mesh::VertexAttributeValues::Float32x3(positions) =
-            terrain.try_attribute_mut(Mesh::ATTRIBUTE_POSITION).unwrap()
-        {
-            assert_eq!(positions.len(), heights.len());
-
-            for (i, pos) in positions.iter_mut().enumerate() {
-                pos[1] = heights[i]
-            }
-        }
-
-        terrain.compute_normals();
-
-        let mesh: Mesh = terrain;
-
-        let collider = Collider::trimesh_from_mesh(&mesh).unwrap();
-        return Some((mesh, collider));
-    }
-    None
-}
-
-async fn data_from_file(coord: &TerrariumCoords) {
-    let file_name = format!("terrain_cache/{}_{}_{}.webp", coord.z, coord.x, coord.y);
-    if !Path::new(&file_name).exists() {
-        let url = format!(
-            "https://tiles.mapterhorn.com/{}/{}/{}.webp",
-            coord.z, coord.x, coord.y
-        );
-
-        let response = reqwest::get(url).await.unwrap();
-        let bytes = response.bytes().await.unwrap();
-
-        let mut file = File::create(file_name).unwrap();
-        file.write(&bytes).unwrap();
     }
 }
