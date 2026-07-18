@@ -13,7 +13,8 @@ use avian3d::{
     math::{Scalar, Vector},
     prelude::*,
 };
-use bevy::prelude::*;
+use bevy::{math::DVec3, prelude::*};
+use big_space::prelude::*;
 
 pub mod fly_by_wire;
 pub mod landing_gear;
@@ -87,13 +88,13 @@ const WING_AC_X: Scalar = -2.8;
 const WING_Z: Scalar = sourced!(-0.3, "Estimate");
 
 /// Geometric dihedral of each wing panel (radians).
-const WING_DIHEDRAL_RAD: Scalar = sourced!(-4.0_f32.to_radians(), "Measured from model");
+const WING_DIHEDRAL_RAD: Scalar = sourced!(-4.0_f64.to_radians(), "Measured from model");
 
-const ENGINE_LENGTH: f32 = sourced!(
+const ENGINE_LENGTH: f64 = sourced!(
     3.538,
     "https://en.wikipedia.org/wiki/Snecma_M88#:~:text=Length%3A%20353.8%C2%A0cm%20(139.3%C2%A0in)"
 );
-const ENGINE_RADIUS: f32 = sourced!(
+const ENGINE_RADIUS: f64 = sourced!(
     0.696 / 2.0,
     "https://en.wikipedia.org/wiki/Snecma_M88#:~:text=Diameter%3A%2069.6%C2%A0cm%20(27.4%C2%A0in)"
 );
@@ -107,21 +108,26 @@ pub fn spawn(
     commands: &mut Commands,
     transform: Transform,
     asset_server: Res<AssetServer>,
-    initial_velocity: Vec3,
+    initial_velocity: DVec3,
+    cell_coord: CellCoord,
+    parent_id: Entity,
+    abs_position: DVec3,
 ) -> Entity {
     const PATH: &str = "aircraft/breeze/c-f3/model.gltf";
 
-    commands
-        .spawn((
+    commands.spawn((
+            cell_coord,
             WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
             breeze_core_bundle(transform, initial_velocity),
             InducedDrag {
                 oswald_factor: 0.94,
             },
             Aircraft,
+            Position(abs_position),
+            ChildOf(parent_id),
             // No LodDamping. Roll/pitch/yaw damping emerges from zone geometry.
         )).observe(crate::data_from_gltf::load)
-        .with_children(|parent| {
+            .with_children(|parent| {
             //==== front avionics/cabin fuselage section ====
             parent.spawn((
                 AeroZoneBundle {
@@ -154,11 +160,11 @@ pub fn spawn(
                 GizmoShape::Box { x: 4.0, y: 2.0, z: 0.8 }
             ));
 
-            const ROOT_X_M: f32 = 4.0;
-            const ROOT_Y_M: f32 = 1.2;
-            const ROOT_OFFSET: f32 = 0.5;
+            const ROOT_X_M: f64 = 4.0;
+            const ROOT_Y_M: f64 = 1.2;
+            const ROOT_OFFSET: f64 = 0.5;
 
-            const TIP_X_M: f32 = -4.5;
+            const TIP_X_M: f64 = -4.5;
 
             // ── Left wing ───────────────────────────────────────────────────
             parent.spawn((wing_zone(
@@ -166,7 +172,7 @@ pub fn spawn(
                 ag47ct02r(),
                 Collider::cuboid(ROOT_X_M, 1.88, 0.2),
                 Mass(100.0),
-            ), GizmoShape::Box { x: ROOT_X_M, y: 1.88, z: 0.2 }));
+            ), GizmoShape::Box { x: ROOT_X_M as f32, y: 1.88, z: 0.2 }));
             parent.spawn((wing_zone(
                 "L-mid", WING_AC_X, WING_AC_X, -2.82, 0.15,
                 ag47ct02r(),
@@ -187,7 +193,7 @@ pub fn spawn(
                 ag47ct02r(),
                 Collider::cuboid(ROOT_X_M, 1.88, 0.2),
                 Mass(100.0),
-            ), GizmoShape::Box { x: ROOT_X_M, y: 1.88, z: 0.2 }));
+            ), GizmoShape::Box { x: ROOT_X_M as f32, y: 1.88, z: 0.2 }));
             parent.spawn((wing_zone(
                 "R-mid", WING_AC_X, WING_AC_X, 2.82, 0.15,
                 ag47ct02r(),
@@ -202,7 +208,7 @@ pub fn spawn(
             ), GizmoShape::Box { x: 1.0, y: 1.5, z: 0.1 }));
 
             //=== canards ====
-            const CANARD_AREA_M2: f32 = 1.0;
+            const CANARD_AREA_M2: f64 = 1.0;
 
             parent.spawn((
                 Name::new("L-canard"),
@@ -247,7 +253,7 @@ pub fn spawn(
             ));
 
             // ── Ailerons ─────────────────────────────────────────────────────
-            const AILERON_LENGTH: f32 = 0.72;
+            const AILERON_LENGTH: f64 = 0.72;
 
             // Trailing-edge strip, outboard: tiled behind tip front and
             // spanning from mid panel end (3.76) to wingtip (5.37).
@@ -264,13 +270,13 @@ pub fn spawn(
                 ControlSurfaceRole::AileronLeft,
                 Collider::cuboid(AILERON_LENGTH, AILERON_SPAN_M, 0.02),
                 ColliderDensity(sourced!(585.0, "Inertia-calibrated: same as wing panels (control surface + structure)")),
-            ), GizmoShape::Box { x: AILERON_LENGTH, y: AILERON_SPAN_M, z: 0.02 }));
+            ), GizmoShape::Box { x: AILERON_LENGTH as f32, y: AILERON_SPAN_M as f32, z: 0.02 }));
             parent.spawn((aileron_zone(
                 "R-aileron", 4.19,
                 ControlSurfaceRole::AileronRight,
                 Collider::cuboid(AILERON_LENGTH, AILERON_SPAN_M, 0.02),
                 ColliderDensity(sourced!(585.0, "Inertia-calibrated: same as wing panels (control surface + structure)")),
-            ), GizmoShape::Box { x: AILERON_LENGTH, y:AILERON_SPAN_M, z: 0.02 }));
+            ), GizmoShape::Box { x: AILERON_LENGTH as f32, y:AILERON_SPAN_M as f32, z: 0.02 }));
 
             // ── Elevator ──────────────────────────────────────────────────────
             parent.spawn((
@@ -299,7 +305,7 @@ pub fn spawn(
                     Collider::cuboid(VFIN_MEAN_CHORD_M, 0.10, VFIN_HEIGHT_M),
                     ColliderDensity(sourced!(30.0, "Inertia-calibrated: vertical fin fabric/wood structure; ~1.7 kg")),
                 ),
-                GizmoShape::Box { x: VFIN_MEAN_CHORD_M, y: 0.1, z: VFIN_HEIGHT_M }
+                GizmoShape::Box { x: VFIN_MEAN_CHORD_M as f32, y: 0.1, z: VFIN_HEIGHT_M as f32 }
             ));
 
             // ── Rudder ────────────────────────────────────────────────────────
@@ -308,7 +314,7 @@ pub fn spawn(
                     ColliderDensity(sourced!(105.0, "Estimate")),
                 ),
                 Name::new("rudder"),
-                GizmoShape::Box { x: RUDDER_MEAN_CHORD_M, y: 0.07, z: RUDDER_HEIGHT_M }
+                GizmoShape::Box { x: RUDDER_MEAN_CHORD_M as f32, y: 0.07, z: RUDDER_HEIGHT_M as f32 }
             ));
 
             // ── Engines ───────────────────────────────────────────────────────
@@ -319,7 +325,7 @@ pub fn spawn(
                     Mass(sourced!(897.0, "https://en.wikipedia.org/wiki/Snecma_M88#:~:text=Dry%20weight%3A%20897%C2%A0kg%20(1%2C978%C2%A0lb)")),
                     -0.6
                 ),
-                GizmoShape::Cylinder { radius: ENGINE_RADIUS, length: ENGINE_LENGTH, axis: Vec3::X },
+                GizmoShape::Cylinder { radius: ENGINE_RADIUS as f32, length: ENGINE_LENGTH as f32, axis: Vec3::X },
             ));
             parent.spawn((
                 Name::new("engine-R"),
@@ -328,7 +334,7 @@ pub fn spawn(
                     Mass(sourced!(897.0, "https://en.wikipedia.org/wiki/Snecma_M88#:~:text=Dry%20weight%3A%20897%C2%A0kg%20(1%2C978%C2%A0lb)")),
                     0.6
                 ),
-                GizmoShape::Cylinder { radius: ENGINE_RADIUS, length: ENGINE_LENGTH, axis: Vec3::X },
+                GizmoShape::Cylinder { radius: ENGINE_RADIUS as f32, length: ENGINE_LENGTH as f32, axis: Vec3::X },
             ));
         })
         .id()
@@ -341,7 +347,7 @@ pub fn spawn(
 /// Pair with [`InducedDrag`] (already included by [`spawn`]) for lift-induced
 /// drag.  No [`LodDamping`](avian_fdm::components::LodDamping). Roll/pitch/yaw
 /// damping emerges from per-zone local α/β physics.
-pub fn breeze_core_bundle(transform: Transform, initial_velocity: Vec3) -> impl Bundle {
+pub fn breeze_core_bundle(transform: Transform, initial_velocity: DVec3) -> impl Bundle {
     (AircraftCoreBundle {
         geometry: AircraftGeometry {
             wing_area_m2: WING_AREA_M2,
@@ -351,6 +357,7 @@ pub fn breeze_core_bundle(transform: Transform, initial_velocity: Vec3) -> impl 
         rigid_body: RigidBody::Dynamic,
         linear_velocity: LinearVelocity(initial_velocity),
         transform,
+        global_transform: GlobalTransform::default(),
         ..Default::default()
     },)
 }
@@ -379,23 +386,24 @@ pub fn wing_zone(
     collider: Collider,
     mass: Mass,
 ) -> impl Bundle {
-    let ac_offset = Vec3::new(ac_x_m - x_m, 0.0, 0.0);
+    let ac_offset = DVec3::new(ac_x_m - x_m, 0.0, 0.0);
     let z_m = WING_Z - y_m.abs() * WING_DIHEDRAL_RAD.sin();
-    let dihedral_rot = Quat::from_rotation_x(-(WING_DIHEDRAL_RAD * y_m.signum()));
+    let dihedral_rot = Quat::from_rotation_x(-(WING_DIHEDRAL_RAD * y_m.signum()) as f32);
     (
         Name::new(name),
         AeroZoneBundle {
             zone: AeroZone {
                 cl: airfoil.cl,
                 cd: airfoil.cd,
-                ac_offset,
+                ac_offset: ac_offset.as_vec3(),
                 area_m2: fraction * WING_AREA_M2,
                 chord_m: CHORD_M,
                 ..Default::default()
             }
             .with_post_stall_extension(),
             collider,
-            transform: Transform::from_xyz(x_m, y_m, z_m).with_rotation(dihedral_rot),
+            transform: Transform::from_xyz(x_m as f32, y_m as f32, z_m as f32)
+                .with_rotation(dihedral_rot),
             global_transform: GlobalTransform::default(),
         },
         mass,
@@ -412,7 +420,7 @@ pub fn aileron_zone(
 ) -> impl Bundle {
     let aileron_x = WING_AC_X - 2.8;
     let z_m = WING_Z - y_m.abs() * WING_DIHEDRAL_RAD.sin();
-    let dihedral_rot = Quat::from_rotation_x(-(WING_DIHEDRAL_RAD * y_m.signum()));
+    let dihedral_rot = Quat::from_rotation_x(-(WING_DIHEDRAL_RAD * y_m.signum()) as f32);
     (
         Name::new(name),
         AeroZoneBundle {
@@ -425,7 +433,8 @@ pub fn aileron_zone(
                 ..Default::default()
             },
             collider,
-            transform: Transform::from_xyz(aileron_x, y_m, z_m).with_rotation(dihedral_rot),
+            transform: Transform::from_xyz(aileron_x as f32, y_m as f32, z_m as f32)
+                .with_rotation(dihedral_rot),
             global_transform: GlobalTransform::default(),
         },
         density,
@@ -459,7 +468,7 @@ pub fn elevator_zone(collider: Collider, density: ColliderDensity, y_m: Scalar) 
                 ..Default::default()
             },
             collider,
-            transform: Transform::from_xyz(elevator_x, y_m, z_m),
+            transform: Transform::from_xyz(elevator_x as f32, y_m as f32, z_m as f32),
             global_transform: GlobalTransform::default(),
         },
         density,
@@ -497,7 +506,7 @@ pub fn vtail_zone(collider: Collider, density: ColliderDensity) -> impl Bundle {
             }
             .with_post_stall_extension(),
             collider,
-            transform: Transform::from_xyz(-VFIN_ARM_M, 0.0, -2.35),
+            transform: Transform::from_xyz(-VFIN_ARM_M as f32, 0.0, -2.35),
             global_transform: GlobalTransform::default(),
         },
         density,
@@ -522,7 +531,7 @@ pub fn rudder_zone(collider: Collider, density: ColliderDensity) -> impl Bundle 
             },
             collider,
             transform: Transform::from_xyz(
-                -(VFIN_ARM_M + VFIN_MEAN_CHORD_M / 2.0 + RUDDER_MEAN_CHORD_M / 2.0),
+                -(VFIN_ARM_M + VFIN_MEAN_CHORD_M / 2.0 + RUDDER_MEAN_CHORD_M / 2.0) as f32,
                 0.0,
                 -2.0,
             ),
@@ -532,7 +541,7 @@ pub fn rudder_zone(collider: Collider, density: ColliderDensity) -> impl Bundle 
     )
 }
 
-pub fn engine_zone(collider: Collider, mass: Mass, y_m: f32) -> impl Bundle {
+pub fn engine_zone(collider: Collider, mass: Mass, y_m: f64) -> impl Bundle {
     (
         EngineZone {
             max_thrust_n: sourced!(
@@ -548,7 +557,7 @@ pub fn engine_zone(collider: Collider, mass: Mass, y_m: f32) -> impl Bundle {
         },
         collider,
         mass,
-        Transform::from_xyz(-5.2, y_m, -0.4),
+        Transform::from_xyz(-5.2, y_m as f32, -0.4),
         GlobalTransform::default(),
     )
 }

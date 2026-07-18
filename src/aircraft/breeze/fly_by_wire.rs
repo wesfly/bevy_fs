@@ -56,6 +56,7 @@ pub fn fly_by_wire(
 pub fn canards_angle(
     aircraft: &mut Single<
         (
+            &Position,
             &Transform,
             Forces,
             Option<&mut avian_fdm::prelude::ControlInputs>,
@@ -64,8 +65,8 @@ pub fn canards_angle(
     >,
     state: AircraftState,
 ) -> BothSides<f32> {
-    let velocity = aircraft.1.linear_velocity(); // (TODO)
-    let transform = aircraft.0;
+    let velocity = aircraft.2.linear_velocity(); // (TODO)
+    let transform = aircraft.1;
 
     let alpha_deg = alpha_deg(&velocity, transform);
 
@@ -78,7 +79,7 @@ pub fn canards_angle(
     let canards_angle = if velocity.length() <= 30.0 {
         0.0
     } else {
-        (offset - alpha_deg).clamp(-22.0, 50.0).to_radians()
+        (offset - alpha_deg).clamp(-22.0, 50.0).to_radians() as f32
     };
 
     canards_angle.both_sides()

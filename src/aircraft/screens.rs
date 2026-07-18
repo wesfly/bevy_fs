@@ -289,7 +289,7 @@ pub fn update_screens(
                 ScreenUiElement::AirspeedKts => {
                     *text = Text::new(format!(
                         "{} kts",
-                        (transform.local_x().dot(velocity.0) * M_S_TO_KTS) as i32
+                        (transform.local_x().dot(velocity.0.as_vec3()) * M_S_TO_KTS) as i32
                     ))
                 }
                 ScreenUiElement::Altitude => {
@@ -309,7 +309,7 @@ pub fn update_screens(
             let up = transform.rotation.inverse() * Vec3::Y;
 
             let roll = f32::atan2(-up.z, up.y);
-            ui_transform.rotation = Rot2::radians(-roll + 1.0 / 2.0 * PI);
+            ui_transform.rotation = Rot2::radians(-roll + (1.0 / 2.0 * PI) as f32);
 
             let forward = transform.local_x();
             let pitch = forward.y.asin();

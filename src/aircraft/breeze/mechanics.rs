@@ -3,7 +3,10 @@ use crate::{
     aircraft::{Aircraft, AircraftState, AircraftTypes},
     input::ControlInputs,
 };
+use avian3d::dynamics::rigid_body::forces::WriteRigidBodyForces;
 use avian3d::prelude::Forces;
+use avian3d::prelude::Position;
+use bevy::math::DVec3;
 use bevy::prelude::*;
 
 pub fn mechanics(
@@ -11,6 +14,7 @@ pub fn mechanics(
     state: &mut ResMut<AircraftState>,
     aircraft: &mut Single<
         (
+            &Position,
             &Transform,
             Forces,
             Option<&mut avian_fdm::prelude::ControlInputs>,
@@ -24,12 +28,33 @@ pub fn mechanics(
         }
         AircraftTypes::Breeze => {
             fly_by_wire(&input, state, aircraft);
+            engine(&input, **state, aircraft);
         }
         AircraftTypes::J3Cub => {
             // TODO
             fly_by_wire(&input, state, aircraft);
         }
     }
+}
+
+fn engine(
+    input: &Res<ControlInputs>,
+    state: AircraftState,
+    aircraft: &mut Single<
+        (
+            &Position,
+            &Transform,
+            Forces,
+            Option<&mut avian_fdm::prelude::ControlInputs>,
+        ),
+        With<Aircraft>,
+    >,
+) {
+    let (position, transform, forces, option_ctrl_inputs) = &mut **aircraft;
+    forces.apply_force_at_point(
+        DVec3::new(0.0, 10.0, 0.0) * 100.0 * input.throttle as f64,
+        position.as_ivec3().as_dvec3() + transform.rotation.as_dquat() * DVec3::new(0.0, 10.0, 0.0),
+    );
 }
 
 /*

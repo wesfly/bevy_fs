@@ -465,12 +465,12 @@ impl LandingGear {
     }
 }
 
-const REST: f32 = 1.2;
-const STRENGTH: f32 = 200_000.0;
-const DAMPING: f32 = 15_000.0;
+const REST: f64 = 1.2;
+const STRENGTH: f64 = 200_000.0;
+const DAMPING: f64 = 15_000.0;
 
-const MAX_FORCE: f32 = 1_000_000.0;
-const MAX_BRAKING_FORCE: f32 = 100_000.0;
+const MAX_FORCE: f64 = 1_000_000.0;
+const MAX_BRAKING_FORCE: f64 = 100_000.0;
 
 // Making Custom Car Physics in Unity (for Very Very Valet)
 // https://www.youtube.com/watch?v=CdPYlj5uZeI
@@ -478,6 +478,7 @@ pub fn spring_forces(
     spatial_query: SpatialQuery,
     mut query: Single<
         (
+            &Position,
             &Transform,
             Forces,
             Option<&mut avian_fdm::prelude::ControlInputs>,
@@ -487,7 +488,7 @@ pub fn spring_forces(
     time: Res<Time>,
     mut state: ResMut<AircraftState>,
 ) {
-    let (transform, force, _) = query.deref_mut();
+    let (position, transform, force, _) = query.deref_mut();
 
     if !(state.landing_gear_deployed && force.linear_velocity().length() <= 200.0) {
         return;
@@ -507,7 +508,7 @@ pub fn spring_forces(
         let rest = if is_nosewheel { REST - 0.1 } else { REST };
 
         let filter = SpatialQueryFilter::DEFAULT;
-        let origin = transform.translation + transform.rotation * gear_pos;
+        let origin = position.0 + (transform.rotation * gear_pos).as_dvec3();
         let ray_dir = transform.local_z();
 
         if let Some(hit) = spatial_query.cast_ray(origin, ray_dir, rest, true, &filter) {
@@ -521,14 +522,15 @@ pub fn spring_forces(
             on_ground_vec[i] = true;
 
             // The point where the gear touches the ground
-            let contact_point = origin + ray_dir * hit.distance;
+            let contact_point = origin + ray_dir.as_dvec3() * hit.distance;
 
             //============================== springs ==============================
-            let spring_vel = spring_dir.dot(force.velocity_at_point(contact_point));
+            let spring_vel =
+                spring_dir.dot(force.velocity_at_point(contact_point).as_vec3()) as f64;
 
             let spring_force = (spring(hit.distance, rest, STRENGTH, DAMPING, spring_vel)
-                * spring_dir)
-                .clamp_length_max(MAX_FORCE);
+                * spring_dir.as_dvec3())
+            .clamp_length_max(MAX_FORCE);
 
             // This is applied three times because three rays are cast
             force.apply_force_at_point(spring_force, origin);
@@ -542,7 +544,7 @@ pub fn spring_forces(
             };
             let vel_at_contact_point = force.velocity_at_point(contact_point);
 
-            let steering_vel = steering_dir.dot(vel_at_contact_point);
+            let steering_vel = steering_dir.dot(vel_at_contact_point.as_vec3());
 
             let tire_grip_factor = 0.5;
             let desired_vel_change = -steering_vel * tire_grip_factor;
@@ -550,26 +552,28 @@ pub fn spring_forces(
             let desired_accel = desired_vel_change / time.delta_secs();
             let tire_mass = 3_300.0 / hit.distance; // The mass that rests on each tire
             force.apply_force_at_point(
-                (steering_dir * tire_mass * desired_accel * 10.0).clamp_length_max(10000.0),
+                (steering_dir * tire_mass as f32 * desired_accel * 10.0)
+                    .clamp_length_max(10000.0)
+                    .into(),
                 contact_point,
             );
 
             //============================== brakes ==============================
 
             if !is_nosewheel {
-                let tire_speed = transform.local_x().dot(vel_at_contact_point);
-                let braking_input = if state.parking_brake {
+                let tire_speed = transform.local_x().dot(vel_at_contact_point.as_vec3());
+                let braking_input: f64 = if state.parking_brake {
                     0.9
                 } else {
-                    state.control_surfaces.ground_brakes * 0.6
+                    state.control_surfaces.ground_brakes as f64 * 0.6
                 };
                 let braking_coeff = 50.0;
                 let braking_force = (braking_input
-                    * tire_speed.signum()
+                    * tire_speed.signum() as f64
                     * tire_mass
-                    * tire_grip_factor
+                    * tire_grip_factor as f64
                     * braking_coeff
-                    * -transform.local_x())
+                    * -transform.local_x().as_dvec3())
                 .clamp_length_max(MAX_BRAKING_FORCE);
 
                 force.apply_force_at_point(braking_force, contact_point);
@@ -582,12 +586,12 @@ pub fn spring_forces(
 }
 
 fn spring(
-    distance: f32,
-    rest_length: f32,
-    strength: f32,
-    damping_factor: f32,
-    velocity: f32,
-) -> f32 {
+    distance: f64,
+    rest_length: f64,
+    strength: f64,
+    damping_factor: f64,
+    velocity: f64,
+) -> f64 {
     let offset = rest_length - distance;
 
     if offset >= 0.0 {

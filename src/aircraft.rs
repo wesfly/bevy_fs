@@ -8,20 +8,26 @@ pub mod breeze;
 mod helicopter;
 mod j3cub;
 
-use crate::{GameState, aircraft, camera::Camera, data_from_gltf::load, input::ControlInputs};
+use crate::{
+    GameState, Settings, aircraft,
+    data_from_gltf::load,
+    input::ControlInputs,
+    scenery::terrain::{EARTH_RADIUS, coord_to_pos},
+};
 use avian3d::prelude::*;
-use bevy::prelude::*;
+use bevy::{dev_tools::diagnostics_overlay::DiagnosticsOverlay, math::DVec3, prelude::*};
+use big_space::prelude::*;
 use serde::Deserialize;
 
-pub fn alpha_deg(velocity: &Vec3, transform: &Transform) -> f32 {
+pub fn alpha_deg(velocity: &DVec3, transform: &Transform) -> f64 {
     let velocity = velocity.normalize_or_zero();
     let forward = transform.local_x();
     let right = transform.local_y();
 
-    let sin = forward.cross(velocity).dot(right.as_vec3());
-    let cos = forward.dot(velocity);
+    let sin = forward.cross(velocity.as_vec3()).dot(right.as_vec3());
+    let cos = forward.dot(velocity.as_vec3());
 
-    -sin.atan2(cos).to_degrees()
+    -sin.atan2(cos).to_degrees() as f64
 }
 
 #[derive(Debug, Deserialize, Component)]
@@ -127,6 +133,7 @@ pub fn main(
     gizmos: Gizmos,
     mut aircraft: Single<
         (
+            &Position,
             &Transform,
             Forces,
             Option<&mut avian_fdm::prelude::ControlInputs>,
@@ -163,33 +170,45 @@ pub fn spawn_breeze(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut state: ResMut<AircraftState>,
+    root_grid: Single<(Entity, &Grid), With<BigSpace>>,
+    settings: Res<Settings>,
 ) {
+    let (root_grid_id, grid) = *root_grid;
+    commands.spawn(DiagnosticsOverlay::fps());
     state.aircraft_type = AircraftTypes::Breeze;
     state.engine.on = true;
-    state.anti_col_lts_on = true;
+    // state.anti_col_lts_on = true;
     state.ldg_lts_on = true;
 
     let level = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
+    let translation =
+        coord_to_pos(settings.terrain.coord) * EARTH_RADIUS + Vec3::new(0.0, 1000.0, 0.0);
+    let (object_cell, object_pos) = grid.translation_to_grid(translation);
+    commands.spawn((
+        crate::Camera::spawn(object_cell, root_grid_id),
+        Transform::from_translation(object_pos + Vec3::new(0.0, 10.0, 0.0)),
+    ));
     breeze::spawn(
         &mut commands,
-        Transform::from_xyz(0.0, 650.0, 0.0).with_rotation(level),
+        Transform::from_translation(object_pos).with_rotation(level),
         asset_server,
-        Vec3::new(100.0, 0.0, 0.0),
+        DVec3::new(100.0, 0.0, 0.0),
+        object_cell,
+        root_grid_id,
+        translation.as_dvec3(),
     );
-    Camera::spawn(&mut commands);
 }
 
 pub fn spawn_j3cub(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut state: ResMut<AircraftState>,
+    // root_grid: Single<(Entity, &Grid), With<BigSpace>>,
 ) {
     state.aircraft_type = AircraftTypes::J3Cub;
     state.engine.on = true;
     // state.anti_col_lts_on = true;
     // state.ldg_lts_on = true;
-
-    Camera::spawn(&mut commands);
 
     let level = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
     j3cub::spawn(
@@ -203,13 +222,23 @@ pub fn spawn_helicopter(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut state: ResMut<AircraftState>,
+    root_grid: Single<(Entity, &Grid), With<BigSpace>>,
+    settings: Res<Settings>,
 ) {
     state.aircraft_type = AircraftTypes::Helicopter;
+    let (root_grid_id, grid) = *root_grid;
 
     let path = "aircraft/helicopter/helicopter.gltf";
 
     let spawn_pos = Vec3::new(0.0, 100.0, 0.0);
-    let spawn_vel = Vec3::new(0.0, 0.0, 0.0);
+    let spawn_vel = DVec3::new(0.0, 0.0, 0.0);
+
+    let translation = coord_to_pos(settings.terrain.coord) * EARTH_RADIUS;
+    let (cell_coord, object_pos) = grid.translation_to_grid(translation);
+    commands.spawn((
+        crate::Camera::spawn(cell_coord, root_grid_id),
+        Transform::from_translation(object_pos),
+    ));
 
     // Aircraft model
     commands
@@ -223,8 +252,6 @@ pub fn spawn_helicopter(
             LinearVelocity(spawn_vel),
         ))
         .observe(load);
-
-    Camera::spawn(&mut commands);
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -233,11 +260,10 @@ pub struct BothSides<T> {
     pub starboard: T,
 }
 
-pub trait BothSidesExt {
+pub trait BothSidesF32 {
     fn both_sides(self) -> BothSides<f32>;
 }
-
-impl BothSidesExt for f32 {
+impl BothSidesF32 for f32 {
     fn both_sides(self) -> BothSides<f32> {
         BothSides {
             port: self,
