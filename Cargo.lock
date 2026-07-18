@@ -441,7 +441,6 @@ dependencies = [
  "glam_matrix_extras",
  "itertools 0.15.0",
  "obvhs",
- "parry3d",
  "parry3d-f64",
  "smallvec",
  "thiserror 2.0.18",
@@ -468,9 +467,7 @@ checksum = "741cbea24dd04ab302e44cdf3d548dc77ec8f56bb076c93e6534f3e467770d33"
 dependencies = [
  "avian3d",
  "bevy_app",
- "bevy_color",
  "bevy_ecs",
- "bevy_gizmos",
  "bevy_log",
  "bevy_math",
  "bevy_reflect",
@@ -718,6 +715,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_camera_controller"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be74e5b6c7238f204b41642cf60d3846b2abda0a2252252035a58bc362072944"
+dependencies = [
+ "bevy_app",
+ "bevy_camera",
+ "bevy_ecs",
+ "bevy_input",
+ "bevy_log",
+ "bevy_math",
+ "bevy_picking",
+ "bevy_time",
+ "bevy_transform",
+ "bevy_window",
+]
+
+[[package]]
 name = "bevy_clipboard"
 version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -940,7 +955,10 @@ dependencies = [
  "avian3d",
  "avian_fdm",
  "bevy",
+ "big_space",
  "chrono",
+ "dashmap",
+ "futures",
  "image",
  "once_cell",
  "reqwest",
@@ -1151,6 +1169,7 @@ dependencies = [
  "bevy_app",
  "bevy_asset",
  "bevy_camera",
+ "bevy_camera_controller",
  "bevy_clipboard",
  "bevy_color",
  "bevy_core_pipeline",
@@ -1980,6 +1999,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "big_space"
+version = "0.13.0"
+source = "git+https://github.com/wesfly/big_space#f1e984eb04d3b20b3b227db82295fbbad0d94fa5"
+dependencies = [
+ "async-channel",
+ "bevy_app",
+ "bevy_color",
+ "bevy_ecs",
+ "bevy_input",
+ "bevy_log",
+ "bevy_math",
+ "bevy_platform",
+ "bevy_reflect",
+ "bevy_tasks",
+ "bevy_time",
+ "bevy_transform",
+ "bevy_utils",
+ "smallvec",
+]
+
+[[package]]
 name = "bit-set"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2569,6 +2609,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f"
 
 [[package]]
+name = "dashmap"
+version = "6.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6361d5c062261c78a176addb82d4c821ae42bed6089de0e12603cd25de2059c"
+dependencies = [
+ "cfg-if",
+ "crossbeam-utils",
+ "hashbrown 0.14.5",
+ "lock_api",
+ "once_cell",
+ "parking_lot_core",
+]
+
+[[package]]
 name = "data-encoding"
 version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2950,12 +3004,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42703706b716c37f96a77aea830392ad231f44c9e9a67872fa5548707e11b11c"
 
 [[package]]
+name = "futures"
+version = "0.3.32"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b147ee9d1f6d097cef9ce628cd2ee62288d963e16fb287bd9286455b241382d"
+dependencies = [
+ "futures-channel",
+ "futures-core",
+ "futures-executor",
+ "futures-io",
+ "futures-sink",
+ "futures-task",
+ "futures-util",
+]
+
+[[package]]
 name = "futures-channel"
 version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07bbe89c50d7a535e539b8c17bc0b49bdb77747034daa8087407d655f3f7cc1d"
 dependencies = [
  "futures-core",
+ "futures-sink",
 ]
 
 [[package]]
@@ -2963,6 +3033,17 @@ name = "futures-core"
 version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7e3450815272ef58cec6d564423f6e755e25379b217b0bc688e295ba24df6b1d"
+
+[[package]]
+name = "futures-executor"
+version = "0.3.32"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "baf29c38818342a3b26b5b923639e7b1f4a61fc5e76102d4b1981c6dc7a7579d"
+dependencies = [
+ "futures-core",
+ "futures-task",
+ "futures-util",
+]
 
 [[package]]
 name = "futures-io"
@@ -3012,9 +3093,13 @@ version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "389ca41296e6190b48053de0321d02a77f32f8a5d2461dd38762c0593805c6d6"
 dependencies = [
+ "futures-channel",
  "futures-core",
+ "futures-io",
  "futures-macro",
+ "futures-sink",
  "futures-task",
+ "memchr",
  "pin-project-lite",
  "slab",
 ]
@@ -3328,6 +3413,12 @@ checksum = "47d60b12902ba28e2730cd37e95b8c9223af2808df9e902d4df49588d1470606"
 dependencies = [
  "byteorder",
 ]
+
+[[package]]
+name = "hashbrown"
+version = "0.14.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
 
 [[package]]
 name = "hashbrown"
@@ -4758,6 +4849,7 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "parry3d"
 version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4787,6 +4879,8 @@ dependencies = [
 ]
 
 [[package]]
+=======
+>>>>>>> 644267d (lock file update)
 name = "parry3d-f64"
 version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4805,7 +4899,6 @@ dependencies = [
  "num-derive",
  "num-traits",
  "ordered-float",
- "rayon",
  "rstar",
  "simba",
  "slab",
@@ -6289,9 +6382,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.52.3"
+version = "1.52.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fc7f01b389ac15039e4dc9531aa973a135d7a4135281b12d7c1bc79fd57fffe"
+checksum = "317fafbbe3f02fc663dad00ea6186197de963cd4190e86a26d8d0fae095539af"
 dependencies = [
  "bytes",
  "libc",
