@@ -421,6 +421,9 @@ impl UI {
                         }
                         SpawnButton::Fly => {
                             if let Some(aircraft) = *spawn_settings {
+                                messages.write(UIMessage::SpawnScenery);
+                                messages.write(UIMessage::DespawnMenu);
+                                messages.write(UIMessage::SpawnUIHud);
                                 match aircraft {
                                     AircraftTypes::Helicopter => {
                                         messages.write(UIMessage::SpawnHelicopter);
@@ -432,9 +435,6 @@ impl UI {
                                         messages.write(UIMessage::SpawnJ3Cub);
                                     }
                                 }
-                                messages.write(UIMessage::SpawnScenery);
-                                messages.write(UIMessage::DespawnMenu);
-                                messages.write(UIMessage::SpawnUIHud);
                             }
                         }
                     }
@@ -548,7 +548,10 @@ impl UI {
                     format!("Throttle: {}%", (input.throttle * 100.0).round())
                 }
                 UIHudComponent::Velocity => {
-                    format!("Velocity: {:?} km/h", (forward.dot(vel.0) * 3.6) as i32)
+                    format!(
+                        "Velocity: {:?} km/h",
+                        (forward.dot(vel.0.as_vec3()) * 3.6) as i32
+                    )
                 }
             };
             text.0 = string;
