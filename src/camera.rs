@@ -6,6 +6,7 @@ use crate::{
 use bevy::{
     anti_alias::taa::TemporalAntiAliasing,
     camera::{Exposure, Hdr},
+    camera_controller::free_camera::FreeCamera,
     core_pipeline::tonemapping::Tonemapping,
     input::mouse::{AccumulatedMouseMotion, MouseScrollUnit, MouseWheel},
     light::AtmosphereEnvironmentMapLight,
@@ -13,6 +14,7 @@ use bevy::{
     post_process::{bloom::Bloom, motion_blur::MotionBlur},
     prelude::*,
 };
+use big_space::prelude::*;
 use std::{
     f32::consts::{FRAC_PI_2, PI},
     ops::Range,
@@ -75,10 +77,16 @@ const CAM_EXPOSURE: Exposure = Exposure { ev100: 13.0 };
 pub struct CameraPosition(pub Transform);
 
 impl Camera {
-    pub fn spawn(commands: &mut Commands) {
-        commands.spawn((
+    pub fn spawn(cell_coord: CellCoord, parent: Entity) -> impl Bundle {
+        (
+            FloatingOrigin,
+            cell_coord,
+            ChildOf(parent),
             Camera3d::default(),
-            AtmosphereSettings::default(),
+            AtmosphereSettings {
+                rendering_method: bevy::pbr::AtmosphereMode::Raymarched,
+                ..default()
+            },
             AtmosphereEnvironmentMapLight::default(),
             CAM_EXPOSURE,
             Tonemapping::AcesFitted,
@@ -87,19 +95,22 @@ impl Camera {
                 fov: 50.0_f32.to_radians(),
                 ..default()
             }),
-            Msaa::Off,
-            TemporalAntiAliasing::default(),
-            ScreenSpaceReflections {
-                min_perceptual_roughness: 0.0..0.0,
-                ..default()
-            },
-            Hdr,
-            MotionBlur {
-                shutter_angle: 0.5,
-                samples: 2,
-            },
-            crate::camera::Camera,
-        ));
+            FreeCamera::default(),
+            (
+                Msaa::Off,
+                TemporalAntiAliasing::default(),
+                ScreenSpaceReflections {
+                    min_perceptual_roughness: 0.0..0.0,
+                    ..default()
+                },
+                Hdr,
+                MotionBlur {
+                    shutter_angle: 0.5,
+                    samples: 2,
+                },
+            ),
+            // crate::camera::Camera,
+        )
     }
 
     pub fn controller(

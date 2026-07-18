@@ -48,6 +48,7 @@ unsafe_code = "forbid"
 opt-level = 1
 =======
     "3d",
+    "free_camera",
 ] }
 big_space = { git = "https://github.com/wesfly/big_space" }
 chrono = "0.4"
