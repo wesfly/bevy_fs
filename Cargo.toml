@@ -7,21 +7,15 @@ edition = "2024"
 license-file = "LICENSE.md"
 
 [dependencies]
-<<<<<<< HEAD
-avian_fdm = { version = "0.2.0" }
-avian3d = "0.7.0"
+avian_fdm = { version = "0.2.0", default-features = false, features = ["f64"] }
 bevy = {
   version = "0.19.0",
   default-features = false,
   features = [
     "3d",
-=======
-avian_fdm = { version = "0.2.0", default-features = false, features = ["f64"] }
-bevy = { version = "0.19.0", default-features = false, features = [
->>>>>>> 3fde2a2 (f32 => f64)
     "bevy_dev_tools",
     "ui",
-<<<<<<< HEAD
+    "free_camera",
   ]
 }
 chrono = "0.4.45"
@@ -31,6 +25,10 @@ reqwest = { version = "0.13.4" }
 serde = "1.0.228"
 serde_json = "1.0.150"
 tokio = { version = "1.52.3", features = ["full"] }
+big_space = { git = "https://github.com/wesfly/big_space" }
+dashmap = "6.2.1"
+futures = "0.3.32"
+avian3d = { version = "0.7.0", default-features = false, features = ["f64", "3d", "parry-f64", "xpbd_joints", "bevy_picking", "collider-from-mesh"] }
 
 [lints.clippy]
 all = { level = "allow", priority = -2 }
@@ -45,25 +43,6 @@ unwrap_used = "warn"
 unsafe_code = "forbid"
 
 [profile.dev]
-opt-level = 1
-=======
-    "3d",
-    "free_camera",
-] }
-big_space = { git = "https://github.com/wesfly/big_space" }
-chrono = "0.4"
-image = { version = "0.25", features = ["webp"] }
-once_cell = "1.21"
-reqwest = { version = "0.13" }
-serde = "1.0"
-serde_json = "1.0"
-tokio = { version = "1.50", features = ["full"] }
-dashmap = "6.2.1"
-futures = "0.3.32"
-avian3d = { version = "0.7.0", default-features = false, features = ["f64", "3d", "parry-f64", "xpbd_joints", "bevy_picking", "collider-from-mesh"] }
->>>>>>> 1004556 (add some dependencies)
-
-[profile.dev.package."*"]
 opt-level = 3
 
 [profile.release]
