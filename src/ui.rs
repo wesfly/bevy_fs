@@ -3,7 +3,7 @@ use core::convert::Into;
 use crate::{
     ControlInputs, GameState, RunOnceSystemList, Settings,
     aircraft::{Aircraft, AircraftState, AircraftTypes},
-    scenery::terrain::Coordinates,
+    scenery::terrain::Coord,
 };
 use avian3d::prelude::LinearVelocity;
 use bevy::{
@@ -27,7 +27,7 @@ pub enum UIHudComponent {
 #[derive(Component, Clone, PartialEq)]
 enum SpawnButton {
     AircraftSelector(AircraftTypes),
-    Location(Coordinates),
+    Location(Coord),
     Fly,
 }
 
@@ -96,126 +96,126 @@ impl Menu {
         let locations = vec![
             (
                 "Toulon, FR",
-                Coordinates {
+                Coord {
                     lat: 43.12694,
                     long: 5.93071,
                 },
             ),
             (
                 "Hobart, AU",
-                Coordinates {
+                Coord {
                     lat: -42.88369,
                     long: 147.3287,
                 },
             ),
             (
                 "San Francisco, USA",
-                Coordinates {
+                Coord {
                     lat: 37.7922,
                     long: -122.4385,
                 },
             ),
             (
                 "Cape Town, ZA",
-                Coordinates {
+                Coord {
                     lat: -33.9114,
                     long: 18.5033,
                 },
             ),
             (
                 "Vancouver, CA",
-                Coordinates {
+                Coord {
                     lat: 49.2920,
                     long: -123.1416,
                 },
             ),
             (
                 "London, UK",
-                Coordinates {
+                Coord {
                     lat: 51.5074,
                     long: -0.1278,
                 },
             ),
             (
                 "Tokyo, JP",
-                Coordinates {
+                Coord {
                     lat: 35.6762,
                     long: 139.6503,
                 },
             ),
             (
                 "New York, US",
-                Coordinates {
+                Coord {
                     lat: 40.7128,
                     long: -74.0060,
                 },
             ),
             (
                 "Sydney, AU",
-                Coordinates {
+                Coord {
                     lat: -33.8688,
                     long: 151.2093,
                 },
             ),
             (
                 "Paris, FR",
-                Coordinates {
+                Coord {
                     lat: 48.8566,
                     long: 2.3522,
                 },
             ),
             (
                 "Cairo, EG",
-                Coordinates {
+                Coord {
                     lat: 30.0444,
                     long: 31.2357,
                 },
             ),
             (
                 "Rio de Janeiro, BR",
-                Coordinates {
+                Coord {
                     lat: -22.9068,
                     long: -43.1729,
                 },
             ),
             (
                 "Berlin, DE",
-                Coordinates {
+                Coord {
                     lat: 52.5200,
                     long: 13.4050,
                 },
             ),
             (
                 "Mumbai, IN",
-                Coordinates {
+                Coord {
                     lat: 19.0760,
                     long: 72.8777,
                 },
             ),
             (
                 "Zürich, CH",
-                Coordinates {
+                Coord {
                     lat: 47.37445,
                     long: 8.541039,
                 },
             ),
             (
                 "Lucerne, CH",
-                Coordinates {
+                Coord {
                     lat: 47.052099,
                     long: 8.30899,
                 },
             ),
             (
                 "Nürnberg, DE",
-                Coordinates {
+                Coord {
                     lat: 49.45387,
                     long: 11.0773,
                 },
             ),
             (
                 "Guăngzhōu Shì, CN",
-                Coordinates {
+                Coord {
                     lat: 23.128864,
                     long: 113.259009,
                 },
@@ -416,7 +416,7 @@ impl UI {
                         }
 
                         SpawnButton::Location(l) => {
-                            settings.terrain.coordinates = l.clone();
+                            settings.terrain.coord = l.clone();
                             highlighted.1 = Some(SpawnButton::Location(l.clone()));
                         }
                         SpawnButton::Fly => {
