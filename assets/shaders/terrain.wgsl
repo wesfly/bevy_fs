@@ -27,10 +27,10 @@ fn sample_noise(uv: vec2<f32>, time: f32) -> vec3<f32> {
     let uv2 = uv * 300.0 + 345.0;
     let uv3 = uv * 400.0 + 456.0;
     return normalize(
-        sample_noise_octave(uv0, 0.2) +
-        sample_noise_octave(uv1, 0.2) +
-        sample_noise_octave(uv2, 0.2) +
-        sample_noise_octave(uv3, 0.2)
+        sample_noise_octave(uv0, 0.5) +
+        sample_noise_octave(uv1, 0.5) +
+        sample_noise_octave(uv2, 0.5) +
+        sample_noise_octave(uv3, 0.5)
     );
 }
 
@@ -39,9 +39,12 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
     // Create the PBR input.
     var pbr_input = pbr_input_from_standard_material(in, is_front);
     // Bump the normal.
-    pbr_input.N += sample_noise(in.uv, globals.time);
+    pbr_input.N += (sample_noise(in.uv, globals.time) - vec3(1.0, 1.0, 1.0)) * 0.2;
+    pbr_input.N = normalize(pbr_input.N);
 
-    let slope = length(cross(pbr_input.N, vec3(0.0, 1.0, 0.0)));
+    let slope = 0.4;
+
+    // let slope = length(cross(pbr_input.N, normalize(pbr_input.world_position.xyz)));
 
     // Based on mediterranean terrain
     if slope > 0.6 {
