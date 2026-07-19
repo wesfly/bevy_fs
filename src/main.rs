@@ -191,6 +191,7 @@ fn main() {
             input::input_system,
             aircraft::buttons::update_cursor,
             Camera::controller,
+            screenshot,
         ),
     )
     .add_systems(
@@ -199,13 +200,11 @@ fn main() {
     )
     .add_systems(
         PostUpdate,
-        sync_from_avian.before(bevy::transform::TransformSystems::Propagate),
         sync_from_avian.before(TransformSystems::Propagate),
     )
     .add_systems(
         FixedUpdate,
         (
-            screenshot,
             planet_gravity,
             update_control_surfaces,
             Light::update_light_cycle,
