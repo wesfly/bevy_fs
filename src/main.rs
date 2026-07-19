@@ -143,6 +143,7 @@ fn main() {
     .insert_resource(PhysicsPickingSettings {
         require_markers: true,
     })
+    .insert_resource(Gravity::ZERO)
     .insert_resource(GameState {
         running: false,
         in_menu: false,
@@ -205,6 +206,7 @@ fn main() {
         FixedUpdate,
         (
             screenshot,
+            planet_gravity,
             update_control_surfaces,
             Light::update_light_cycle,
             (Light::update_mesh_lights, Light::update_lights).after(Light::update_light_cycle),
@@ -292,3 +294,18 @@ fn sync_from_avian(mut bodies: Query<(&Position, &mut CellCoord, &mut Transform,
         transform.rotation = rot.as_quat().normalize();
     }
 }
+
+fn planet_gravity(mut query: Query<(Forces, &Position)>) {
+    let planet_center = DVec3::new(0.0, 0.0, 0.0); // your planet's position
+    for (mut forces, position) in &mut query {
+        let to_center = planet_center - position.as_ivec3().as_dvec3();
+        let direction = to_center.normalize_or_zero();
+        forces.apply_linear_acceleration(direction * 9.81);
+    }
+}
+
+// // Could be useful in the future
+// fn absolute_position(cell: &CellCoord, local_translation: Vec3) -> DVec3 {
+//     DVec3::new(cell.x as f64, cell.y as f64, cell.z as f64) * CELL_SIZE as f64
+//         + local_translation.as_dvec3()
+// }
