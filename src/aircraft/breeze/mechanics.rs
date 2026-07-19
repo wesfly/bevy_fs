@@ -50,11 +50,27 @@ fn engine(
         With<Aircraft>,
     >,
 ) {
-    let (position, transform, forces, option_ctrl_inputs) = &mut **aircraft;
-    forces.apply_force_at_point(
-        DVec3::new(0.0, 10.0, 0.0) * 100.0 * input.throttle as f64,
-        position.as_ivec3().as_dvec3() + transform.rotation.as_dquat() * DVec3::new(0.0, 10.0, 0.0),
-    );
+    if state.engine.on {
+        let (position, transform, forces, _option_ctrl_inputs) = &mut **aircraft;
+        let point_r = DVec3::new(-5.2, 0.6, -0.4);
+        forces.apply_force_at_point(
+            transform.rotation.as_dquat()
+                * DVec3::new(1.0, 0.0, 0.0)
+                * 7_330.0 // kgf of one engine
+                * 9.80665 // gravitational force
+                * input.throttle as f64,
+            position.as_ivec3().as_dvec3() + transform.rotation.as_dquat() * point_r,
+        );
+        let point_l = DVec3::new(-5.2, -0.6, -0.4);
+        forces.apply_force_at_point(
+            transform.rotation.as_dquat()
+                * DVec3::new(1.0, 0.0, 0.0)
+                * 7_330.0 // kgf of one engine
+                * 9.80665 // gravitational force
+                * input.throttle as f64,
+            position.as_ivec3().as_dvec3() + transform.rotation.as_dquat() * point_l,
+        );
+    }
 }
 
 /*

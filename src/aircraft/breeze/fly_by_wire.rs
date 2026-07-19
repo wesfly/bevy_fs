@@ -27,11 +27,6 @@ pub fn fly_by_wire(
         // avian_fdm control inputs
         fdm_cs.aileron = -input.roll as f64;
         fdm_cs.elevator = input.pitch as f64;
-        // if state.engine.on {
-        //     fdm_cs.throttle = input.throttle as f64;
-        // } else {
-        //     fdm_cs.throttle = 0.0;
-        // }
         fdm_cs.rudder = -input.yaw as f64;
 
         cs.ground_brakes = input.ground_brakes;
