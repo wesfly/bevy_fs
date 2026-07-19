@@ -111,8 +111,8 @@
 //! All zones are tiled without collider overlap. No double-counted mass.
 
 use super::airfoils::usa35b;
-use crate::aircraft::Aircraft;
 use crate::data_from_gltf::load;
+use crate::{aircraft::Aircraft, camera::Camera};
 use avian_fdm::{
     airfoil::AirfoilData,
     components::{
@@ -126,6 +126,7 @@ use avian3d::{
     prelude::{Collider, ColliderDensity, RigidBody},
 };
 use bevy::prelude::*;
+use big_space::prelude::*;
 
 // ── Aircraft reference constants ─────────────────────────────────────────────
 
@@ -456,12 +457,18 @@ pub fn spawn(
     commands: &mut Commands,
     transform: Transform,
     asset_server: Res<AssetServer>,
+    abs_pos: bevy::math::DVec3,
+    cell: CellCoord,
+    parent_id: Entity,
+    rotation: avian3d::prelude::Rotation,
 ) -> Entity {
     use avian_fdm::components::GizmoShape;
 
     const PATH: &str = "aircraft/j3cub/model.glb";
     commands
         .spawn((
+            FloatingOrigin,
+            cell,
             WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
             Visibility::default(),
             j3cub_core_bundle(transform),
@@ -473,10 +480,14 @@ pub fn spawn(
                     "JSBSim:J3Cub.xml: CD_i = CL²×0.0485 -> e = 1/(π×0.0485×AR=6.956) ≈ 0.94"
                 ),
             },
+            avian3d::prelude::Position(abs_pos),
             Aircraft,
+            ChildOf(parent_id),
+            rotation,
             // No LodDamping. Roll/pitch/yaw damping emerges from zone geometry.
         ))
         .with_children(|parent| {
+            parent.spawn(Camera::spawn(Quat::from_rotation_z(core::f32::consts::PI)));
             // ── Left wing ────────────────────────────────────────────────────
             // Thin collider (z=0.02 m). See module docs on hybrid approach.
             parent.spawn((wing_zone(
