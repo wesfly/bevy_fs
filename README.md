@@ -49,7 +49,7 @@ This is a little flight sim made in Bevy.
 
 ## Terrain
 
-Terrain data will be stored in the `terrain_cache` folder after the first fetch
+Terrain data will be stored in the `.user/cache/` folder after the first fetch
 (the game window will be unresponsive while fetching). To change the coordinates
 or the resolution, change `terrain.coordinates` or `terrain.level_of_detail` in
 the settings. Note that the general maximum level of detail is 15, but in most
