@@ -23,9 +23,9 @@ mod material;
 pub const EARTH_RADIUS: f32 = 6_360_000.0;
 
 const SIZE: f32 = 2.0;
-const SUBDIV: u32 = 4096 * 4;
+const SUBDIV: u32 = 4096 * 1;
 const CHUNKS: u32 = SUBDIV.pow(2);
-const SUBDIV_PER_TILE: u32 = 64;
+const SUBDIV_PER_TILE: u32 = 128;
 
 #[derive(Resource, Clone)]
 pub struct TerrainCacheResource {
@@ -122,7 +122,6 @@ pub fn spawn_chunk(
         ));
 
         let task = thread_pool.spawn(async move { tokio_handle.await.unwrap() });
-        // let (cell_coord, cell_offset) = commands.grid().translation_to_grid(chunk_translation);
         let (cell_coord, cell_offset) = commands.grid().translation_to_grid(projected_chunk_center);
         commands.spawn(SpawnTerrain(task, (cell_coord, cell_offset)));
     }
@@ -158,7 +157,6 @@ fn to_sphere_pos(pos: &[f32; 3]) -> Vec3 {
     even_spaced_pos * EARTH_RADIUS
 }
 
-// type TileCache = Arc<RwLock<HashMap<(u8, u32, u32), Arc<RgbImage>>>>;
 type TileCache = Arc<DashMap<(u8, u32, u32), Arc<image::RgbImage>>>;
 pub fn init_terrain_cache() -> TileCache {
     Arc::new(DashMap::new())
@@ -173,10 +171,8 @@ static DUMMY_TILE: Lazy<Arc<image::RgbImage>> = Lazy::new(|| {
 });
 
 fn coord_to_tile(coord: Coord, n: f32) -> (u32, u32) {
-    // Longitude to Tile X
     let x = n * ((coord.long + 180.0) / 360.0);
 
-    // Latitude to Tile Y (clamped to protect against tangents approaching infinity near poles)
     let lat_rad = coord
         .lat
         .to_radians()
@@ -204,7 +200,7 @@ async fn ensure_tiles_loaded(
         let cache = Arc::clone(&cache);
 
         let task = tokio::spawn(async move {
-            let path = format!("terrain_cache/{}_{}_{}.webp", zoom, x, y);
+            let path = format!(".user/cache/{}_{}_{}.webp", zoom, x, y);
 
             match get_tile(&client, semaphore, &TerrariumCoords { z: zoom, x, y }).await {
                 Ok(_) => {}
@@ -238,25 +234,8 @@ async fn ensure_tiles_loaded(
     futures::future::join_all(fetch_tasks).await;
 }
 
-fn get_height_at_coord(coord_: Coord, zoom: u8, cache: &TileCache) -> f32 {
+async fn get_height_at_coord(coord_: Coord, zoom: u8, cache: &TileCache) -> f32 {
     //--------------------- coords to terrarium coords ---------------------
-
-    // because coordinates are from elliptic sphere (geodetic coords)
-    // const FLATTENING_SQ: f32 = 0.99330562;
-
-    // let geocentric_lat_rad = coord.lat.to_radians();
-
-    // // Convert geocentric latitude to geodetic latitude
-    // let geodetic_lat_rad = (geocentric_lat_rad.tan() / FLATTENING_SQ).atan();
-    // let geodetic_lat = geodetic_lat_rad.to_degrees();
-
-    // if geodetic_lat < -85.05113 || coord.lat > 85.05113 {
-    //     error!(
-    //         "Latitude {} is out of Web Mercator bounds (-85.05113..85.05113)",
-    //         coord.lat
-    //     );
-    //     return 0.0;
-    // }
     let coord = coord_;
     if coord.long < -180.0 || coord.long > 180.0 {
         error!("Longitude {} is out of bounds (-180.0..180.0)", coord.long);
@@ -341,11 +320,8 @@ async fn build_mesh(
 
             let coord = pos_to_coord(*pos);
 
-            let factor =
-                1.0 + (0.0000001 * get_height_at_coord(coord, terrain.level_of_detail, &cache));
-            // pos[0] *= factor;
-            // pos[1] *= factor;
-            // pos[2] *= factor;
+            let factor = 1.0
+                + (0.0000001 * get_height_at_coord(coord, terrain.level_of_detail, &cache).await);
             even_spaced_pos.x *= factor;
             even_spaced_pos.y *= factor;
             even_spaced_pos.z *= factor;
@@ -426,7 +402,7 @@ async fn get_tile(
     semaphore: Arc<Semaphore>,
     coord: &TerrariumCoords,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let file_name = format!("terrain_cache/{}_{}_{}.webp", coord.z, coord.x, coord.y);
+    let file_name = format!(".user/cache/{}_{}_{}.webp", coord.z, coord.x, coord.y);
 
     if !Path::new(&file_name).exists() {
         let _permit = semaphore.acquire().await?;
