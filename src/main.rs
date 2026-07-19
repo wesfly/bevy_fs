@@ -19,7 +19,7 @@ mod ui;
 
 use crate::{
     aircraft::{
-        Aircraft, AircraftState,
+        AircraftState,
         animations::{update_control_surfaces, update_rotors},
         breeze::landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
         buttons::{Button, ButtonMessages},
@@ -31,6 +31,7 @@ use crate::{
     sse::Sse,
     ui::{Menu, UI},
 };
+use avian_fdm::prelude::*;
 use avian3d::prelude::*;
 use bevy::{
     dev_tools::diagnostics_overlay::DiagnosticsOverlayPlugin,
@@ -46,15 +47,8 @@ use big_space::prelude::*;
 use serde::Deserialize;
 use std::{collections::HashMap, fs};
 
-#[allow(unused)] // AircraftFdmDebugPlugin, FdmGizmos can be commented out in the main function
-use avian_fdm::plugin::AircraftFdmPlugin;
-
 pub fn bevy_to_aerospace_coords() -> Quat {
-    Quat::from_mat3(&Mat3::from_cols(
-        Vec3::Y,  // Camera X goes to Aerospace +Y (Right)
-        -Vec3::Z, // Camera Y goes to Aerospace -Z (Up)
-        -Vec3::X, // Camera Z goes to Aerospace -X
-    ))
+    Quat::from_mat3(&Mat3::from_cols(Vec3::Y, -Vec3::Z, -Vec3::X))
 }
 
 #[derive(Resource, Deserialize)]
@@ -205,6 +199,7 @@ fn main() {
     .add_systems(
         PostUpdate,
         sync_from_avian.before(bevy::transform::TransformSystems::Propagate),
+        sync_from_avian.before(TransformSystems::Propagate),
     )
     .add_systems(
         FixedUpdate,
@@ -221,7 +216,6 @@ fn main() {
             Button::listener,
             rotate_sun,
             game_state,
-            // track_position,
         ),
     );
     app.run();
@@ -264,59 +258,7 @@ fn game_state(mut physics_time: ResMut<Time<Physics>>, game_state: Res<GameState
 
 pub const CELL_SIZE: f64 = 500.0;
 
-fn write_avian_position(
-    mut bodies: Query<(
-        &RigidBody,
-        &CellCoord,
-        &Transform,
-        &mut Position,
-        &mut Rotation,
-    )>,
-) {
-    for (rb, cell, transform, mut pos, mut rot) in &mut bodies {
-        if *rb != RigidBody::Kinematic {
-            continue;
-        }
-        let cell_diff = bevy::math::DVec3::new(cell.x as f64, cell.y as f64, cell.z as f64);
-        pos.0 = transform.translation.as_dvec3() + cell_diff * CELL_SIZE;
-        rot.0 = transform.rotation.as_dquat().normalize();
-    }
-}
-
-fn read_avian_position(
-    mut bodies: Query<(&Position, &Rotation, &mut CellCoord, &mut Transform), With<RigidBody>>,
-) {
-    for (pos, rot, mut cell, mut transform) in &mut bodies {
-        let cell_origin =
-            bevy::math::DVec3::new(cell.x as f64, cell.y as f64, cell.z as f64) * CELL_SIZE;
-        let mut local = pos.0 - cell_origin;
-
-        if local.x > CELL_SIZE {
-            cell.x += 1;
-            local.x -= CELL_SIZE;
-        } else if local.x < -CELL_SIZE {
-            cell.x -= 1;
-            local.x += CELL_SIZE;
-        }
-        if local.y > CELL_SIZE {
-            cell.y += 1;
-            local.y -= CELL_SIZE;
-        } else if local.y < -CELL_SIZE {
-            cell.y -= 1;
-            local.y += CELL_SIZE;
-        }
-        if local.z > CELL_SIZE {
-            cell.z += 1;
-            local.z -= CELL_SIZE;
-        } else if local.z < -CELL_SIZE {
-            cell.z -= 1;
-            local.z += CELL_SIZE;
-        }
-
-        transform.translation = local.as_vec3();
-        transform.rotation = rot.0.as_quat().normalize();
-    }
-}
+// big_space compatibility systems
 
 fn sync_to_avian(mut bodies: Query<(&CellCoord, &Transform, &mut Position, &mut Rotation)>) {
     for (cell, transform, mut pos, mut rot) in &mut bodies {
