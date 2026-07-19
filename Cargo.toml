@@ -28,7 +28,7 @@ tokio = { version = "1.52.3", features = ["full"] }
 big_space = { git = "https://github.com/wesfly/big_space" }
 dashmap = "6.2.1"
 futures = "0.3.32"
-avian3d = { version = "0.7.0", default-features = false, features = ["f64", "3d", "parry-f64", "xpbd_joints", "bevy_picking", "collider-from-mesh"] }
+avian3d = { version = "0.7.0", default-features = false, features = ["f64", "3d", "parry-f64", "xpbd_joints", "bevy_picking", "collider-from-mesh", "debug-plugin"] }
 
 [lints.clippy]
 all = { level = "allow", priority = -2 }
