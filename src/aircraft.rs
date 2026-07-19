@@ -177,17 +177,19 @@ pub fn spawn_breeze(
     commands.spawn(DiagnosticsOverlay::fps());
     state.aircraft_type = AircraftTypes::Breeze;
     state.engine.on = true;
-    // state.anti_col_lts_on = true;
     state.ldg_lts_on = true;
 
-    let level = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
     let translation =
         coord_to_pos(settings.terrain.coord) * EARTH_RADIUS + Vec3::new(0.0, 1000.0, 0.0);
     let (object_cell, object_pos) = grid.translation_to_grid(translation);
+    let up = translation.normalize();
+    let level =
+        Quat::from_rotation_arc(Vec3::Y, up) * Quat::from_rotation_x(core::f32::consts::FRAC_PI_2);
     breeze::spawn(
         &mut commands,
         Transform::from_translation(object_pos).with_rotation(level),
         asset_server,
+        Rotation(level.as_dquat()),
         DVec3::new(100.0, 0.0, 0.0),
         object_cell,
         root_grid_id,
@@ -199,18 +201,29 @@ pub fn spawn_j3cub(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut state: ResMut<AircraftState>,
-    // root_grid: Single<(Entity, &Grid), With<BigSpace>>,
+    root_grid: Single<(Entity, &Grid), With<BigSpace>>,
+    settings: Res<Settings>,
 ) {
     state.aircraft_type = AircraftTypes::J3Cub;
     state.engine.on = true;
-    // state.anti_col_lts_on = true;
-    // state.ldg_lts_on = true;
 
-    let level = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
+    let (root_grid_id, grid) = *root_grid;
+    commands.spawn(DiagnosticsOverlay::fps());
+
+    let translation =
+        coord_to_pos(settings.terrain.coord) * EARTH_RADIUS + Vec3::new(0.0, 1000.0, 0.0);
+    let (object_cell, object_pos) = grid.translation_to_grid(translation);
+    let up = translation.normalize();
+    let level =
+        Quat::from_rotation_arc(Vec3::Y, up) * Quat::from_rotation_x(core::f32::consts::FRAC_PI_2);
     j3cub::spawn(
         &mut commands,
-        Transform::from_xyz(0.0, 1000.0, 0.0).with_rotation(level),
+        Transform::from_translation(object_pos).with_rotation(level),
         asset_server,
+        translation.as_dvec3(),
+        object_cell,
+        root_grid_id,
+        Rotation(level.as_dquat()),
     );
 }
 
@@ -223,29 +236,28 @@ pub fn spawn_helicopter(
 ) {
     state.aircraft_type = AircraftTypes::Helicopter;
     let (root_grid_id, grid) = *root_grid;
+    commands.spawn(DiagnosticsOverlay::fps());
+
+    let translation =
+        coord_to_pos(settings.terrain.coord) * EARTH_RADIUS + Vec3::new(0.0, 1000.0, 0.0);
+    let (object_cell, object_pos) = grid.translation_to_grid(translation);
+    let up = translation.normalize();
+    let level =
+        Quat::from_rotation_arc(Vec3::Y, up) * Quat::from_rotation_x(core::f32::consts::FRAC_PI_2);
 
     let path = "aircraft/helicopter/helicopter.gltf";
 
-    let spawn_pos = Vec3::new(0.0, 100.0, 0.0);
-    let spawn_vel = DVec3::new(0.0, 0.0, 0.0);
-
-    let translation = coord_to_pos(settings.terrain.coord) * EARTH_RADIUS;
-    let (cell_coord, object_pos) = grid.translation_to_grid(translation);
-    commands.spawn((
-        crate::Camera::spawn(cell_coord, root_grid_id),
-        Transform::from_translation(object_pos),
-    ));
-
-    // Aircraft model
     commands
         .spawn((
+            object_cell,
             WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(path))),
             Aircraft,
             RigidBody::Dynamic,
             ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh),
-            Transform::from_translation(spawn_pos),
+            Transform::from_translation(object_pos).with_rotation(level),
+            Rotation(level.as_dquat()),
             Mass(10_000.0),
-            LinearVelocity(spawn_vel),
+            ChildOf(root_grid_id),
         ))
         .observe(load);
 }
