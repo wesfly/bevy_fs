@@ -1,3 +1,4 @@
+use avian3d::prelude::*;
 use bevy::{
     color::palettes::css::GREEN,
     image::{
@@ -49,7 +50,7 @@ pub struct TerrainSettings {
 struct TerrainFaces;
 
 #[derive(Component)]
-pub struct SpawnTerrain(Task<Option<Mesh>>, (CellCoord, Vec3));
+pub struct SpawnTerrain(Task<Option<(Mesh, Collider)>>, (CellCoord, Vec3));
 
 #[derive(Copy, Clone, PartialEq, Deserialize, Debug)]
 pub struct Coord {
@@ -288,7 +289,7 @@ async fn build_mesh(
     semaphore: Arc<Semaphore>,
     cache: TileCache,
     terrain: TerrainSettings,
-) -> Option<Mesh> {
+) -> Option<(Mesh, Collider)> {
     let n = 2.0_f32.powf(terrain.level_of_detail as f32);
     let required_tiles = calculate_required_tiles_for_chunk(chunk_translation, normal, n, &terrain);
     ensure_tiles_loaded(
@@ -333,8 +334,9 @@ async fn build_mesh(
     }
 
     earth_mesh.compute_normals();
+    let collider = Collider::trimesh_from_mesh(&earth_mesh)?;
 
-    return Some(earth_mesh);
+    return Some((earth_mesh, collider));
 }
 
 fn calculate_required_tiles_for_chunk(
@@ -448,14 +450,16 @@ pub fn poll_terrain(
     big_space: Single<Entity, With<BigSpace>>,
 ) {
     for (entity, mut task) in &mut tasks {
-        if let Some(mesh_intermediary) = future::block_on(future::poll_once(&mut task.0)) {
-            if let Some(earth_mesh) = mesh_intermediary {
+        if let Some(mesh_collider) = future::block_on(future::poll_once(&mut task.0)) {
+            if let Some((earth_mesh, collider)) = mesh_collider {
                 let (cell_coord, cell_offset) = task.1;
 
                 let chunk = commands
                     .spawn((
                         TerrainFaces,
                         Mesh3d(meshes.add(earth_mesh)),
+                        RigidBody::Static,
+                        collider,
                         MeshMaterial3d(
                             terrain_materials.add(ExtendedMaterial {
                                 base: StandardMaterial {
