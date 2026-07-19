@@ -1,4 +1,5 @@
 use crate::{
+    CELL_SIZE,
     aircraft::{Aircraft, AircraftState},
     bevy_to_aerospace_coords,
     input::Keymap,
@@ -10,6 +11,7 @@ use bevy::{
     core_pipeline::tonemapping::Tonemapping,
     input::mouse::{AccumulatedMouseMotion, MouseScrollUnit, MouseWheel},
     light::AtmosphereEnvironmentMapLight,
+    math::DVec3,
     pbr::{AtmosphereSettings, ScreenSpaceReflections},
     post_process::{bloom::Bloom, motion_blur::MotionBlur},
     prelude::*,
@@ -77,11 +79,8 @@ const CAM_EXPOSURE: Exposure = Exposure { ev100: 13.0 };
 pub struct CameraPosition(pub Transform);
 
 impl Camera {
-    pub fn spawn(cell_coord: CellCoord, parent: Entity) -> impl Bundle {
+    pub fn spawn(rotation: Quat) -> impl Bundle {
         (
-            FloatingOrigin,
-            cell_coord,
-            ChildOf(parent),
             Camera3d::default(),
             AtmosphereSettings {
                 rendering_method: bevy::pbr::AtmosphereMode::Raymarched,
@@ -95,7 +94,7 @@ impl Camera {
                 fov: 50.0_f32.to_radians(),
                 ..default()
             }),
-            FreeCamera::default(),
+            Transform::from_rotation(rotation),
             (
                 Msaa::Off,
                 TemporalAntiAliasing::default(),
@@ -109,15 +108,14 @@ impl Camera {
                     samples: 2,
                 },
             ),
-            // crate::camera::Camera,
+            crate::camera::Camera,
         )
     }
 
     pub fn controller(
-        mut camera: Single<&mut Transform, (With<Camera>, Without<Aircraft>)>,
+        camera: Single<&mut Transform, With<Camera>>,
         camera_settings: Res<CameraSettings>,
         state: Res<AircraftState>,
-        aircraft: Single<&Transform, With<Aircraft>>,
         mouse_buttons: Res<ButtonInput<MouseButton>>,
         mouse_motion: Res<AccumulatedMouseMotion>,
         keyboard_input: Res<'_, ButtonInput<KeyCode>>,
@@ -126,6 +124,8 @@ impl Camera {
         mut scroll_events: MessageReader<MouseWheel>,
         mut camera_pos: ResMut<CameraPosition>,
     ) {
+        let mut cam_transform = camera.into_inner();
+
         let cockpit_default_position = match state.aircraft_type {
             crate::aircraft::AircraftTypes::Helicopter => Vec3 {
                 x: 0.38,
@@ -163,61 +163,39 @@ impl Camera {
 
         match camera_settings.view {
             CameraView::Cockpit => {
-                camera.translation =
-                    aircraft.translation + aircraft.rotation * cockpit_default_position;
-                camera.rotation = match state.aircraft_type {
-                    crate::aircraft::AircraftTypes::Helicopter => {
-                        aircraft.rotation * camera_pos.0.rotation
-                    }
-                    _ => aircraft.rotation * bevy_to_aerospace_coords() * camera_pos.0.rotation,
+                cam_transform.translation = cockpit_default_position;
+                cam_transform.rotation = match state.aircraft_type {
+                    crate::aircraft::AircraftTypes::Helicopter => camera_pos.0.rotation,
+                    _ => bevy_to_aerospace_coords() * camera_pos.0.rotation,
                 };
             }
             CameraView::Follow => {
-                let target = camera_settings.follow_default_lookat + aircraft.translation;
+                let target = bevy_to_aerospace_coords() * camera_settings.follow_default_lookat;
 
-                let forward = match state.aircraft_type {
-                    crate::aircraft::AircraftTypes::Helicopter => aircraft.local_z(),
-                    _ => -aircraft.local_x(),
-                };
-                let flat_forward = Vec3::new(forward.x, 0.0, forward.z).normalize();
+                cam_transform.rotation = Quat::from_rotation_z(core::f32::consts::FRAC_PI_2)
+                    * Quat::from_rotation_x(-core::f32::consts::FRAC_PI_2)
+                    * camera_pos.0.rotation;
 
-                // Ignoring roll to create a MSFS-like camera
-                let no_roll = Quat::from_euler(
-                    EulerRot::YXZ,
-                    flat_forward.x.atan2(flat_forward.z), // yaw
-                    0.0,                                  // pitch (-forward.y.asin(),)
-                    0.0,                                  // roll
-                );
-                camera.rotation = no_roll * camera_pos.0.rotation;
-
-                camera.translation = target - camera.forward() * camera_settings.orbit_distance;
+                cam_transform.translation =
+                    target - cam_transform.forward() * camera_settings.orbit_distance;
 
                 if keyboard_input.just_pressed(keymap.reset_camera) {
-                    camera.translation = aircraft.translation
-                        + aircraft.rotation * camera_settings.follow_default_position;
+                    cam_transform.translation = camera_settings.follow_default_position;
                     pitch = 0.0;
                     yaw = 0.0;
                 }
             }
             CameraView::Tail => {
-                camera.translation = match state.aircraft_type {
+                cam_transform.translation = match state.aircraft_type {
                     crate::aircraft::AircraftTypes::Helicopter => {
-                        aircraft.translation
-                            + aircraft.rotation * camera_settings.tail_default_position
+                        camera_settings.tail_default_position
                     }
-                    _ => {
-                        aircraft.translation
-                            + aircraft.rotation
-                                * bevy_to_aerospace_coords()
-                                * camera_settings.tail_default_position
-                    }
+                    _ => bevy_to_aerospace_coords() * camera_settings.tail_default_position,
                 };
 
-                camera.rotation = match state.aircraft_type {
-                    crate::aircraft::AircraftTypes::Helicopter => {
-                        aircraft.rotation * camera_pos.0.rotation
-                    }
-                    _ => aircraft.rotation * bevy_to_aerospace_coords() * camera_pos.0.rotation,
+                cam_transform.rotation = match state.aircraft_type {
+                    crate::aircraft::AircraftTypes::Helicopter => camera_pos.0.rotation,
+                    _ => bevy_to_aerospace_coords() * camera_pos.0.rotation,
                 };
             }
         }

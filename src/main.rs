@@ -191,6 +191,7 @@ fn main() {
             Camera::controller,
             input::input_system,
             aircraft::buttons::update_cursor,
+            Camera::controller,
         ),
     )
     .add_systems(

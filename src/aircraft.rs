@@ -184,10 +184,6 @@ pub fn spawn_breeze(
     let translation =
         coord_to_pos(settings.terrain.coord) * EARTH_RADIUS + Vec3::new(0.0, 1000.0, 0.0);
     let (object_cell, object_pos) = grid.translation_to_grid(translation);
-    commands.spawn((
-        crate::Camera::spawn(object_cell, root_grid_id),
-        Transform::from_translation(object_pos + Vec3::new(0.0, 10.0, 0.0)),
-    ));
     breeze::spawn(
         &mut commands,
         Transform::from_translation(object_pos).with_rotation(level),

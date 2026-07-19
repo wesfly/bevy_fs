@@ -128,6 +128,9 @@ pub fn spawn(
             // No LodDamping. Roll/pitch/yaw damping emerges from zone geometry.
         )).observe(crate::data_from_gltf::load)
             .with_children(|parent| {
+                parent.spawn(
+                    crate::Camera::spawn(Quat::from_rotation_z(core::f32::consts::PI))
+                );
             //==== front avionics/cabin fuselage section ====
             parent.spawn((
                 AeroZoneBundle {
