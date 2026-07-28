@@ -117,7 +117,6 @@ pub fn spawn(
     const PATH: &str = "aircraft/breeze/c-f3/model.gltf";
 
     commands.spawn((
-            TransformInterpolation,
             cell_coord,
             WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
             breeze_core_bundle(transform, initial_velocity),
@@ -127,14 +126,10 @@ pub fn spawn(
             Aircraft,
             Position(abs_position),
             ChildOf(parent_id),
-            FloatingOrigin,
             rotation,
             // No LodDamping. Roll/pitch/yaw damping emerges from zone geometry.
         )).observe(crate::data_from_gltf::load)
             .with_children(|parent| {
-                parent.spawn(
-                    crate::Camera::spawn(Quat::from_rotation_z(core::f32::consts::PI))
-                );
             //==== front avionics/cabin fuselage section ====
             parent.spawn((
                 AeroZoneBundle {

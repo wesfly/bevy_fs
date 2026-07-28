@@ -1,17 +1,18 @@
 use crate::{
-    CELL_SIZE,
+    CELL_SIZE, absolute_position,
     aircraft::{Aircraft, AircraftState},
     bevy_to_aerospace_coords,
     input::Keymap,
 };
+use avian3d::prelude::ReadRigidBodyForces;
+use avian3d::prelude::{Position, Rotation};
 use bevy::{
     anti_alias::taa::TemporalAntiAliasing,
     camera::{Exposure, Hdr},
-    camera_controller::free_camera::FreeCamera,
     core_pipeline::tonemapping::Tonemapping,
     input::mouse::{AccumulatedMouseMotion, MouseScrollUnit, MouseWheel},
     light::AtmosphereEnvironmentMapLight,
-    math::DVec3,
+    math::{DQuat, DVec3},
     pbr::{AtmosphereSettings, ScreenSpaceReflections},
     post_process::{bloom::Bloom, motion_blur::MotionBlur},
     prelude::*,
@@ -23,7 +24,7 @@ use std::{
 };
 
 #[derive(Component)]
-pub struct Camera;
+pub struct AircraftCamera;
 
 #[derive(Debug)]
 pub enum CameraView {
@@ -36,7 +37,6 @@ pub enum CameraView {
 pub struct CameraSettings {
     pub orbit_distance: f32,
     pub pitch_speed: f32,
-    pub pitch_range: Range<f32>,
     pub yaw_speed: f32,
     follow_default_position: Vec3,
     follow_default_lookat: Vec3,
@@ -50,9 +50,8 @@ impl Default for CameraSettings {
         let pitch_limit = FRAC_PI_2 - 0.01;
         Self {
             orbit_distance: 25.0,
-            pitch_speed: 0.001,
-            pitch_range: -pitch_limit..pitch_limit,
-            yaw_speed: 0.001,
+            pitch_speed: 0.1,
+            yaw_speed: 0.1,
             follow_default_position: Vec3 {
                 x: -20.0,
                 y: 4.0,
@@ -72,29 +71,35 @@ impl Default for CameraSettings {
         }
     }
 }
-
-const CAM_EXPOSURE: Exposure = Exposure { ev100: 13.0 };
+pub struct CameraRotation {
+    pub yaw: f32,
+    pub pitch: f32,
+}
 
 #[derive(Resource)]
-pub struct CameraPosition(pub Transform);
+pub struct CameraPosition {
+    pub cockpit: Transform,
+    pub follow: CameraRotation,
+    pub tail: Transform,
+}
 
-impl Camera {
-    pub fn spawn(rotation: Quat) -> impl Bundle {
+impl AircraftCamera {
+    pub fn spawn() -> impl Bundle {
         (
+            FloatingOrigin,
             Camera3d::default(),
             AtmosphereSettings {
                 rendering_method: bevy::pbr::AtmosphereMode::Raymarched,
                 ..default()
             },
             AtmosphereEnvironmentMapLight::default(),
-            CAM_EXPOSURE,
+            Exposure { ev100: 13.0 },
             Tonemapping::AcesFitted,
             Bloom::NATURAL,
             Projection::from(PerspectiveProjection {
                 fov: 50.0_f32.to_radians(),
                 ..default()
             }),
-            Transform::from_rotation(rotation),
             (
                 Msaa::Off,
                 TemporalAntiAliasing::default(),
@@ -108,23 +113,34 @@ impl Camera {
                     samples: 2,
                 },
             ),
-            crate::camera::Camera,
+            crate::camera::AircraftCamera,
         )
     }
 
     pub fn controller(
-        camera: Single<&mut Transform, With<Camera>>,
+        mut camera: Single<
+            (&mut Transform, &mut CellCoord),
+            (With<AircraftCamera>, Without<Aircraft>),
+        >,
         camera_settings: Res<CameraSettings>,
         state: Res<AircraftState>,
+        aircraft: Single<
+            (&Transform, &CellCoord, avian3d::prelude::forces::Forces),
+            With<Aircraft>,
+        >,
         mouse_buttons: Res<ButtonInput<MouseButton>>,
         mouse_motion: Res<AccumulatedMouseMotion>,
         keyboard_input: Res<'_, ButtonInput<KeyCode>>,
         keymap: Res<Keymap>,
-        mut projection: Single<&mut Projection, With<Camera>>,
+        mut projection: Single<&mut Projection, With<AircraftCamera>>,
         mut scroll_events: MessageReader<MouseWheel>,
         mut camera_pos: ResMut<CameraPosition>,
+        time: Res<Time>,
     ) {
-        let mut cam_transform = camera.into_inner();
+        let (ref mut cam_tf, ref mut cell_coord) = *camera;
+        let (ac_tf, ac_cell, ref ac_forces) = *aircraft;
+
+        **cell_coord = *ac_cell;
 
         let cockpit_default_position = match state.aircraft_type {
             crate::aircraft::AircraftTypes::Helicopter => Vec3 {
@@ -143,64 +159,86 @@ impl Camera {
                 z: -1.2,
             },
         };
+
         let delta = mouse_motion.delta;
+        let delta_pitch;
+        let delta_yaw;
+        if mouse_buttons.pressed(MouseButton::Right) {
+            delta_pitch = -delta.y * camera_settings.pitch_speed * time.delta_secs();
+            delta_yaw = -delta.x * camera_settings.yaw_speed * time.delta_secs();
+        } else {
+            delta_pitch = 0.0;
+            delta_yaw = 0.0;
+        }
 
-        let delta_pitch = -delta.y * camera_settings.pitch_speed;
-        let delta_yaw = -delta.x * camera_settings.yaw_speed;
-
-        let (yaw, pitch, roll) = camera_pos.0.rotation.to_euler(EulerRot::YXZ);
-
-        let (mut pitch, mut yaw) = match mouse_buttons.pressed(MouseButton::Right) {
-            true => (
-                (pitch + delta_pitch).clamp(
-                    camera_settings.pitch_range.start,
-                    camera_settings.pitch_range.end,
-                ),
-                (yaw + delta_yaw),
-            ),
-            false => (pitch, yaw),
-        };
+        let surface_up = absolute_position(cell_coord, cam_tf.translation)
+            .normalize()
+            .as_vec3();
 
         match camera_settings.view {
             CameraView::Cockpit => {
-                cam_transform.translation = cockpit_default_position;
-                cam_transform.rotation = match state.aircraft_type {
-                    crate::aircraft::AircraftTypes::Helicopter => camera_pos.0.rotation,
-                    _ => bevy_to_aerospace_coords() * camera_pos.0.rotation,
-                };
+                let (yaw, pitch, roll) = camera_pos.cockpit.rotation.to_euler(EulerRot::YXZ);
+
+                camera_pos.cockpit.rotation = Quat::from_euler(
+                    EulerRot::YXZ,
+                    yaw + delta_yaw,
+                    (pitch + delta_pitch).clamp(-(FRAC_PI_2 - 0.01), FRAC_PI_2 - 0.01),
+                    roll,
+                );
+                cam_tf.translation = ac_tf.translation + ac_tf.rotation * cockpit_default_position;
+                cam_tf.rotation =
+                    ac_tf.rotation * bevy_to_aerospace_coords() * camera_pos.cockpit.rotation;
             }
             CameraView::Follow => {
-                let target = bevy_to_aerospace_coords() * camera_settings.follow_default_lookat;
+                camera_pos.follow.yaw += delta_yaw;
+                camera_pos.follow.pitch = (camera_pos.follow.pitch + delta_pitch)
+                    .clamp(-(FRAC_PI_2 - 0.01), FRAC_PI_2 - 0.01);
 
-                cam_transform.rotation = Quat::from_rotation_z(core::f32::consts::FRAC_PI_2)
-                    * Quat::from_rotation_x(-core::f32::consts::FRAC_PI_2)
-                    * camera_pos.0.rotation;
+                let orbit_yaw = camera_pos.follow.yaw;
+                let orbit_pitch = camera_pos.follow.pitch;
 
-                cam_transform.translation =
-                    target - cam_transform.forward() * camera_settings.orbit_distance;
+                let aircraft_forward = -(ac_tf.rotation * Vec3::X);
 
-                if keyboard_input.just_pressed(keymap.reset_camera) {
-                    cam_transform.translation = camera_settings.follow_default_position;
-                    pitch = 0.0;
-                    yaw = 0.0;
-                }
+                let flat_forward = {
+                    let f = aircraft_forward - surface_up * aircraft_forward.dot(surface_up);
+                    if f.length_squared() < 1e-6 {
+                        surface_up.any_orthonormal_vector()
+                    } else {
+                        f.normalize()
+                    }
+                };
+
+                let yaw_rot = Quat::from_axis_angle(surface_up, orbit_yaw);
+                let base_dir = yaw_rot * (-flat_forward);
+
+                let pitch_axis = base_dir.cross(surface_up);
+                let orbit_dir = if pitch_axis.length_squared() < 1e-6 {
+                    base_dir
+                } else {
+                    (Quat::from_axis_angle(pitch_axis.normalize(), orbit_pitch) * base_dir)
+                        .normalize()
+                };
+
+                cam_tf.translation = ac_tf.translation + orbit_dir * camera_settings.orbit_distance;
+                cam_tf.look_at(ac_tf.translation, surface_up);
             }
             CameraView::Tail => {
-                cam_transform.translation = match state.aircraft_type {
-                    crate::aircraft::AircraftTypes::Helicopter => {
-                        camera_settings.tail_default_position
-                    }
-                    _ => bevy_to_aerospace_coords() * camera_settings.tail_default_position,
-                };
+                let (yaw, pitch, roll) = camera_pos.tail.rotation.to_euler(EulerRot::YXZ);
 
-                cam_transform.rotation = match state.aircraft_type {
-                    crate::aircraft::AircraftTypes::Helicopter => camera_pos.0.rotation,
-                    _ => bevy_to_aerospace_coords() * camera_pos.0.rotation,
-                };
+                camera_pos.tail.rotation = Quat::from_euler(
+                    EulerRot::YXZ,
+                    yaw + delta_yaw,
+                    (pitch + delta_pitch).clamp(-(FRAC_PI_2 - 0.01), FRAC_PI_2 - 0.01),
+                    roll,
+                );
+                cam_tf.translation = ac_tf.translation
+                    + ac_tf.rotation
+                        * bevy_to_aerospace_coords()
+                        * camera_settings.tail_default_position;
+                cam_tf.rotation =
+                    ac_tf.rotation * bevy_to_aerospace_coords() * camera_pos.tail.rotation;
             }
-        }
-
-        camera_pos.0.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
+        };
 
         let Projection::Perspective(perspective) = projection.as_mut() else {
             return;

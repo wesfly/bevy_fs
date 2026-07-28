@@ -25,7 +25,7 @@ use crate::{
         buttons::{Button, ButtonMessages},
         lights::{ACOL_OFF_DURATION, Light, LightsTimers, STROBE_OFF_DURATION},
     },
-    camera::{Camera, CameraPosition, CameraSettings, rotate_sun},
+    camera::{AircraftCamera, CameraPosition, CameraRotation, CameraSettings, rotate_sun},
     input::ControlInputs,
     scenery::terrain::{TerrainCacheResource, TerrainMaterial, TerrainSettings, poll_terrain},
     sse::Sse,
@@ -155,7 +155,6 @@ fn main() {
         throttle: 0.0,
         ground_brakes: 0.0,
     })
-    // .init_resource::<ShowColliders>()
     .insert_resource(CameraSettings::default())
     .insert_resource(input::Keymap::default())
     .insert_resource(Settings::fetch())
@@ -170,10 +169,14 @@ fn main() {
     .insert_resource(TerrainCacheResource::default())
     .insert_resource(AircraftState::default())
     .insert_resource(LandingGearStatus::Retracted)
-    .insert_resource(CameraPosition(Transform {
-        translation: Vec3::ZERO,
-        ..default()
-    }))
+    .insert_resource(CameraPosition {
+        cockpit: Transform::default(),
+        follow: CameraRotation {
+            yaw: std::f32::consts::PI,
+            pitch: 0.1,
+        },
+        tail: Transform::default(),
+    })
     .insert_resource(avian3d::physics_transform::PhysicsTransformConfig {
         propagate_before_physics: false,
         transform_to_position: false,
@@ -190,17 +193,16 @@ fn main() {
             update_rotors,
             input::input_system,
             aircraft::buttons::update_cursor,
-            Camera::controller,
             screenshot,
+            AircraftCamera::controller,
         ),
     )
     .add_systems(
         FixedPostUpdate,
-        sync_to_avian.in_set(PhysicsSystems::Prepare),
-    )
-    .add_systems(
-        PostUpdate,
-        sync_from_avian.before(TransformSystems::Propagate),
+        (
+            sync_to_avian.in_set(PhysicsSystems::Prepare),
+            sync_from_avian.in_set(TransformSystems::Propagate),
+        ),
     )
     .add_systems(
         FixedUpdate,
@@ -219,6 +221,7 @@ fn main() {
             game_state,
         ),
     );
+
     app.run();
 }
 
@@ -294,17 +297,18 @@ fn sync_from_avian(mut bodies: Query<(&Position, &mut CellCoord, &mut Transform,
     }
 }
 
-fn planet_gravity(mut query: Query<(Forces, &Position)>) {
-    let planet_center = DVec3::new(0.0, 0.0, 0.0); // your planet's position
-    for (mut forces, position) in &mut query {
-        let to_center = planet_center - position.as_ivec3().as_dvec3();
-        let direction = to_center.normalize_or_zero();
-        forces.apply_linear_acceleration(direction * 9.81);
+fn planet_gravity(mut query: Query<(Forces, &Position)>, game_state: Res<GameState>) {
+    if game_state.running {
+        let planet_center = DVec3::new(0.0, 0.0, 0.0); // your planet's position
+        for (mut forces, position) in &mut query {
+            let to_center = planet_center - position.as_ivec3().as_dvec3();
+            let direction = to_center.normalize_or_zero();
+            forces.apply_linear_acceleration(direction * 9.81);
+        }
     }
 }
 
-// // Could be useful in the future
-// fn absolute_position(cell: &CellCoord, local_translation: Vec3) -> DVec3 {
-//     DVec3::new(cell.x as f64, cell.y as f64, cell.z as f64) * CELL_SIZE as f64
-//         + local_translation.as_dvec3()
-// }
+pub fn absolute_position(cell: &CellCoord, local_translation: Vec3) -> DVec3 {
+    DVec3::new(cell.x as f64, cell.y as f64, cell.z as f64) * CELL_SIZE as f64
+        + local_translation.as_dvec3()
+}

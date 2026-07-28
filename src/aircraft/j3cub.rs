@@ -111,8 +111,8 @@
 //! All zones are tiled without collider overlap. No double-counted mass.
 
 use super::airfoils::usa35b;
+use crate::aircraft::Aircraft;
 use crate::data_from_gltf::load;
-use crate::{aircraft::Aircraft, camera::Camera};
 use avian_fdm::{
     airfoil::AirfoilData,
     components::{
@@ -467,7 +467,6 @@ pub fn spawn(
     const PATH: &str = "aircraft/j3cub/model.glb";
     commands
         .spawn((
-            FloatingOrigin,
             cell,
             WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
             Visibility::default(),
@@ -487,7 +486,6 @@ pub fn spawn(
             // No LodDamping. Roll/pitch/yaw damping emerges from zone geometry.
         ))
         .with_children(|parent| {
-            parent.spawn(Camera::spawn(Quat::from_rotation_z(core::f32::consts::PI)));
             // ── Left wing ────────────────────────────────────────────────────
             // Thin collider (z=0.02 m). See module docs on hybrid approach.
             parent.spawn((wing_zone(
