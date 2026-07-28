@@ -41,13 +41,12 @@ pub struct CameraSettings {
     follow_default_position: Vec3,
     follow_default_lookat: Vec3,
     tail_default_position: Vec3,
+    default_camera_position: CameraPosition,
     pub view: CameraView,
 }
 
 impl Default for CameraSettings {
     fn default() -> Self {
-        // Limiting pitch stops some unexpected rotation past 90° up or down.
-        let pitch_limit = FRAC_PI_2 - 0.01;
         Self {
             orbit_distance: 25.0,
             pitch_speed: 0.1,
@@ -67,16 +66,26 @@ impl Default for CameraSettings {
                 y: 4.0,
                 z: 7.0,
             },
+            default_camera_position: CameraPosition {
+                cockpit: Transform::default(),
+                follow: CameraRotation {
+                    yaw: std::f32::consts::PI,
+                    pitch: 0.1,
+                },
+                tail: Transform::default(),
+            },
             view: CameraView::Follow,
         }
     }
 }
+
+#[derive(Debug)]
 pub struct CameraRotation {
     pub yaw: f32,
     pub pitch: f32,
 }
 
-#[derive(Resource)]
+#[derive(Resource, Debug)]
 pub struct CameraPosition {
     pub cockpit: Transform,
     pub follow: CameraRotation,
@@ -124,10 +133,7 @@ impl AircraftCamera {
         >,
         camera_settings: Res<CameraSettings>,
         state: Res<AircraftState>,
-        aircraft: Single<
-            (&Transform, &CellCoord, avian3d::prelude::forces::Forces),
-            With<Aircraft>,
-        >,
+        aircraft: Single<(&Transform, &CellCoord), With<Aircraft>>,
         mouse_buttons: Res<ButtonInput<MouseButton>>,
         mouse_motion: Res<AccumulatedMouseMotion>,
         keyboard_input: Res<'_, ButtonInput<KeyCode>>,
@@ -138,7 +144,7 @@ impl AircraftCamera {
         time: Res<Time>,
     ) {
         let (ref mut cam_tf, ref mut cell_coord) = *camera;
-        let (ac_tf, ac_cell, ref ac_forces) = *aircraft;
+        let (ac_tf, ac_cell) = *aircraft;
 
         **cell_coord = *ac_cell;
 

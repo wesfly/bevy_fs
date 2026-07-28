@@ -9,11 +9,8 @@ mod helicopter;
 mod j3cub;
 
 use crate::{
-    GameState, Settings, aircraft,
-    camera::AircraftCamera,
-    data_from_gltf::load,
-    input::ControlInputs,
-    scenery::terrain::{EARTH_RADIUS, coord_to_pos},
+    EARTH_RADIUS, GameState, Settings, aircraft, camera::AircraftCamera, data_from_gltf::load,
+    input::ControlInputs, scenery::terrain::coord_to_pos,
 };
 use avian3d::prelude::*;
 use bevy::{

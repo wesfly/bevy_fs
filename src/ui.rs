@@ -1,7 +1,7 @@
 use core::convert::Into;
 
 use crate::{
-    ControlInputs, GameState, RunOnceSystemList, Settings,
+    ControlInputs, EARTH_RADIUS, GameState, RunOnceSystemList, Settings,
     aircraft::{Aircraft, AircraftState, AircraftTypes},
     scenery::terrain::Coord,
 };
@@ -530,20 +530,25 @@ impl UI {
     fn update_ui_hud(
         query: Query<(&mut Text, &UIHudComponent)>,
         state: Res<AircraftState>,
-        transform: Single<&Transform, With<Aircraft>>,
+        aircraft: Single<(&Transform, &avian3d::prelude::Position), With<Aircraft>>,
         input: Res<ControlInputs>,
         vel: Single<&LinearVelocity, With<Aircraft>>,
     ) {
+        let (transform, position) = *aircraft;
         for (mut text, ui_hud_component) in query {
             let forward = match state.aircraft_type {
                 AircraftTypes::Helicopter => -transform.local_z(),
                 _ => transform.local_x(),
             };
             let string = match ui_hud_component {
-                UIHudComponent::Altitude => format!(
-                    "Altitude: {}m",
-                    &transform.translation.y.round().to_string()
-                ),
+                UIHudComponent::Altitude => {
+                    format!(
+                        "Altitude: {}m",
+                        (position.length() - EARTH_RADIUS as f64)
+                            .round()
+                            .to_string()
+                    )
+                }
                 UIHudComponent::Throttle => {
                     format!("Throttle: {}%", (input.throttle * 100.0).round())
                 }

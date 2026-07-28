@@ -1,3 +1,4 @@
+use crate::EARTH_RADIUS;
 use avian3d::prelude::*;
 use bevy::{
     color::palettes::css::GREEN,
@@ -21,7 +22,6 @@ use tokio::runtime::Runtime;
 use tokio::sync::Semaphore;
 
 mod material;
-pub const EARTH_RADIUS: f32 = 6_360_000.0;
 
 const SIZE: f32 = 2.0;
 const SUBDIV: u32 = 4096 * 1;

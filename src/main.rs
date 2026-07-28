@@ -8,6 +8,7 @@ Default for speed is m/s
 
 pub const METRES_TO_FEET: f32 = 3.28084;
 pub const M_S_TO_KTS: f32 = 1.943844;
+pub const EARTH_RADIUS: f32 = 6_360_000.0;
 
 mod aircraft;
 mod camera;

@@ -1,7 +1,7 @@
 use crate::{
-    CELL_SIZE, Settings,
+    CELL_SIZE, EARTH_RADIUS, Settings,
     scenery::{
-        terrain::{EARTH_RADIUS, TerrainCacheResource, coord_to_pos, init_terrain_cache},
+        terrain::{TerrainCacheResource, coord_to_pos, init_terrain_cache},
         water::{Water, spawn_water},
     },
     ui::MenuCamera,
