@@ -128,6 +128,8 @@ pub fn spawn_chunk(
     }
 }
 
+/// Returns a normalized Vec3:
+/// You need to multiply it with `EARTH_RADIUS` to get the absolute position
 pub fn coord_to_pos(target_coord: Coord) -> Vec3 {
     let lat_rad = target_coord.lat.to_radians();
     let long_rad = target_coord.long.to_radians();
@@ -135,7 +137,7 @@ pub fn coord_to_pos(target_coord: Coord) -> Vec3 {
     let y = lat_rad.sin();
     let x = lat_rad.cos() * long_rad.sin();
     let z = lat_rad.cos() * long_rad.cos();
-    Vec3::new(x, y, z)
+    Vec3::new(x, y, z).normalize()
 }
 
 fn to_sphere_pos(pos: &[f32; 3]) -> Vec3 {
