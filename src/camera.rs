@@ -1,6 +1,6 @@
 use crate::{
     absolute_position,
-    aircraft::{Aircraft, AircraftState},
+    aircraft::{self, Aircraft, AircraftState, AircraftTypes},
     bevy_to_aerospace_coords,
     input::Keymap,
 };
@@ -135,12 +135,12 @@ impl AircraftCamera {
         **cell_coord = *ac_cell;
 
         let cockpit_default_position = match state.aircraft_type {
-            crate::aircraft::AircraftTypes::Helicopter => Vec3 {
+            aircraft::AircraftTypes::Helicopter => Vec3 {
                 x: 0.38,
                 y: 1.2,
                 z: -2.6,
             },
-            crate::aircraft::AircraftTypes::J3Cub => Vec3 {
+            aircraft::AircraftTypes::J3Cub => Vec3 {
                 x: 0.2,
                 y: 0.0,
                 z: -0.5,
@@ -189,7 +189,10 @@ impl AircraftCamera {
                 let orbit_yaw = camera_pos.follow.yaw;
                 let orbit_pitch = camera_pos.follow.pitch;
 
-                let aircraft_forward = -(ac_tf.rotation * Vec3::X);
+                let aircraft_forward = match state.aircraft_type {
+                    AircraftTypes::Helicopter => (ac_tf.rotation * Vec3::Z),
+                    _ => -(ac_tf.rotation * Vec3::X),
+                };
 
                 let flat_forward = {
                     let f = aircraft_forward - surface_up * aircraft_forward.dot(surface_up);
