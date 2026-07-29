@@ -26,7 +26,7 @@ use crate::{
         buttons::{Button, ButtonMessages},
         lights::{ACOL_OFF_DURATION, Light, LightsTimers, STROBE_OFF_DURATION},
     },
-    camera::{AircraftCamera, CameraPosition, CameraRotation, CameraSettings, rotate_sun},
+    camera::{AircraftCamera, CameraPosition, CameraSettings, rotate_sun},
     input::ControlInputs,
     scenery::terrain::{TerrainCacheResource, TerrainMaterial, TerrainSettings, poll_terrain},
     sse::Sse,
@@ -170,14 +170,7 @@ fn main() {
     .insert_resource(TerrainCacheResource::default())
     .insert_resource(AircraftState::default())
     .insert_resource(LandingGearStatus::Retracted)
-    .insert_resource(CameraPosition {
-        cockpit: Transform::default(),
-        follow: CameraRotation {
-            yaw: std::f32::consts::PI,
-            pitch: 0.1,
-        },
-        tail: Transform::default(),
-    })
+    .insert_resource(CameraPosition::default())
     .insert_resource(avian3d::physics_transform::PhysicsTransformConfig {
         propagate_before_physics: false,
         transform_to_position: false,

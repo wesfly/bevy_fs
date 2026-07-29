@@ -1,27 +1,21 @@
 use crate::{
-    CELL_SIZE, absolute_position,
+    absolute_position,
     aircraft::{Aircraft, AircraftState},
     bevy_to_aerospace_coords,
     input::Keymap,
 };
-use avian3d::prelude::ReadRigidBodyForces;
-use avian3d::prelude::{Position, Rotation};
 use bevy::{
     anti_alias::taa::TemporalAntiAliasing,
     camera::{Exposure, Hdr},
     core_pipeline::tonemapping::Tonemapping,
     input::mouse::{AccumulatedMouseMotion, MouseScrollUnit, MouseWheel},
     light::AtmosphereEnvironmentMapLight,
-    math::{DQuat, DVec3},
     pbr::{AtmosphereSettings, ScreenSpaceReflections},
     post_process::{bloom::Bloom, motion_blur::MotionBlur},
     prelude::*,
 };
 use big_space::prelude::*;
-use std::{
-    f32::consts::{FRAC_PI_2, PI},
-    ops::Range,
-};
+use std::f32::consts::{FRAC_PI_2, PI};
 
 #[derive(Component)]
 pub struct AircraftCamera;
@@ -38,10 +32,7 @@ pub struct CameraSettings {
     pub orbit_distance: f32,
     pub pitch_speed: f32,
     pub yaw_speed: f32,
-    follow_default_position: Vec3,
-    follow_default_lookat: Vec3,
     tail_default_position: Vec3,
-    default_camera_position: CameraPosition,
     pub view: CameraView,
 }
 
@@ -51,28 +42,10 @@ impl Default for CameraSettings {
             orbit_distance: 25.0,
             pitch_speed: 0.1,
             yaw_speed: 0.1,
-            follow_default_position: Vec3 {
-                x: -20.0,
-                y: 4.0,
-                z: 0.0,
-            },
-            follow_default_lookat: Vec3 {
-                x: 0.0,
-                y: 2.5,
-                z: 0.0,
-            },
             tail_default_position: Vec3 {
                 x: 0.0,
                 y: 4.0,
                 z: 7.0,
-            },
-            default_camera_position: CameraPosition {
-                cockpit: Transform::default(),
-                follow: CameraRotation {
-                    yaw: std::f32::consts::PI,
-                    pitch: 0.1,
-                },
-                tail: Transform::default(),
             },
             view: CameraView::Follow,
         }
@@ -90,6 +63,19 @@ pub struct CameraPosition {
     pub cockpit: Transform,
     pub follow: CameraRotation,
     pub tail: Transform,
+}
+
+impl Default for CameraPosition {
+    fn default() -> Self {
+        CameraPosition {
+            cockpit: Transform::default(),
+            follow: CameraRotation {
+                yaw: std::f32::consts::PI,
+                pitch: 0.1,
+            },
+            tail: Transform::default(),
+        }
+    }
 }
 
 impl AircraftCamera {
@@ -245,6 +231,10 @@ impl AircraftCamera {
                     ac_tf.rotation * bevy_to_aerospace_coords() * camera_pos.tail.rotation;
             }
         };
+
+        if keyboard_input.pressed(keymap.reset_camera) {
+            *camera_pos = CameraPosition::default();
+        }
 
         let Projection::Perspective(perspective) = projection.as_mut() else {
             return;
