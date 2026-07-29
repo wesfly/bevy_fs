@@ -178,8 +178,10 @@ impl AircraftCamera {
                     roll,
                 );
                 cam_tf.translation = ac_tf.translation + ac_tf.rotation * cockpit_default_position;
-                cam_tf.rotation =
-                    ac_tf.rotation * bevy_to_aerospace_coords() * camera_pos.cockpit.rotation;
+                cam_tf.rotation = match state.aircraft_type {
+                    AircraftTypes::Helicopter => ac_tf.rotation * camera_pos.cockpit.rotation,
+                    _ => ac_tf.rotation * bevy_to_aerospace_coords() * camera_pos.cockpit.rotation,
+                };
             }
             CameraView::Follow => {
                 camera_pos.follow.yaw += delta_yaw;
@@ -190,7 +192,7 @@ impl AircraftCamera {
                 let orbit_pitch = camera_pos.follow.pitch;
 
                 let aircraft_forward = match state.aircraft_type {
-                    AircraftTypes::Helicopter => (ac_tf.rotation * Vec3::Z),
+                    AircraftTypes::Helicopter => ac_tf.rotation * Vec3::Z,
                     _ => -(ac_tf.rotation * Vec3::X),
                 };
 
@@ -226,12 +228,22 @@ impl AircraftCamera {
                     (pitch + delta_pitch).clamp(-(FRAC_PI_2 - 0.01), FRAC_PI_2 - 0.01),
                     roll,
                 );
-                cam_tf.translation = ac_tf.translation
-                    + ac_tf.rotation
-                        * bevy_to_aerospace_coords()
-                        * camera_settings.tail_default_position;
-                cam_tf.rotation =
-                    ac_tf.rotation * bevy_to_aerospace_coords() * camera_pos.tail.rotation;
+                cam_tf.translation = match state.aircraft_type {
+                    AircraftTypes::Helicopter => {
+                        ac_tf.translation + ac_tf.rotation * camera_settings.tail_default_position
+                    }
+                    _ => {
+                        ac_tf.translation
+                            + ac_tf.rotation
+                                * bevy_to_aerospace_coords()
+                                * camera_settings.tail_default_position
+                    }
+                };
+
+                cam_tf.rotation = match state.aircraft_type {
+                    AircraftTypes::Helicopter => ac_tf.rotation * camera_pos.tail.rotation,
+                    _ => ac_tf.rotation * bevy_to_aerospace_coords() * camera_pos.tail.rotation,
+                };
             }
         };
 
