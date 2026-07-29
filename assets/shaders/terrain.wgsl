@@ -11,6 +11,7 @@
 
 @group(#{MATERIAL_BIND_GROUP}) @binding(103) var normals_texture: texture_2d<f32>;
 @group(#{MATERIAL_BIND_GROUP}) @binding(104) var normals_sampler: sampler;
+@group(#{MATERIAL_BIND_GROUP}) @binding(105) var<uniform> chunk_normal: vec3<f32>;
 
 // Samples a single octave of noise and returns the resulting normal.
 fn sample_noise_octave(uv: vec2<f32>, strength: f32) -> vec3<f32> {
@@ -42,9 +43,7 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
     pbr_input.N += (sample_noise(in.uv, globals.time) - vec3(1.0, 1.0, 1.0)) * 0.2;
     pbr_input.N = normalize(pbr_input.N);
 
-    let slope = 0.4;
-
-    // let slope = length(cross(pbr_input.N, normalize(pbr_input.world_position.xyz)));
+    let slope = length(cross(pbr_input.N, normalize(chunk_normal)));
 
     // Based on mediterranean terrain
     if slope > 0.6 {

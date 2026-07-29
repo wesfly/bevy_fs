@@ -1,4 +1,4 @@
-use crate::EARTH_RADIUS;
+use crate::{EARTH_RADIUS, absolute_position};
 use avian3d::prelude::*;
 use bevy::{
     color::palettes::css::GREEN,
@@ -24,7 +24,7 @@ use tokio::sync::Semaphore;
 mod material;
 
 const SIZE: f32 = 2.0;
-const SUBDIV: u32 = 4096 * 1;
+const SUBDIV: u32 = 4096 * 2;
 const CHUNKS: u32 = SUBDIV.pow(2);
 const SUBDIV_PER_TILE: u32 = 128;
 
@@ -482,6 +482,8 @@ pub fn poll_terrain(
                                                 });
                                         })
                                         .load("textures/water_normals.png"),
+                                    chunk_normal: absolute_position(&cell_coord, cell_offset)
+                                        .as_vec3(),
                                 },
                             }),
                         ),

@@ -2,6 +2,7 @@ use bevy::{
     asset::{Asset, Handle},
     image::Image,
     pbr::MaterialExtension,
+    prelude::Vec3,
     reflect::TypePath,
     render::render_resource::AsBindGroup,
     shader::ShaderRef,
@@ -16,6 +17,8 @@ pub struct TerrainMaterial {
     #[texture(103)]
     #[sampler(104)]
     pub normals: Handle<Image>,
+    #[uniform(105)]
+    pub chunk_normal: Vec3,
 }
 
 impl MaterialExtension for TerrainMaterial {
