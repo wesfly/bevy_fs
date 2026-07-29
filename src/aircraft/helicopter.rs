@@ -21,8 +21,7 @@ pub fn mechanics(
         With<Aircraft>,
     >,
 ) {
-    let transform = &aircraft.1.clone();
-    let force = &mut aircraft.2;
+    let (_, transform, force, _) = &mut **aircraft;
     if state.engine.on {
         let thrust_factor = 120_000.0;
         let thrust = transform.up() * thrust_factor * input.throttle;
