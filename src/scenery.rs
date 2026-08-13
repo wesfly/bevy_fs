@@ -1,14 +1,10 @@
 use crate::{
-    CELL_SIZE, EARTH_RADIUS, Settings,
+    CELL_SIZE, Settings,
     scenery::{
-        terrain::{TerrainCacheResource, coord_to_pos, init_terrain_cache},
+        terrain::{TerrainCacheResource, init_terrain_cache},
         water::{Water, spawn_water},
     },
     ui::MenuCamera,
-};
-use avian3d::prelude::{
-    ColliderConstructor, ColliderConstructorHierarchy, Friction, Restitution, RigidBody, SweepMode,
-    SweptCcd,
 };
 use bevy::{
     light::{
@@ -36,36 +32,9 @@ pub fn setup_scene(
     cache: Res<TerrainCacheResource>,
 ) {
     init_terrain_cache();
-
     commands.spawn_big_space(Grid::new(CELL_SIZE as f32, 10.0), |mut root| {
         let earth_medium = ScatteringMedium::default();
         let earth_atmosphere = Atmosphere::earth(scattering_mediums.add(earth_medium));
-        // runway
-        let rwy_translation = terrain::coord_to_pos(settings.terrain.coord) * EARTH_RADIUS;
-        let (rwy_cell, rwy_offset) = root.grid().translation_to_grid(rwy_translation);
-
-        root.spawn_spatial((
-            WorldAssetRoot(asset_server.load("scenery/rwy/rwy.gltf#Scene0")),
-            ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
-            RigidBody::Static,
-            Restitution::new(0.0),
-            SweptCcd::new_with_mode(SweepMode::Linear),
-            Friction::new(1.0),
-            Transform::from_translation(rwy_offset),
-            rwy_cell,
-        ));
-
-        let (cell, offset) = root
-            .grid()
-            .translation_to_grid(coord_to_pos(settings.terrain.coord));
-        // let hospital_spawn_pos = Vec3::new(0.0, 0.0, 0.0);
-        root.spawn_spatial((
-            cell,
-            WorldAssetRoot(asset_server.load("scenery/hospital/hospital.gltf#Scene0")),
-            RigidBody::Static,
-            ColliderConstructorHierarchy::new(ColliderConstructor::TrimeshFromMesh),
-            // Transform::from_translation(offset),
-        ));
 
         root.spawn_spatial(earth_atmosphere.clone());
 
@@ -90,7 +59,6 @@ pub fn setup_scene(
             terrain::spawn_chunk(
                 &mut root,
                 normal,
-                // normals[1],
                 &client,
                 Arc::clone(&semaphore),
                 cache.cache.clone(),
