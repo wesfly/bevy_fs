@@ -261,7 +261,7 @@ pub fn get_material_handle(
                         });
                 });
 
-            let brightness = 100.0;
+            let brightness = 10.0;
             // This material has the texture that has been rendered.
             materials.add(StandardMaterial {
                 emissive_texture: Some(image_handle),
