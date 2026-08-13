@@ -54,7 +54,6 @@ pub fn setup_scene(
         let client = Client::new();
         let semaphore = Arc::new(Semaphore::new(64));
         let terrain_settings = settings.terrain;
-        info!("{terrain_settings:?}");
         for normal in normals {
             terrain::spawn_chunk(
                 &mut root,
