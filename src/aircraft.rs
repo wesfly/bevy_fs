@@ -231,28 +231,36 @@ pub fn spawn_j3cub(
     let (root_grid_id, grid) = *root_grid;
     commands.spawn(DiagnosticsOverlay::fps());
 
+    let normalized_pos = coord_to_pos(settings.terrain.coord);
+    let altitude = 1000.0;
     let translation =
-        coord_to_pos(settings.terrain.coord) * EARTH_RADIUS + Vec3::new(0.0, 1000.0, 0.0);
+        normalized_pos.as_dvec3() * EARTH_RADIUS as f64 + normalized_pos.as_dvec3() * altitude;
     let (object_cell, object_pos) = grid.translation_to_grid(translation);
-    let up = translation.normalize();
-    let level =
-        Quat::from_rotation_arc(Vec3::Y, up) * Quat::from_rotation_x(core::f32::consts::FRAC_PI_2);
+    let surface_up = translation.normalize();
+    let level = DQuat::from_rotation_arc(DVec3::Y, surface_up)
+        * DQuat::from_rotation_x(core::f64::consts::FRAC_PI_2);
 
+    let up = surface_up;
+    let reference_forward = DVec3::NEG_Z;
+    let forward = (reference_forward - up * reference_forward.dot(up)).normalize();
+    let right = forward.cross(up).normalize();
+    let up = right.cross(forward);
+
+    let rotation = DQuat::from_mat3(&DMat3::from_cols(right, up, -forward));
     commands.spawn((
         AircraftCamera::spawn(),
         ChildOf(root_grid_id),
         object_cell,
-        Transform::from_translation(object_pos)
-            .with_rotation(Quat::from_rotation_z(core::f32::consts::PI)),
+        Transform::from_translation(object_pos).with_rotation(rotation.as_quat()),
     ));
     j3cub::spawn(
         &mut commands,
-        Transform::from_translation(object_pos).with_rotation(level),
+        Transform::from_translation(object_pos).with_rotation(level.as_quat()),
         asset_server,
-        translation.as_dvec3(),
+        translation,
         object_cell,
         root_grid_id,
-        Rotation(level.as_dquat()),
+        Rotation(level),
     );
 }
 
