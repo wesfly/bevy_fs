@@ -45,6 +45,7 @@ use bevy::{
     window::{CursorIcon, SystemCursorIcon},
 };
 use big_space::prelude::*;
+use core::option::Option::Some;
 use serde::Deserialize;
 use std::{collections::HashMap, fs};
 
@@ -113,7 +114,16 @@ impl FromWorld for RunOnceSystemList {
 
 fn main() {
     let mut app = App::new();
-    let default_plugins = DefaultPlugins.build().disable::<TransformPlugin>();
+    let default_plugins = DefaultPlugins
+        .set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Kestrel Flight Simulator".into(),
+                ..default()
+            }),
+            ..default()
+        })
+        .build()
+        .disable::<TransformPlugin>();
     app.add_plugins((
         default_plugins,
         PhysicsPlugins::default(),
