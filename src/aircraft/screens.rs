@@ -1,5 +1,5 @@
 use crate::{
-    M_S_TO_KTS, METRES_TO_FEET,
+    EARTH_RADIUS, M_S_TO_KTS, METRES_TO_FEET,
     aircraft::{Aircraft, alpha_deg},
     input::ControlInputs,
 };
@@ -277,9 +277,9 @@ pub fn get_material_handle(
 pub fn update_screens(
     query: Query<(Option<&mut Text>, &ScreenUiElement, &mut UiTransform)>,
     input_axis: Res<ControlInputs>,
-    vel_tf: Single<(&LinearVelocity, &Transform), With<Aircraft>>,
+    vel_tf: Single<(&LinearVelocity, &Transform, &avian3d::prelude::Position), With<Aircraft>>,
 ) {
-    let (velocity, transform) = *vel_tf;
+    let (velocity, transform, position) = *vel_tf;
     for (text, screen, mut ui_transform) in query {
         if let Some(mut text) = text {
             match screen {
@@ -306,16 +306,20 @@ pub fn update_screens(
                 _ => *text = Text::new("todo!()"),
             }
         } else if let ScreenUiElement::Horizon = screen {
-            let up = transform.rotation.inverse() * Vec3::Y;
+            let dist_from_center = position.as_vec3().length();
+            let local_up = position.as_vec3() / dist_from_center;
 
+            let dip = (EARTH_RADIUS / dist_from_center).clamp(-1.0, 1.0).acos();
+
+            let up = transform.rotation.inverse() * local_up;
             let roll = f32::atan2(-up.z, up.y);
             ui_transform.rotation = Rot2::radians(-roll + (1.0 / 2.0 * PI) as f32);
 
             let forward = transform.local_x();
-            let pitch = forward.y.asin();
+            let pitch = forward.dot(local_up).asin();
 
-            let px_per_rad = 2800.0;
-            ui_transform.translation.y = px(pitch * px_per_rad);
+            let px_per_rad = 3100.0;
+            ui_transform.translation.y = px((pitch + dip) * px_per_rad);
             ui_transform.translation.x = px(0.0);
         }
     }
