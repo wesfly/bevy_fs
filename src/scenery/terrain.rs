@@ -46,6 +46,20 @@ pub struct TerrainSettings {
     max_render_distance: f32,
     pub level_of_detail: u8,
 }
+
+impl Default for TerrainSettings {
+    fn default() -> Self {
+        TerrainSettings {
+            coord: Coord {
+                lat: 0.0,
+                long: 0.0,
+            },
+            level_of_detail: 12,
+            max_render_distance: 5000.0,
+        }
+    }
+}
+
 #[derive(Component)]
 struct TerrainFaces;
 
@@ -208,11 +222,11 @@ async fn ensure_tiles_loaded(
             match get_tile(&client, semaphore, &TerrariumCoords { z: zoom, x, y }).await {
                 Ok(_) => {}
                 Err(e) => {
-                    warn!("Missing tile {}/{}/{}: {}", zoom, x, y, e);
+                    info!("Missing tile {}/{}/{}: {}", zoom, x, y, e);
                 }
             }
 
-            let img_result = tokio::task::spawn_blocking(move || {
+            let img_result = match tokio::task::spawn_blocking(move || {
                 let bytes = std::fs::read(&path).unwrap_or_else(|_| vec![]);
 
                 if bytes.is_empty() {
@@ -225,7 +239,13 @@ async fn ensure_tiles_loaded(
                 }
             })
             .await
-            .expect("Task panicked");
+            {
+                Ok(img) => img,
+                Err(e) => {
+                    error!("Task failed: {e}");
+                    Ok(Arc::clone(&DUMMY_TILE))
+                }
+            };
 
             let final_image = img_result.unwrap_or_else(|_| Arc::clone(&DUMMY_TILE));
             cache.insert((zoom, x, y), final_image);

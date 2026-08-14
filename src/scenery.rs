@@ -69,16 +69,20 @@ pub fn setup_scene(
     commands.entity(*camera).despawn();
 
     let cascade = CascadeShadowConfigBuilder {
-        maximum_distance: settings.shadow_distance,
+        maximum_distance: settings.shadow_distance.clamp(1.0, 100_000.0),
         ..Default::default()
     }
     .build();
 
-    let sun_position = settings.sun_position;
+    let sun_position = Vec3::new(1.0, 0.1, 0.0).normalize();
+    let shadows_enabled = settings.shadow_distance != 0.0;
+    if !shadows_enabled {
+        info!("Shadows disabled")
+    }
     commands.spawn((
         DirectionalLight {
-            shadow_maps_enabled: true,
-            contact_shadows_enabled: true,
+            shadow_maps_enabled: shadows_enabled,
+            contact_shadows_enabled: shadows_enabled,
             illuminance: lux::RAW_SUNLIGHT,
             ..default()
         },

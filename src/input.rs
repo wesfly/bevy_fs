@@ -22,6 +22,15 @@ pub struct Gamepad {
     hotas: bool,
 }
 
+impl Default for Gamepad {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            hotas: false,
+        }
+    }
+}
+
 #[derive(Resource)]
 pub struct Keymap {
     pub reset_camera: KeyCode,

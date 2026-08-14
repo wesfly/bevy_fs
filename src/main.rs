@@ -27,7 +27,7 @@ use crate::{
         lights::{ACOL_OFF_DURATION, Light, LightsTimers, STROBE_OFF_DURATION},
     },
     camera::{AircraftCamera, CameraPosition, CameraSettings, rotate_sun},
-    input::ControlInputs,
+    input::{ControlInputs, Gamepad},
     scenery::terrain::{TerrainCacheResource, TerrainMaterial, TerrainSettings, poll_terrain},
     sse::Sse,
     ui::{Menu, UI},
@@ -58,15 +58,36 @@ pub struct Settings {
     gamepad: input::Gamepad,
     shadow_distance: f32,
     terrain: TerrainSettings,
-    sun_position: Vec3,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            gamepad: Gamepad::default(),
+            shadow_distance: 5000.0,
+            terrain: TerrainSettings::default(),
+        }
+    }
 }
 
 impl Settings {
     fn fetch() -> Self {
-        let json_data = fs::read_to_string("settings.json")
-            .expect("Try running 'cargo run (--release)' from the project root folder.");
-        let settings: Self =
-            serde_json::from_str(&json_data).expect("Failed to serialize settings file");
+        let json_data = match fs::read_to_string("settings.json") {
+            Ok(data) => data,
+            Err(e) => {
+                error!(
+                    "Couldn't read settings.json ({e}). Try running 'cargo run (--release)' from the project root folder."
+                );
+                return Self::default();
+            }
+        };
+        let settings: Self = match serde_json::from_str(&json_data) {
+            Ok(settings) => settings,
+            Err(e) => {
+                error!("Invalid settings.json: {e}",);
+                Self::default()
+            }
+        };
         settings
     }
 }
