@@ -8,8 +8,8 @@
    version="1.1"
    id="svg1"
    inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
-   sodipodi:docname="drawing.svg"
-   inkscape:export-filename="drawing.png"
+   sodipodi:docname="logo.svg"
+   inkscape:export-filename="../assets/aircraft/helicopter/logo.png"
    inkscape:export-xdpi="96"
    inkscape:export-ydpi="96"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
@@ -27,10 +27,10 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="px"
      inkscape:zoom="0.54276993"
-     inkscape:cx="1185.5852"
-     inkscape:cy="533.37517"
-     inkscape:window-width="2048"
-     inkscape:window-height="1080"
+     inkscape:cx="1021.6115"
+     inkscape:cy="607.99241"
+     inkscape:window-width="2560"
+     inkscape:window-height="1371"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -42,16 +42,31 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
-    <text
-       xml:space="preserve"
-       style="font-size:457.906px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;opacity:1;fill:#000000;fill-opacity:0.193329;stroke-width:2.38493"
-       x="0"
-       y="663.63434"
-       id="text1"><tspan
-         sodipodi:role="line"
-         id="tspan1"
-         x="0"
-         y="663.63434"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:457.906px;font-family:'IBM Plex Mono';-inkscape-font-specification:'IBM Plex Mono Bold';fill:#000000;fill-opacity:1;stroke-width:2.38493">bevy_fs</tspan></text>
+    <g
+       id="g8"
+       transform="matrix(6.6388134,0,0,6.6388134,-127.11425,-2393.9243)">
+      <text
+         xml:space="preserve"
+         style="font-weight:bold;font-size:42.6667px;font-family:'Inter 18pt';-inkscape-font-specification:'Inter 18pt Bold';text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#024959;fill-opacity:1;stroke-width:3"
+         x="31.615776"
+         y="431.18506"
+         id="text4"><tspan
+           sodipodi:role="line"
+           id="tspan4"
+           x="31.615776"
+           y="431.18506"
+           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:42.6667px;font-family:'Adwaita Sans';-inkscape-font-specification:'Adwaita Sans Bold';fill:#024959;fill-opacity:1">kestrel</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:42.6667px;font-family:'Adwaita Sans';-inkscape-font-specification:'Adwaita Sans Bold';text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#026873;fill-opacity:1;stroke-width:3"
+         x="32.532444"
+         y="474.7684"
+         id="text6"><tspan
+           sodipodi:role="line"
+           id="tspan6"
+           x="32.532444"
+           y="474.7684"
+           style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:42.6667px;font-family:'Adwaita Sans';-inkscape-font-specification:'Adwaita Sans Light';fill:#026873;fill-opacity:1">flight simulator</tspan></text>
+    </g>
   </g>
 </svg>
