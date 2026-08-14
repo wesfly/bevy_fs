@@ -8,6 +8,8 @@ pub mod breeze;
 mod helicopter;
 mod j3cub;
 
+use core::f64::consts::FRAC_PI_2;
+
 use crate::{
     EARTH_RADIUS, GameState, Settings, absolute_position, aircraft, camera::AircraftCamera,
     data_from_gltf::load, input::ControlInputs, scenery::terrain::coord_to_pos,
@@ -189,8 +191,7 @@ pub fn spawn_breeze(
         normalized_pos.as_dvec3() * EARTH_RADIUS as f64 + normalized_pos.as_dvec3() * altitude;
     let (object_cell, object_pos) = grid.translation_to_grid(translation);
     let surface_up = translation.normalize();
-    let level = DQuat::from_rotation_arc(DVec3::Y, surface_up)
-        * DQuat::from_rotation_x(core::f64::consts::FRAC_PI_2);
+    let level = DQuat::from_rotation_arc(DVec3::Y, surface_up) * DQuat::from_rotation_x(FRAC_PI_2);
 
     let up = surface_up;
     let reference_forward = DVec3::NEG_Z;
@@ -237,8 +238,7 @@ pub fn spawn_j3cub(
         normalized_pos.as_dvec3() * EARTH_RADIUS as f64 + normalized_pos.as_dvec3() * altitude;
     let (object_cell, object_pos) = grid.translation_to_grid(translation);
     let surface_up = translation.normalize();
-    let level = DQuat::from_rotation_arc(DVec3::Y, surface_up)
-        * DQuat::from_rotation_x(core::f64::consts::FRAC_PI_2);
+    let level = DQuat::from_rotation_arc(DVec3::Y, surface_up) * DQuat::from_rotation_x(FRAC_PI_2);
 
     let up = surface_up;
     let reference_forward = DVec3::NEG_Z;
@@ -279,7 +279,7 @@ pub fn spawn_helicopter(
         coord_to_pos(settings.terrain.coord) * EARTH_RADIUS + Vec3::new(0.0, 1000.0, 0.0);
     let (object_cell, object_pos) = grid.translation_to_grid(translation);
     let up = translation.normalize();
-    let level = Quat::from_rotation_arc(Vec3::Y, up);
+    let level = Quat::from_rotation_arc(Vec3::Y, up) * Quat::from_rotation_y(-FRAC_PI_2 as f32);
 
     let path = "aircraft/helicopter/helicopter.gltf";
 
@@ -287,8 +287,7 @@ pub fn spawn_helicopter(
         AircraftCamera::spawn(),
         ChildOf(root_grid_id),
         object_cell,
-        Transform::from_translation(object_pos)
-            .with_rotation(Quat::from_rotation_z(core::f32::consts::PI)),
+        Transform::from_translation(object_pos),
     ));
 
     commands
