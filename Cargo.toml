@@ -1,7 +1,7 @@
 #:schema https://www.schemastore.org/cargo.json
 
 [package]
-name = "bevy_fs"
+name = "kestrel"
 version = "0.3.0"
 edition = "2024"
 license-file = "LICENSE.md"

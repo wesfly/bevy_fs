@@ -1,6 +1,8 @@
-# bevy_fs
+# kestrel flight simulator
 
 This is a little flight sim made in Bevy.
+
+This project is formerly known as `bevy_fs`, but it was renamed due to likelyhood of confusion with a file system crate.
 
 ## Highlights
 
@@ -15,9 +17,9 @@ This is a little flight sim made in Bevy.
 
 ## Preview
 
-![(bevy_fs: preview 1)](./docs/preview-1.png)
-![(bevy_fs: preview 2)](./docs/preview-2.png)
-![(bevy_fs: preview 3)](./docs/preview-3.png)
+![(kestrel flight simulator: preview 1)](./docs/preview-1.png)
+![(kestrel flight simulator: preview 2)](./docs/preview-2.png)
+![(kestrel flight simulator: preview 3)](./docs/preview-3.png)
 
 ## Community
 
@@ -35,7 +37,7 @@ This is a little flight sim made in Bevy.
 1. Clone the repository
 
    ```bash
-   git clone https://github.com/wesfly/bevy_fs.git && cd bevy_fs
+   git clone https://github.com/wesfly/kestrel.git && cd kestrel
    ```
 
 2. Build and run the project
@@ -44,7 +46,7 @@ This is a little flight sim made in Bevy.
    cargo run --release
    ```
 
-   This will build and launch `bevy_fs`. The first startup fetches terrain data
+   This will build and launch `kestrel`. The first startup fetches terrain data
    and can take some time.
 
 ## Terrain
