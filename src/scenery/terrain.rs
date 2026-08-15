@@ -66,7 +66,7 @@ struct TerrainFaces;
 #[derive(Component)]
 pub struct SpawnTerrain(Task<Option<(Mesh, Collider)>>, (CellCoord, Vec3));
 
-#[derive(Copy, Clone, PartialEq, Deserialize, Debug)]
+#[derive(Copy, Clone, PartialEq, Deserialize, Debug, Default)]
 pub struct Coord {
     pub lat: f32,
     pub long: f32,
