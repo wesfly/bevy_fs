@@ -29,6 +29,7 @@ bevy = {
     "bevy_dev_tools",
     "free_camera",
     "ui",
+    "bevy_feathers",
   ]
 }
 big_space = { git = "https://github.com/wesfly/big_space" }

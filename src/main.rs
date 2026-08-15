@@ -38,6 +38,7 @@ use bevy::{
     dev_tools::diagnostics_overlay::DiagnosticsOverlayPlugin,
     diagnostic::FrameTimeDiagnosticsPlugin,
     ecs::system::SystemId,
+    feathers::{dark_theme::create_dark_theme, theme::UiTheme},
     math::DVec3,
     pbr::ExtendedMaterial,
     prelude::*,
@@ -199,6 +200,7 @@ fn main() {
     .init_resource::<RunOnceSystemList>()
     .insert_resource(ClearColor(Color::BLACK))
     .insert_resource(TerrainCacheResource::default())
+    .insert_resource(UiTheme(create_dark_theme()))
     .insert_resource(AircraftState::default())
     .insert_resource(LandingGearStatus::Retracted)
     .insert_resource(CameraPosition::default())
