@@ -7,7 +7,7 @@ edition = "2024"
 license-file = "LICENSE.md"
 
 [dependencies]
-avian_fdm = { version = "0.2.0", default-features = false, features = ["f64"] }
+avian_fdm = { git = "https://github.com/wesfly/avian_fdm", default-features = false, features = ["f64"] }
 avian3d = {
   version = "0.7.0",
   default-features = false,

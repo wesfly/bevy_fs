@@ -3,10 +3,8 @@ use crate::{
     aircraft::{Aircraft, AircraftState, AircraftTypes},
     input::ControlInputs,
 };
-use avian3d::dynamics::rigid_body::forces::WriteRigidBodyForces;
 use avian3d::prelude::Forces;
 use avian3d::prelude::Position;
-use bevy::math::DVec3;
 use bevy::prelude::*;
 
 pub fn mechanics(
@@ -28,48 +26,11 @@ pub fn mechanics(
         }
         AircraftTypes::Breeze => {
             fly_by_wire(&input, state, aircraft);
-            engine(&input, **state, aircraft);
         }
         AircraftTypes::J3Cub => {
             // TODO
             fly_by_wire(&input, state, aircraft);
         }
-    }
-}
-
-fn engine(
-    input: &Res<ControlInputs>,
-    state: AircraftState,
-    aircraft: &mut Single<
-        (
-            &Position,
-            &Transform,
-            Forces,
-            Option<&mut avian_fdm::prelude::ControlInputs>,
-        ),
-        With<Aircraft>,
-    >,
-) {
-    if state.engine.on {
-        let (position, transform, forces, _option_ctrl_inputs) = &mut **aircraft;
-        let point_r = DVec3::new(-5.2, 0.6, -0.4);
-        forces.apply_force_at_point(
-            transform.rotation.as_dquat()
-                * DVec3::new(1.0, 0.0, 0.0)
-                * 7_330.0 // kgf of one engine
-                * 9.80665 // gravitational force
-                * input.throttle as f64,
-            position.as_ivec3().as_dvec3() + transform.rotation.as_dquat() * point_r,
-        );
-        let point_l = DVec3::new(-5.2, -0.6, -0.4);
-        forces.apply_force_at_point(
-            transform.rotation.as_dquat()
-                * DVec3::new(1.0, 0.0, 0.0)
-                * 7_330.0 // kgf of one engine
-                * 9.80665 // gravitational force
-                * input.throttle as f64,
-            position.as_ivec3().as_dvec3() + transform.rotation.as_dquat() * point_l,
-        );
     }
 }
 

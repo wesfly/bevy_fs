@@ -28,6 +28,7 @@ pub fn fly_by_wire(
         fdm_cs.aileron = -input.roll as f64;
         fdm_cs.elevator = input.pitch as f64;
         fdm_cs.rudder = -input.yaw as f64;
+        fdm_cs.throttle = input.throttle as f64;
 
         cs.ground_brakes = input.ground_brakes;
 
@@ -43,8 +44,6 @@ pub fn fly_by_wire(
         cs.canards = canards_angle;
 
         state.control_surfaces = cs;
-
-        state.engine.throttle = input.throttle;
     }
 }
 

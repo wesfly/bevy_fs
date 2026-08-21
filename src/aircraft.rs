@@ -8,8 +8,6 @@ pub mod breeze;
 mod helicopter;
 mod j3cub;
 
-use core::f64::consts::FRAC_PI_2;
-
 use crate::{
     EARTH_RADIUS, GameState, Settings, absolute_position, aircraft, camera::AircraftCamera,
     data_from_gltf::load, input::ControlInputs, scenery::terrain::coord_to_pos,
@@ -22,6 +20,7 @@ use bevy::{
     world_serialization::WorldInstanceReady,
 };
 use big_space::prelude::*;
+use core::f64::consts::FRAC_PI_2;
 use serde::Deserialize;
 
 pub fn alpha_deg(velocity: &DVec3, transform: &Transform) -> f64 {
@@ -75,7 +74,6 @@ pub enum AircraftTypes {
 #[derive(Resource, Copy, Clone)]
 pub struct EngineState {
     on: bool,
-    throttle: f32, // 0 to 1
 }
 
 /// Angles in radians
@@ -115,10 +113,7 @@ impl Default for AircraftState {
 
                 ground_brakes: 0.0,
             },
-            engine: EngineState {
-                on: false,
-                throttle: 0.0,
-            },
+            engine: EngineState { on: false },
             aircraft_type: AircraftTypes::Helicopter,
             anti_col_lts_on: false,
             pos_lts_on: false,
