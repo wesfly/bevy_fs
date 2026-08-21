@@ -26,7 +26,7 @@ mod material;
 const SIZE: f32 = 2.0;
 const SUBDIV: u32 = 8192;
 const CHUNKS: u32 = SUBDIV.pow(2);
-const SUBDIV_PER_TILE: u32 = 64;
+const SUBDIV_PER_TILE: u32 = 32;
 
 #[derive(Resource, Clone)]
 pub struct TerrainCacheResource {
