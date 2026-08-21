@@ -207,7 +207,7 @@ pub fn spawn_breeze(
         Transform::from_translation(object_pos).with_rotation(level.as_quat()),
         asset_server,
         Rotation(level),
-        DVec3::new(100.0, 0.0, 0.0),
+        100.0,
         object_cell,
         root_grid_id,
         translation,

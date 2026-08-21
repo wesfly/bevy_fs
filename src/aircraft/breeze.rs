@@ -1,6 +1,5 @@
-use crate::aircraft::{ControlSurfaces, airfoils::naca0010};
-
 use super::{aircraft::Aircraft, airfoils::ag47ct02r};
+use crate::aircraft::{ControlSurfaces, airfoils::naca0010};
 use avian_fdm::{
     components::{GizmoShape, InducedDrag},
     prelude::{
@@ -109,7 +108,7 @@ pub fn spawn(
     transform: Transform,
     asset_server: Res<AssetServer>,
     rotation: Rotation,
-    initial_velocity: DVec3,
+    initial_velocity: Scalar,
     cell_coord: CellCoord,
     parent_id: Entity,
     abs_position: DVec3,
@@ -119,7 +118,7 @@ pub fn spawn(
     commands.spawn((
             cell_coord,
             WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
-            breeze_core_bundle(transform, initial_velocity),
+            breeze_core_bundle(transform, rotation * DVec3::X * initial_velocity),
             InducedDrag {
                 oswald_factor: 0.94,
             },
