@@ -9,15 +9,14 @@ mod helicopter;
 mod j3cub;
 
 use crate::{
-    EARTH_RADIUS, GameState, Settings, absolute_position, aircraft, camera::AircraftCamera,
-    data_from_gltf::load, input::ControlInputs, scenery::terrain::coord_to_pos,
+    EARTH_RADIUS, GameState, Settings, aircraft, camera::AircraftCamera, input::ControlInputs,
+    scenery::terrain::coord_to_pos,
 };
 use avian3d::prelude::*;
 use bevy::{
     dev_tools::diagnostics_overlay::DiagnosticsOverlay,
     math::{DMat3, DQuat, DVec3},
     prelude::*,
-    world_serialization::WorldInstanceReady,
 };
 use big_space::prelude::*;
 use core::f64::consts::FRAC_PI_2;
@@ -276,35 +275,20 @@ pub fn spawn_helicopter(
     let up = translation.normalize();
     let level = Quat::from_rotation_arc(Vec3::Y, up) * Quat::from_rotation_y(-FRAC_PI_2 as f32);
 
-    let path = "aircraft/helicopter/helicopter.gltf";
-
     commands.spawn((
         AircraftCamera::spawn(),
         ChildOf(root_grid_id),
         object_cell,
         Transform::from_translation(object_pos),
     ));
-
-    commands
-        .spawn((
-            object_cell,
-            WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(path))),
-            Aircraft,
-            RigidBody::Dynamic,
-            Transform::from_translation(object_pos).with_rotation(level),
-            Position(absolute_position(&object_cell, object_pos)),
-            Rotation(level.as_dquat()),
-            Mass(10_000.0),
-            ChildOf(root_grid_id),
-        ))
-        .observe(|trigger: On<WorldInstanceReady>, mut commands: Commands| {
-            commands
-                .entity(trigger.entity.entity())
-                .insert(ColliderConstructorHierarchy::new(
-                    ColliderConstructor::ConvexHullFromMesh,
-                ));
-        })
-        .observe(load);
+    helicopter::spawn(
+        &mut commands,
+        &asset_server,
+        level,
+        object_pos,
+        object_cell,
+        root_grid_id,
+    );
 }
 
 #[derive(Clone, Copy, Debug)]
