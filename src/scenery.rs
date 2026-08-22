@@ -1,16 +1,12 @@
 use crate::{
     CELL_SIZE, Settings,
-    scenery::{
-        terrain::{TerrainCacheResource, init_terrain_cache},
-        water::{Water, spawn_water},
-    },
+    scenery::terrain::{TerrainCacheResource, init_terrain_cache},
     ui::MenuCamera,
 };
 use bevy::{
     light::{
         Atmosphere, CascadeShadowConfigBuilder, atmosphere::ScatteringMedium, light_consts::lux,
     },
-    pbr::ExtendedMaterial,
     prelude::*,
 };
 use big_space::prelude::*;
@@ -19,14 +15,10 @@ use std::sync::Arc;
 use tokio::sync::Semaphore;
 
 pub mod terrain;
-pub mod water;
 
 pub fn setup_scene(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
     settings: Res<Settings>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    water_materials: Option<ResMut<Assets<ExtendedMaterial<StandardMaterial, Water>>>>,
     camera: Single<Entity, With<MenuCamera>>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     cache: Res<TerrainCacheResource>,
@@ -37,10 +29,6 @@ pub fn setup_scene(
         let earth_atmosphere = Atmosphere::earth(scattering_mediums.add(earth_medium));
 
         root.spawn_spatial(earth_atmosphere.clone());
-
-        if let Some(material) = water_materials {
-            spawn_water(&mut root, &asset_server, &mut meshes, material);
-        }
 
         let normals = vec![
             Dir3::X,

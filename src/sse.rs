@@ -4,16 +4,11 @@ It includes screen space reflections (and technically screen space ambient occlu
 but it doesn't work for large terrain because of f32 accuracy)
 */
 
-use crate::scenery::water::Water;
-use bevy::{
-    pbr::{DefaultOpaqueRendererMethod, ExtendedMaterial},
-    prelude::*,
-};
+use bevy::{pbr::DefaultOpaqueRendererMethod, prelude::*};
 
 pub struct Sse;
 impl Plugin for Sse {
     fn build(&self, app: &mut App) {
-        app.insert_resource(DefaultOpaqueRendererMethod::deferred())
-            .add_plugins(MaterialPlugin::<ExtendedMaterial<StandardMaterial, Water>>::default());
+        app.insert_resource(DefaultOpaqueRendererMethod::deferred());
     }
 }
