@@ -24,7 +24,7 @@ This project is formerly known as `bevy_fs`, but it was renamed due to likelyhoo
 ## Community
 
 - [Discord](https://discord.gg/epMBz5m2Ad)
-- [Fluxer](https://fluxer.gg/6OosduvZ)
+- [Fluxer](https://fluxer.gg/hDS7y2y7)
 
 ## Run
 
