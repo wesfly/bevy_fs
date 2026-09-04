@@ -1,15 +1,15 @@
 use crate::{
-    ControlInputs, EARTH_RADIUS, GameState, RunOnceSystemList,
+    ControlInputs, EARTH_RADIUS, GameState, RunOnceSystemList, Settings,
     aircraft::{Aircraft, AircraftState, AircraftTypes},
     scenery::terrain::Coord,
 };
 use avian3d::prelude::LinearVelocity;
 use bevy::{
-    feathers::{FeathersPlugins, containers::*, controls::*, theme::ThemedText},
+    feathers::{FeathersPlugins, containers::*, controls::*, display::label, theme::ThemedText},
     input_focus::InputFocus,
     prelude::*,
-    ui::Selected,
-    ui_widgets::{Activate, listbox_update_selection},
+    ui::{Checked, Selected},
+    ui_widgets::{Activate, ValueChange, listbox_update_selection},
     window::WindowMode,
 };
 use core::convert::Into;
@@ -44,8 +44,6 @@ struct LocationSelector(Coord);
 #[derive(Component, Default, Clone)]
 pub struct Menu;
 
-// const FONT_PATH: &str = "fonts/Geist-VariableFont_wght.ttf";
-
 fn aircraft_selector() -> impl Scene {
     bsn! {
         Node {
@@ -58,7 +56,7 @@ fn aircraft_selector() -> impl Scene {
             width: percent(30),
             min_width: px(200),
         }
-        Children[
+        Children [
             subpane() Children [
                 subpane_header() Children [
                     (Text("Aircraft") ThemedText),
@@ -66,27 +64,37 @@ fn aircraft_selector() -> impl Scene {
                 subpane_body() Children [
                     @FeathersListView {
                         @rows: { bsn_list! [
-                            @FeathersListRow AircraftSelector::BREEZE Children [(
-                                Text("Breeze")
-                                ThemedText
-                                Node {
-                                    height: px(100)
-                                }
-                            )],
-                            @FeathersListRow AircraftSelector::J3CUB Children [(
-                                Text("J-3 Cub")
-                                ThemedText
-                                Node {
-                                    height: px(100)
-                                }
-                            )],
-                            @FeathersListRow AircraftSelector::HELICOPTER Children [(
-                                Text("Helicopter")
-                                ThemedText
-                                Node {
-                                    height: px(100)
-                                }
-                            )],
+                            @FeathersListRow
+                            AircraftSelector::BREEZE
+                            Node {
+                                display: Display::Grid,
+                                margin: UiRect::bottom(px(10))
+                            }
+                            Children
+                            [
+                                (Text("Breeze C F3") ThemedText),
+                                (label("An aeroplane inspired by a French twin-engine, canard delta wing, multirole fighter aircraft."))
+                            ],
+                            @FeathersListRow
+                            AircraftSelector::J3CUB
+                            Node {
+                                display: Display::Grid,
+                                margin: UiRect::bottom(px(10))
+                            }
+                            Children [
+                                (Text("J-3 Cub") ThemedText),
+                                (label("This aeroplane is a classic light aircraft and probably older than you."))
+                            ],
+                            @FeathersListRow
+                            AircraftSelector::HELICOPTER
+                            Node {
+                                display: Display::Grid,
+                                margin: UiRect::bottom(px(10))
+                            }
+                            Children [
+                                (Text("Helicopter H134") ThemedText),
+                                (label("A fictional single-engine civil light utility helicopter."))
+                            ],
                         ]}
                     }
                     Node {
@@ -203,7 +211,7 @@ fn location_menu() -> impl Scene {
                 subpane_header() Children [
                     (Text("Location") ThemedText),
                 ],
-                subpane_body() Children [
+                subpane_body() Children [(
                     @FeathersListView {
                         @rows: { Box::new(rows) as Box<dyn SceneList> }
                     }
@@ -212,8 +220,32 @@ fn location_menu() -> impl Scene {
                     }
                     on(listbox_update_selection)
 
-                ]
-            ]
+                ),
+                (
+                    @FeathersCheckbox {
+                        @caption: bsn! { Text("Buildings (experimental)") ThemedText }
+                    }
+                    Checked
+                    AccessibleLabel("Enable Buildings Checkbox")
+                    on(
+                        |
+                            change: On<ValueChange<bool>>,
+                            mut commands: Commands,
+                            mut settings: ResMut<Settings>
+                        | {
+                            let mut checkbox = commands.entity(change.source);
+                            if change.value {
+                                checkbox.insert(Checked);
+                                settings.buildings_enabled = true;
+                            } else {
+                                checkbox.remove::<Checked>();
+                                settings.buildings_enabled = false;
+                            }
+                        }
+                    )
+                )]
+            ],
+
         ]
     }
 }
@@ -225,6 +257,7 @@ fn ui_root() -> impl Scene {
             height: percent(100.0),
             width: percent(100.0)
         }
+        Visibility
         Children [
             aircraft_selector(),
             fly_button(),
@@ -289,14 +322,9 @@ fn fly_button() -> impl Scene {
 }
 
 impl Menu {
-    fn despawn(
-        commands: &mut Commands,
-        menu_query: Query<Entity, With<Menu>>,
-        game_state: &mut ResMut<GameState>,
-    ) {
-        game_state.in_menu = true;
+    fn despawn(commands: &mut Commands, menu_query: Query<Entity, With<Menu>>) {
         for entity in menu_query {
-            commands.entity(entity).despawn();
+            commands.entity(entity).try_despawn();
         }
     }
 
@@ -307,16 +335,14 @@ impl Menu {
         ui_hud_query: Query<Entity, With<UIHudComponent>>,
     ) {
         commands.spawn((Camera2d::default(), MenuCamera, IsDefaultUiCamera));
-
+        game_state.running = false;
         for entity in &scene_query {
-            commands.entity(entity).despawn();
+            commands.entity(entity).try_despawn();
         }
 
         for entity in &ui_hud_query {
-            commands.entity(entity).despawn();
+            commands.entity(entity).try_despawn();
         }
-
-        game_state.in_menu = true;
 
         commands.spawn_scene(ui_root());
     }
@@ -351,11 +377,10 @@ impl UI {
         mut messages: MessageReader<UIMessage>,
         menu_query: Query<Entity, With<Menu>>,
         systems: Res<RunOnceSystemList>,
-        mut game_state: ResMut<GameState>,
     ) {
         for message in messages.read() {
             match message {
-                UIMessage::DespawnMenu => Menu::despawn(&mut commands, menu_query, &mut game_state),
+                UIMessage::DespawnMenu => Menu::despawn(&mut commands, menu_query),
                 UIMessage::SpawnMenu => {
                     commands.run_system(systems.0["spawn_menu"]);
                 }
