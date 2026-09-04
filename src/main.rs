@@ -23,8 +23,8 @@ use crate::{
     },
     camera::{AircraftCamera, CameraPosition, CameraSettings, rotate_sun},
     input::{ControlInputs, Gamepad},
-    scenery::terrain::{TerrainCacheResource, TerrainMaterial, TerrainSettings, poll_terrain},
     scenery::{
+        osm::buildings::BuildingMaterial,
         terrain::{self, TerrainCacheResource, TerrainMaterial, TerrainSettings},
     },
     sse::Sse,
@@ -75,6 +75,7 @@ pub fn bevy_to_aerospace_coords() -> Quat {
 pub struct Settings {
     gamepad: input::Gamepad,
     shadow_distance: f32,
+    buildings_enabled: bool,
     terrain: TerrainSettings,
 }
 
@@ -83,6 +84,7 @@ impl Default for Settings {
         Self {
             gamepad: Gamepad::default(),
             shadow_distance: 5000.0,
+            buildings_enabled: false, // Buildings are heavy to compute
             terrain: TerrainSettings::default(),
         }
     }
@@ -191,6 +193,7 @@ fn main() {
     // .add_plugins(AircraftFdmDebugPlugin)
     // .add_plugins(PhysicsDebugPlugin)
     // Resources
+    .init_resource::<BuildingMaterial>()
     .insert_resource(PhysicsPickingSettings {
         require_markers: true,
     })
@@ -272,6 +275,7 @@ fn main() {
             Button::listener,
             rotate_sun,
             game_state,
+            scenery::osm::buildings::poll,
         ),
     );
 

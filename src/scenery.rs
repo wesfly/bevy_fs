@@ -1,7 +1,7 @@
 use crate::{
-    CELL_SIZE, Settings,
-    scenery::terrain::{TerrainCacheResource, init_terrain_cache},
+    CELL_SIZE, Settings, TOKIO_RUNTIME,
     scenery::{
+        osm::buildings::SpawnBuilding,
         terrain::{TerrainCacheResource, TerrainChunkRegistry},
     },
     ui::MenuCamera,
@@ -11,9 +11,11 @@ use bevy::{
         Atmosphere, CascadeShadowConfigBuilder, atmosphere::ScatteringMedium, light_consts::lux,
     },
     prelude::*,
+    tasks::AsyncComputeTaskPool,
 };
 use big_space::prelude::*;
 
+pub mod osm;
 pub mod terrain;
 
 pub fn setup_scene(
@@ -24,7 +26,6 @@ pub fn setup_scene(
     mut terrain_tile_cache: ResMut<TerrainCacheResource>,
     mut terrain_registry: ResMut<TerrainChunkRegistry>,
 ) {
-    init_terrain_cache();
     commands.spawn_big_space(Grid::new(CELL_SIZE as f32, 10.0), |mut root| {
         let earth_medium = ScatteringMedium::default();
         let earth_atmosphere = Atmosphere::earth(scattering_mediums.add(earth_medium));
@@ -32,9 +33,21 @@ pub fn setup_scene(
     *terrain_tile_cache = TerrainCacheResource::default();
     *terrain_registry = TerrainChunkRegistry::default();
 
+    let coord = settings.terrain.coord;
+    let thread_pool = AsyncComputeTaskPool::get();
         root.spawn_spatial(earth_atmosphere.clone());
 
+        if settings.buildings_enabled {
+            let tokio_handle = TOKIO_RUNTIME.spawn(osm::buildings::spawn(
+                root.grid().clone(),
+                coord.lat - 0.05,
+                coord.long - 0.05,
+                coord.lat + 0.05,
+                coord.long + 0.05,
+            ));
 
+            let task = thread_pool.spawn(async move { tokio_handle.await.unwrap() });
+            root.spawn(SpawnBuilding { task });
         }
     });
 
