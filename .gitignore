@@ -2,6 +2,10 @@
 .envrc
 shell.nix
 /target
-/.user/*
-!/.user/cache/elevation/.gitkeep
-!/.user/screenshots/.gitkeep
+.user/*
+!.user/cache/
+.user/cache/*
+!.user/cache/elevation/
+.user/cache/elevation/*
+!.user/cache/elevation/.gitkeep
+!.user/screenshots/.gitkeep
