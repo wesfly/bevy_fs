@@ -7,6 +7,7 @@
   "buildings_enabled": true,
   "terrain": {
     "coord": { "lat": 43.12694, "long": 5.93071 },
+    "max_render_distance": 200000.0,
     "level_of_detail": 12
   }
 }
