@@ -3,14 +3,13 @@ use core::convert::Into;
 use crate::{
     absolute_position,
     aircraft::{Aircraft, AircraftState},
-    data_from_gltf::load,
     input::ControlInputs,
 };
 use avian3d::prelude::{
     ColliderConstructor, ColliderConstructorHierarchy, Forces, Mass, Position, RigidBody, Rotation,
     WriteRigidBodyForces,
 };
-use bevy::{prelude::*, world_serialization::WorldInstanceReady};
+use bevy::{math::DQuat, prelude::*, world_serialization::WorldInstanceReady};
 use big_space::prelude::CellCoord;
 
 pub fn mechanics(
@@ -41,7 +40,7 @@ pub fn mechanics(
 pub fn spawn(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
-    level: Quat,
+    level: DQuat,
     object_pos: Vec3,
     object_cell: CellCoord,
     root_grid_id: Entity,
@@ -53,9 +52,9 @@ pub fn spawn(
             WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(path))),
             Aircraft,
             RigidBody::Dynamic,
-            Transform::from_translation(object_pos).with_rotation(level),
+            Transform::from_translation(object_pos).with_rotation(level.as_quat()),
             Position(absolute_position(&object_cell, object_pos)),
-            Rotation(level.as_dquat()),
+            Rotation(level),
             Mass(10_000.0),
             ChildOf(root_grid_id),
         ))

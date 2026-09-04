@@ -9,12 +9,13 @@ mod helicopter;
 mod j3cub;
 
 use crate::{
-    EARTH_RADIUS, GameState, Settings, aircraft, camera::AircraftCamera, input::ControlInputs,
-    scenery::terrain::coord_to_pos,
+    EARTH_RADIUS, GameState, Settings, aircraft,
+    camera::AircraftCamera,
+    input::ControlInputs,
+    scenery::terrain::{coord_to_pos, coord_to_world_pos},
 };
 use avian3d::prelude::*;
 use bevy::{
-    dev_tools::diagnostics_overlay::DiagnosticsOverlay,
     math::{DMat3, DQuat, DVec3},
     prelude::*,
 };
@@ -33,7 +34,11 @@ pub fn alpha_deg(velocity: &DVec3, transform: &Transform) -> f64 {
     -sin.atan2(cos).to_degrees() as f64
 }
 
-#[derive(Debug, Deserialize, Component)]
+#[derive(Component)]
+pub struct Aircraft;
+
+const SPAWN_ALTITUDE: f64 = 3000.0;
+
 #[derive(Component, Default, Reflect)]
 #[reflect(Default, Component)]
 #[type_path = "skein"]
@@ -136,7 +141,6 @@ pub fn main(
         With<Aircraft>,
     >,
     spatial_query: SpatialQuery,
-    time: Res<Time>,
     game_state: Res<GameState>,
 ) {
     if !game_state.running {
@@ -153,13 +157,10 @@ pub fn main(
         }
         AircraftTypes::Breeze => {
             aircraft::breeze::mechanics::mechanics(input, &mut state, &mut aircraft);
-            aircraft::breeze::landing_gear::spring_forces(spatial_query, aircraft, time, state);
+            aircraft::breeze::landing_gear::spring_forces(spatial_query, aircraft, state);
         }
     }
 }
-
-#[derive(Component)]
-pub struct Aircraft;
 
 pub fn spawn_breeze(
     mut commands: Commands,
@@ -169,16 +170,16 @@ pub fn spawn_breeze(
     settings: Res<Settings>,
 ) {
     let (root_grid_id, grid) = *root_grid;
-    commands.spawn(DiagnosticsOverlay::fps());
+
     state.aircraft_type = AircraftTypes::Breeze;
     state.engine.on = true;
     state.ldg_lts_on = true;
 
     let normalized_pos = coord_to_pos(settings.terrain.coord);
 
-    let altitude = 1000.0;
+    let altitude = SPAWN_ALTITUDE;
     let translation =
-        normalized_pos.as_dvec3() * EARTH_RADIUS as f64 + normalized_pos.as_dvec3() * altitude;
+        coord_to_world_pos(settings.terrain.coord) + normalized_pos.as_dvec3() * altitude;
     let (object_cell, object_pos) = grid.translation_to_grid(translation);
     let surface_up = translation.normalize();
     let level = DQuat::from_rotation_arc(DVec3::Y, surface_up) * DQuat::from_rotation_x(FRAC_PI_2);
@@ -220,10 +221,9 @@ pub fn spawn_j3cub(
     state.engine.on = true;
 
     let (root_grid_id, grid) = *root_grid;
-    commands.spawn(DiagnosticsOverlay::fps());
 
     let normalized_pos = coord_to_pos(settings.terrain.coord);
-    let altitude = 1000.0;
+    let altitude = SPAWN_ALTITUDE;
     let translation =
         normalized_pos.as_dvec3() * EARTH_RADIUS as f64 + normalized_pos.as_dvec3() * altitude;
     let (object_cell, object_pos) = grid.translation_to_grid(translation);
@@ -263,14 +263,21 @@ pub fn spawn_helicopter(
 ) {
     state.aircraft_type = AircraftTypes::Helicopter;
     let (root_grid_id, grid) = *root_grid;
-    commands.spawn(DiagnosticsOverlay::fps());
 
+    let normalized_pos = coord_to_pos(settings.terrain.coord);
+    let altitude = SPAWN_ALTITUDE;
     let translation =
-        coord_to_pos(settings.terrain.coord) * EARTH_RADIUS + Vec3::new(0.0, 1000.0, 0.0);
+        normalized_pos.as_dvec3() * EARTH_RADIUS as f64 + normalized_pos.as_dvec3() * altitude;
     let (object_cell, object_pos) = grid.translation_to_grid(translation);
-    let up = translation.normalize();
-    let level = Quat::from_rotation_arc(Vec3::Y, up) * Quat::from_rotation_y(-FRAC_PI_2 as f32);
+    let surface_up = translation.normalize();
 
+    let up = surface_up;
+    let reference_forward = DVec3::NEG_Z;
+    let forward = (reference_forward - up * reference_forward.dot(up)).normalize();
+    let right = forward.cross(up).normalize();
+    let up = right.cross(forward);
+
+    let level = DQuat::from_rotation_arc(DVec3::Y, up) * DQuat::from_rotation_y(-FRAC_PI_2);
     commands.spawn((
         AircraftCamera::spawn(),
         ChildOf(root_grid_id),

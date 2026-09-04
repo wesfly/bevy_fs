@@ -1,3 +1,5 @@
+use std::f32::consts::FRAC_PI_2;
+
 use super::{aircraft::Aircraft, airfoils::ag47ct02r};
 use crate::aircraft::{ControlSurfaces, airfoils::naca0010};
 use avian_fdm::{
@@ -56,7 +58,7 @@ const VFIN_AREA_M2: Scalar = VFIN_HEIGHT_M * VFIN_MEAN_CHORD_M;
 const VFIN_ARM_M: Scalar = 6.0;
 
 /// Vertical fin CY per radian of sideslip.
-const VFIN_CY_BETA: Scalar = sourced!(-10.0, "Estimate");
+const VFIN_CY_BETA: Scalar = sourced!(-5.0, "Estimate");
 
 /// Rudder height (m): extends slightly beyond the fin (horn balance).
 const RUDDER_HEIGHT_M: Scalar = sourced!(2.0, "Measured from model");
@@ -117,7 +119,6 @@ pub fn spawn(
 
     commands.spawn((
             cell_coord,
-            WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
             breeze_core_bundle(transform, rotation * DVec3::X * initial_velocity),
             InducedDrag {
                 oswald_factor: 0.94,
@@ -129,215 +130,221 @@ pub fn spawn(
             // No LodDamping. Roll/pitch/yaw damping emerges from zone geometry.
         ))
             .with_children(|parent| {
-            //==== front avionics/cabin fuselage section ====
-            parent.spawn((
-                AeroZoneBundle {
-                    zone: AeroZone {
-                        cl: AeroCoeff::Scalar(0.0),
-                        cd: AeroCoeff::Scalar(0.0),
-                        ..Default::default()
+                // 3D model
+                parent.spawn((
+                    WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
+                    Transform::from_rotation(Quat::from_rotation_x(-FRAC_PI_2)),
+                ));
+                //==== front avionics/cabin fuselage section ====
+                parent.spawn((
+                    AeroZoneBundle {
+                        zone: AeroZone {
+                            cl: AeroCoeff::Scalar(0.0),
+                            cd: AeroCoeff::Scalar(0.0),
+                            ..Default::default()
+                        },
+                        collider: Collider::cuboid(2.05, 0.40, 0.35),
+                        transform: Transform::from_xyz(4.0, 0.0, 0.0),
+                        global_transform: GlobalTransform::default(),
                     },
-                    collider: Collider::cuboid(2.05, 0.40, 0.35),
-                    transform: Transform::from_xyz(4.0, 0.0, 0.0),
-                    global_transform: GlobalTransform::default(),
-                },
-                Mass(1500.0),
-                GizmoShape::Box { x: 2.05, y: 0.40, z: 0.35 }
-            ));
+                    Mass(1500.0),
+                    GizmoShape::Box { x: 2.05, y: 0.40, z: 0.35 }
+                ));
 
-            //==== mid fuselage section ====
-            parent.spawn((
-                AeroZoneBundle {
-                    zone: AeroZone {
-                        cl: AeroCoeff::Scalar(0.0),
-                        cd: AeroCoeff::Scalar(0.0),
-                        ..Default::default()
+                //==== mid fuselage section ====
+                parent.spawn((
+                    AeroZoneBundle {
+                        zone: AeroZone {
+                            cl: AeroCoeff::Scalar(0.0),
+                            cd: AeroCoeff::Scalar(0.0),
+                            ..Default::default()
+                        },
+                        collider: Collider::cuboid(4.0, 2.0, 0.8),
+                        transform: Transform::from_xyz(-2.0, 0.0, 0.0),
+                        global_transform: GlobalTransform::default(),
                     },
-                    collider: Collider::cuboid(4.0, 2.0, 0.8),
-                    transform: Transform::from_xyz(-2.0, 0.0, 0.0),
-                    global_transform: GlobalTransform::default(),
-                },
-                Mass(5500.0),
-                GizmoShape::Box { x: 4.0, y: 2.0, z: 0.8 }
-            ));
+                    Mass(5500.0),
+                    GizmoShape::Box { x: 4.0, y: 2.0, z: 0.8 }
+                ));
 
-            const ROOT_X_M: f64 = 4.0;
-            const ROOT_Y_M: f64 = 1.2;
-            const ROOT_OFFSET: f64 = 0.5;
+                const ROOT_X_M: f64 = 4.0;
+                const ROOT_Y_M: f64 = 1.2;
+                const ROOT_OFFSET: f64 = 0.5;
 
-            const TIP_X_M: f64 = -4.5;
+                const TIP_X_M: f64 = -4.5;
 
-            // ── Left wing ───────────────────────────────────────────────────
-            parent.spawn((wing_zone(
-                "L-root", WING_AC_X + ROOT_OFFSET, WING_AC_X, -ROOT_Y_M, 0.25,
-                ag47ct02r(),
-                Collider::cuboid(ROOT_X_M, 1.88, 0.2),
-                Mass(100.0),
-            ), GizmoShape::Box { x: ROOT_X_M as f32, y: 1.88, z: 0.2 }));
-            parent.spawn((wing_zone(
-                "L-mid", WING_AC_X, WING_AC_X, -2.82, 0.15,
-                ag47ct02r(),
-                Collider::cuboid(2.80, 1.88, 0.2),
-                Mass(80.0),
-            ), GizmoShape::Box { x: 2.80, y: 1.88, z: 0.2 }));
+                // ── Left wing ───────────────────────────────────────────────────
+                parent.spawn((wing_zone(
+                    "L-root", WING_AC_X + ROOT_OFFSET, WING_AC_X, -ROOT_Y_M, 0.25,
+                    ag47ct02r(),
+                    Collider::cuboid(ROOT_X_M, 1.88, 0.2),
+                    Mass(100.0),
+                ), GizmoShape::Box { x: ROOT_X_M as f32, y: 1.88, z: 0.2 }));
+                parent.spawn((wing_zone(
+                    "L-mid", WING_AC_X, WING_AC_X, -2.82, 0.15,
+                    ag47ct02r(),
+                    Collider::cuboid(2.80, 1.88, 0.2),
+                    Mass(80.0),
+                ), GizmoShape::Box { x: 2.80, y: 1.88, z: 0.2 }));
 
-            parent.spawn((wing_zone(
-                "L-tip", TIP_X_M, WING_AC_X, -4.19, 0.1,
-                ag47ct02r(),
-                Collider::cuboid(0.45, 0.86, 0.02),
-                Mass(50.0),
-            ), GizmoShape::Box { x: 0.45, y: 0.86, z: 0.02 }));
+                parent.spawn((wing_zone(
+                    "L-tip", TIP_X_M, WING_AC_X, -4.19, 0.1,
+                    ag47ct02r(),
+                    Collider::cuboid(0.45, 0.86, 0.02),
+                    Mass(50.0),
+                ), GizmoShape::Box { x: 0.45, y: 0.86, z: 0.02 }));
 
-            // ── Right wing ───────────────────────────────────────────────────
-            parent.spawn((wing_zone(
-                "R-root", WING_AC_X + ROOT_OFFSET, WING_AC_X, ROOT_Y_M, 0.25,
-                ag47ct02r(),
-                Collider::cuboid(ROOT_X_M, 1.88, 0.2),
-                Mass(100.0),
-            ), GizmoShape::Box { x: ROOT_X_M as f32, y: 1.88, z: 0.2 }));
-            parent.spawn((wing_zone(
-                "R-mid", WING_AC_X, WING_AC_X, 2.82, 0.15,
-                ag47ct02r(),
-                Collider::cuboid(2.80, 1.88, 0.2),
-                Mass(80.0),
-            ), GizmoShape::Box { x: 2.80, y: 1.88, z: 0.2 }));
-            parent.spawn((wing_zone(
-                "R-tip", TIP_X_M, WING_AC_X, 4.4, 0.1,
-                ag47ct02r(),
-                Collider::cuboid(1.0, 1.5, 0.1),
-                Mass(50.0),
-            ), GizmoShape::Box { x: 1.0, y: 1.5, z: 0.1 }));
+                // ── Right wing ───────────────────────────────────────────────────
+                parent.spawn((wing_zone(
+                    "R-root", WING_AC_X + ROOT_OFFSET, WING_AC_X, ROOT_Y_M, 0.25,
+                    ag47ct02r(),
+                    Collider::cuboid(ROOT_X_M, 1.88, 0.2),
+                    Mass(100.0),
+                ), GizmoShape::Box { x: ROOT_X_M as f32, y: 1.88, z: 0.2 }));
+                parent.spawn((wing_zone(
+                    "R-mid", WING_AC_X, WING_AC_X, 2.82, 0.15,
+                    ag47ct02r(),
+                    Collider::cuboid(2.80, 1.88, 0.2),
+                    Mass(80.0),
+                ), GizmoShape::Box { x: 2.80, y: 1.88, z: 0.2 }));
+                parent.spawn((wing_zone(
+                    "R-tip", TIP_X_M, WING_AC_X, 4.4, 0.1,
+                    ag47ct02r(),
+                    Collider::cuboid(1.0, 1.5, 0.1),
+                    Mass(50.0),
+                ), GizmoShape::Box { x: 1.0, y: 1.5, z: 0.1 }));
 
-            //=== canards ====
-            const CANARD_AREA_M2: f64 = 1.0;
+                //=== canards ====
+                const CANARD_AREA_M2: f64 = 1.0;
 
-            parent.spawn((
-                Name::new("L-canard"),
-                ControlSurfaces::CanardPort,
-                AeroZoneBundle {
-                    zone: AeroZone {
-                        cl: naca0010().cl,
-                        cd: naca0010().cd,
-                        area_m2: CANARD_AREA_M2,
-                        chord_m: CHORD_M,
-                        ac_offset: Vec3::new(0.0, 0.0, 0.0),
-                        ..Default::default()
-                    }
-                    .with_post_stall_extension(),
-                    collider: Collider::cuboid(1.0, 1.0, 0.1),
-                    transform: Transform::from_xyz(1.0, -1.8, -0.6),
-                    global_transform: GlobalTransform::default(),
-                },
-                Mass(200.0),
-                GizmoShape::Box { x: 1.0, y: 1.0, z: 0.1 }
-            ));
+                parent.spawn((
+                    Name::new("L-canard"),
+                    ControlSurfaces::CanardPort,
+                    AeroZoneBundle {
+                        zone: AeroZone {
+                            cl: naca0010().cl,
+                            cd: naca0010().cd,
+                            area_m2: CANARD_AREA_M2,
+                            chord_m: CHORD_M,
+                            ac_offset: Vec3::new(0.0, 0.0, 0.0),
+                            ..Default::default()
+                        }
+                        .with_post_stall_extension(),
+                        collider: Collider::cuboid(1.0, 1.0, 0.1),
+                        transform: Transform::from_xyz(1.0, -1.8, -0.6),
+                        global_transform: GlobalTransform::default(),
+                    },
+                    Mass(200.0),
+                    GizmoShape::Box { x: 1.0, y: 1.0, z: 0.1 }
+                ));
 
-            parent.spawn((
-                Name::new("R-canard"),
-                ControlSurfaces::CanardStarboard,
-                AeroZoneBundle {
-                    zone: AeroZone {
-                        cl: naca0010().cl,
-                        cd: naca0010().cd,
-                        area_m2: CANARD_AREA_M2,
-                        chord_m: CHORD_M,
-                        ac_offset: Vec3::new(0.0, 0.0, 0.0),
-                        ..Default::default()
-                    }
-                    .with_post_stall_extension(),
-                    collider: Collider::cuboid(1.0, 1.0, 0.1),
-                    transform: Transform::from_xyz(0.8, 1.8, -0.6),
-                    global_transform: GlobalTransform::default(),
-                },
-                Mass(200.0),
-                GizmoShape::Box { x: 1.0, y: 1.0, z: 0.1 }
-            ));
+                parent.spawn((
+                    Name::new("R-canard"),
+                    ControlSurfaces::CanardStarboard,
+                    AeroZoneBundle {
+                        zone: AeroZone {
+                            cl: naca0010().cl,
+                            cd: naca0010().cd,
+                            area_m2: CANARD_AREA_M2,
+                            chord_m: CHORD_M,
+                            ac_offset: Vec3::new(0.0, 0.0, 0.0),
+                            ..Default::default()
+                        }
+                        .with_post_stall_extension(),
+                        collider: Collider::cuboid(1.0, 1.0, 0.1),
+                        transform: Transform::from_xyz(0.8, 1.8, -0.6),
+                        global_transform: GlobalTransform::default(),
+                    },
+                    Mass(200.0),
+                    GizmoShape::Box { x: 1.0, y: 1.0, z: 0.1 }
+                ));
 
-            // ── Ailerons ─────────────────────────────────────────────────────
-            const AILERON_LENGTH: f64 = 0.72;
+                // ── Ailerons ─────────────────────────────────────────────────────
+                const AILERON_LENGTH: f64 = 0.72;
 
-            // Trailing-edge strip, outboard: tiled behind tip front and
-            // spanning from mid panel end (3.76) to wingtip (5.37).
-            // Aileron span = 0.75m per side, center at 3.76 + 0.86 + 0.75/2 = 4.995
-            // WRONG. That places them outside the wing. The aileron sits at
-            // the SAME spanwise station as the tip, occupying the TE strip:
-            // tip_main covers y = [3.76, 4.62], aileron covers y = [3.87, 4.62]
-            // sharing the outboard span. Actually the tip+aileron tile the
-            // outboard region: tip is the LE strip, aileron is the TE strip,
-            // both at the SAME Y range.
-            // Center Y = same as tip = 4.19.
-            parent.spawn((aileron_zone(
-                "L-aileron", -4.19,
-                ControlSurfaceRole::AileronLeft,
-                Collider::cuboid(AILERON_LENGTH, AILERON_SPAN_M, 0.02),
-                ColliderDensity(sourced!(585.0, "Inertia-calibrated: same as wing panels (control surface + structure)")),
-            ), GizmoShape::Box { x: AILERON_LENGTH as f32, y: AILERON_SPAN_M as f32, z: 0.02 }));
-            parent.spawn((aileron_zone(
-                "R-aileron", 4.19,
-                ControlSurfaceRole::AileronRight,
-                Collider::cuboid(AILERON_LENGTH, AILERON_SPAN_M, 0.02),
-                ColliderDensity(sourced!(585.0, "Inertia-calibrated: same as wing panels (control surface + structure)")),
-            ), GizmoShape::Box { x: AILERON_LENGTH as f32, y:AILERON_SPAN_M as f32, z: 0.02 }));
+                // Trailing-edge strip, outboard: tiled behind tip front and
+                // spanning from mid panel end (3.76) to wingtip (5.37).
+                // Aileron span = 0.75m per side, center at 3.76 + 0.86 + 0.75/2 = 4.995
+                // WRONG. That places them outside the wing. The aileron sits at
+                // the SAME spanwise station as the tip, occupying the TE strip:
+                // tip_main covers y = [3.76, 4.62], aileron covers y = [3.87, 4.62]
+                // sharing the outboard span. Actually the tip+aileron tile the
+                // outboard region: tip is the LE strip, aileron is the TE strip,
+                // both at the SAME Y range.
+                // Center Y = same as tip = 4.19.
+                parent.spawn((aileron_zone(
+                    "L-aileron", -4.19,
+                    ControlSurfaceRole::AileronLeft,
+                    Collider::cuboid(AILERON_LENGTH, AILERON_SPAN_M, 0.02),
+                    ColliderDensity(sourced!(585.0, "Inertia-calibrated: same as wing panels (control surface + structure)")),
+                ), GizmoShape::Box { x: AILERON_LENGTH as f32, y: AILERON_SPAN_M as f32, z: 0.02 }));
+                parent.spawn((aileron_zone(
+                    "R-aileron", 4.19,
+                    ControlSurfaceRole::AileronRight,
+                    Collider::cuboid(AILERON_LENGTH, AILERON_SPAN_M, 0.02),
+                    ColliderDensity(sourced!(585.0, "Inertia-calibrated: same as wing panels (control surface + structure)")),
+                ), GizmoShape::Box { x: AILERON_LENGTH as f32, y:AILERON_SPAN_M as f32, z: 0.02 }));
 
-            // ── Elevator ──────────────────────────────────────────────────────
-            parent.spawn((
-                Name::new("elevator-L"),
-                elevator_zone(
-                    Collider::cuboid(0.75, 2.0, 0.02),
-                    ColliderDensity(sourced!(100.0, "Inertia-calibrated: elevator lighter than h-stab; ~0.7 kg total")),
-                    -2.2
-                ),
-                GizmoShape::Box { x: 0.75, y: 2.0, z: 0.02 }
-            ));
-            parent.spawn((
-                Name::new("elevator-R"),
-                elevator_zone(
-                    Collider::cuboid(0.75, 2.0, 0.02),
-                    ColliderDensity(sourced!(100.0, "Inertia-calibrated: elevator lighter than h-stab; ~0.7 kg total")),
-                    2.2
-                ),
-                GizmoShape::Box { x: 0.75, y: 2.0, z: 0.02 },
-            ));
+                // ── Elevator ──────────────────────────────────────────────────────
+                parent.spawn((
+                    Name::new("elevator-L"),
+                    elevator_zone(
+                        Collider::cuboid(0.75, 2.0, 0.02),
+                        ColliderDensity(sourced!(100.0, "Inertia-calibrated: elevator lighter than h-stab; ~0.7 kg total")),
+                        -2.2
+                    ),
+                    GizmoShape::Box { x: 0.75, y: 2.0, z: 0.02 }
+                ));
+                parent.spawn((
+                    Name::new("elevator-R"),
+                    elevator_zone(
+                        Collider::cuboid(0.75, 2.0, 0.02),
+                        ColliderDensity(sourced!(100.0, "Inertia-calibrated: elevator lighter than h-stab; ~0.7 kg total")),
+                        2.2
+                    ),
+                    GizmoShape::Box { x: 0.75, y: 2.0, z: 0.02 },
+                ));
 
-            // ── Vertical fin ──────────────────────────────────────────────────
-            parent.spawn((
-                Name::new("vertical fin"),
-                vtail_zone(
-                    Collider::cuboid(VFIN_MEAN_CHORD_M, 0.10, VFIN_HEIGHT_M),
-                    ColliderDensity(sourced!(30.0, "Inertia-calibrated: vertical fin fabric/wood structure; ~1.7 kg")),
-                ),
-                GizmoShape::Box { x: VFIN_MEAN_CHORD_M as f32, y: 0.1, z: VFIN_HEIGHT_M as f32 }
-            ));
+                // ── Vertical fin ──────────────────────────────────────────────────
+                parent.spawn((
+                    Name::new("vertical fin"),
+                    vtail_zone(
+                        Collider::cuboid(VFIN_MEAN_CHORD_M, 0.10, VFIN_HEIGHT_M),
+                        ColliderDensity(sourced!(30.0, "Inertia-calibrated: vertical fin fabric/wood structure; ~1.7 kg")),
+                    ),
+                    GizmoShape::Box { x: VFIN_MEAN_CHORD_M as f32, y: 0.1, z: VFIN_HEIGHT_M as f32 }
+                ));
 
-            // ── Rudder ────────────────────────────────────────────────────────
-            parent.spawn((rudder_zone(
-                    Collider::cuboid(RUDDER_MEAN_CHORD_M, 0.07, RUDDER_HEIGHT_M),
-                    ColliderDensity(sourced!(105.0, "Estimate")),
-                ),
-                Name::new("rudder"),
-                GizmoShape::Box { x: RUDDER_MEAN_CHORD_M as f32, y: 0.07, z: RUDDER_HEIGHT_M as f32 }
-            ));
+                // ── Rudder ────────────────────────────────────────────────────────
+                parent.spawn((rudder_zone(
+                        Collider::cuboid(RUDDER_MEAN_CHORD_M, 0.07, RUDDER_HEIGHT_M),
+                        ColliderDensity(sourced!(105.0, "Estimate")),
+                    ),
+                    Name::new("rudder"),
+                    GizmoShape::Box { x: RUDDER_MEAN_CHORD_M as f32, y: 0.07, z: RUDDER_HEIGHT_M as f32 }
+                ));
 
-            // ── Engines ───────────────────────────────────────────────────────
-            parent.spawn((
-                Name::new("engine-L"),
-                engine_zone(
-                    Collider::cuboid(ENGINE_LENGTH, ENGINE_RADIUS * 2.0, ENGINE_RADIUS * 2.0),
-                    Mass(sourced!(897.0, "https://en.wikipedia.org/wiki/Snecma_M88#:~:text=Dry%20weight%3A%20897%C2%A0kg%20(1%2C978%C2%A0lb)")),
-                    -0.6
-                ),
-                GizmoShape::Cylinder { radius: ENGINE_RADIUS as f32, length: ENGINE_LENGTH as f32, axis: Vec3::X },
-            ));
-            parent.spawn((
-                Name::new("engine-R"),
-                engine_zone(
-                    Collider::cuboid(ENGINE_LENGTH, ENGINE_RADIUS * 2.0, ENGINE_RADIUS * 2.0),
-                    Mass(sourced!(897.0, "https://en.wikipedia.org/wiki/Snecma_M88#:~:text=Dry%20weight%3A%20897%C2%A0kg%20(1%2C978%C2%A0lb)")),
-                    0.6
-                ),
-                GizmoShape::Cylinder { radius: ENGINE_RADIUS as f32, length: ENGINE_LENGTH as f32, axis: Vec3::X },
-            ));
-        })
+                // ── Engines ───────────────────────────────────────────────────────
+                parent.spawn((
+                    Name::new("engine-L"),
+                    engine_zone(
+                        Collider::cuboid(ENGINE_LENGTH, ENGINE_RADIUS * 2.0, ENGINE_RADIUS * 2.0),
+                        Mass(sourced!(897.0, "https://en.wikipedia.org/wiki/Snecma_M88#:~:text=Dry%20weight%3A%20897%C2%A0kg%20(1%2C978%C2%A0lb)")),
+                        -0.6
+                    ),
+                    GizmoShape::Cylinder { radius: ENGINE_RADIUS as f32, length: ENGINE_LENGTH as f32, axis: Vec3::X },
+                ));
+                parent.spawn((
+                    Name::new("engine-R"),
+                    engine_zone(
+                        Collider::cuboid(ENGINE_LENGTH, ENGINE_RADIUS * 2.0, ENGINE_RADIUS * 2.0),
+                        Mass(sourced!(897.0, "https://en.wikipedia.org/wiki/Snecma_M88#:~:text=Dry%20weight%3A%20897%C2%A0kg%20(1%2C978%C2%A0lb)")),
+                        0.6
+                    ),
+                    GizmoShape::Cylinder { radius: ENGINE_RADIUS as f32, length: ENGINE_LENGTH as f32, axis: Vec3::X },
+                ));
+            }
+        )
         .id()
 }
 

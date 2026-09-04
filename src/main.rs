@@ -8,7 +8,6 @@ Default for speed is m/s
 
 mod aircraft;
 mod camera;
-mod data_from_gltf;
 mod input;
 mod scenery;
 mod sse;
@@ -16,7 +15,7 @@ mod ui;
 
 use crate::{
     aircraft::{
-        AircraftState,
+        Aircraft, AircraftState,
         animations::{update_control_surfaces, update_rotors},
         breeze::landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
         buttons::{Button, ButtonMessages},
@@ -279,6 +278,8 @@ fn main() {
 }
 
 fn setup(mut commands: Commands) {
+    commands.spawn(DiagnosticsOverlay::fps());
+    commands.spawn(DiagnosticsOverlay::mesh_and_standard_material());
     commands.insert_resource(MaterialStore {
         lights: StandardMaterial {
             perceptual_roughness: 0.1,
