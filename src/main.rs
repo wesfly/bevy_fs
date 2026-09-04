@@ -6,10 +6,6 @@ Spatial units are in metres
 Default for speed is m/s
 */
 
-pub const METRES_TO_FEET: f32 = 3.28084;
-pub const M_S_TO_KTS: f32 = 1.943844;
-pub const EARTH_RADIUS: f32 = 6_360_000.0;
-
 mod aircraft;
 mod camera;
 mod data_from_gltf;
@@ -29,6 +25,9 @@ use crate::{
     camera::{AircraftCamera, CameraPosition, CameraSettings, rotate_sun},
     input::{ControlInputs, Gamepad},
     scenery::terrain::{TerrainCacheResource, TerrainMaterial, TerrainSettings, poll_terrain},
+    scenery::{
+        terrain::{self, TerrainCacheResource, TerrainMaterial, TerrainSettings},
+    },
     sse::Sse,
     ui::{Menu, UI},
 };
@@ -47,8 +46,20 @@ use bevy::{
 };
 use big_space::prelude::*;
 use core::option::Option::Some;
+use once_cell::sync::Lazy;
+use reqwest::Client;
 use serde::Deserialize;
-use std::{collections::HashMap, fs};
+use std::{
+    sync::Arc,
+    {collections::HashMap, fs},
+};
+use tokio::{runtime::Runtime, sync::Semaphore};
+
+pub const METRES_TO_FEET: f32 = 3.28084;
+pub const M_S_TO_KTS: f32 = 1.943844;
+pub const EARTH_RADIUS: f32 = 6_360_000.0;
+pub static TOKIO_RUNTIME: Lazy<Runtime> =
+    Lazy::new(|| Runtime::new().expect("Failed to create tokio runtime"));
 
 pub fn bevy_to_aerospace_coords() -> Quat {
     Quat::from_mat3(&Mat3::from_cols(Vec3::Y, -Vec3::Z, -Vec3::X))
@@ -197,6 +208,11 @@ fn main() {
         strobe: Timer::from_seconds(STROBE_OFF_DURATION, TimerMode::Repeating),
         strobe_on_cycle: false,
     })
+    .insert_resource(terrain::HttpClient(Client::new()))
+    .insert_resource(terrain::TileSemaphore(Arc::new(Semaphore::new(64))))
+    .init_resource::<terrain::TerrainCacheResource>()
+    .init_resource::<terrain::TerrainChunkRegistry>()
+    .init_resource::<terrain::TerrainUpdateTracker>()
     .init_resource::<RunOnceSystemList>()
     .insert_resource(ClearColor(Color::BLACK))
     .insert_resource(TerrainCacheResource::default())
@@ -217,11 +233,13 @@ fn main() {
     .add_systems(
         Update,
         (
+            track_aircraft_terrain,
             update_rotors,
             input::input_system,
             aircraft::buttons::update_cursor,
             screenshot,
             AircraftCamera::controller,
+            terrain::poll_terrain,
         ),
     )
     .add_systems(
@@ -242,7 +260,6 @@ fn main() {
             screenshot_saving,
             aircraft::screens::update_screens,
             aircraft::main,
-            poll_terrain,
             Button::listener,
             rotate_sun,
             game_state,
@@ -339,3 +356,33 @@ pub fn absolute_position(cell: &CellCoord, local_translation: Vec3) -> DVec3 {
     DVec3::new(cell.x as f64, cell.y as f64, cell.z as f64) * CELL_SIZE as f64
         + local_translation.as_dvec3()
 }
+fn track_aircraft_terrain(
+    mut commands: Commands,
+    grid: Single<&Grid, With<BigSpace>>,
+    mut registry: ResMut<terrain::TerrainChunkRegistry>,
+    mut tracker: ResMut<terrain::TerrainUpdateTracker>,
+    mut settings: ResMut<Settings>,
+    cache: Res<terrain::TerrainCacheResource>,
+    client: Res<terrain::HttpClient>,
+    semaphore: Res<terrain::TileSemaphore>,
+    aircraft: Single<(&CellCoord, &Transform), With<Aircraft>>,
+    reset_messages: MessageReader<ResetMessage>,
+) {
+    let override_update = !reset_messages.is_empty();
+    let (cell_coord, transform) = *aircraft;
+    let reference_pos = absolute_position(cell_coord, transform.translation).as_vec3();
+
+    settings.terrain = terrain::update_terrain_for_aircraft(
+        &mut commands,
+        &grid,
+        &mut registry,
+        &mut tracker,
+        &client.0,
+        Arc::clone(&semaphore.0),
+        cache.cache.clone(),
+        settings.terrain,
+        reference_pos,
+        override_update,
+    );
+}
+

@@ -1,6 +1,9 @@
 use crate::{
     CELL_SIZE, Settings,
     scenery::terrain::{TerrainCacheResource, init_terrain_cache},
+    scenery::{
+        terrain::{TerrainCacheResource, TerrainChunkRegistry},
+    },
     ui::MenuCamera,
 };
 use bevy::{
@@ -10,9 +13,6 @@ use bevy::{
     prelude::*,
 };
 use big_space::prelude::*;
-use reqwest::Client;
-use std::sync::Arc;
-use tokio::sync::Semaphore;
 
 pub mod terrain;
 
@@ -21,36 +21,20 @@ pub fn setup_scene(
     settings: Res<Settings>,
     camera: Single<Entity, With<MenuCamera>>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
-    cache: Res<TerrainCacheResource>,
+    mut terrain_tile_cache: ResMut<TerrainCacheResource>,
+    mut terrain_registry: ResMut<TerrainChunkRegistry>,
 ) {
     init_terrain_cache();
     commands.spawn_big_space(Grid::new(CELL_SIZE as f32, 10.0), |mut root| {
         let earth_medium = ScatteringMedium::default();
         let earth_atmosphere = Atmosphere::earth(scattering_mediums.add(earth_medium));
+    // Init/Reset tile cache
+    *terrain_tile_cache = TerrainCacheResource::default();
+    *terrain_registry = TerrainChunkRegistry::default();
 
         root.spawn_spatial(earth_atmosphere.clone());
 
-        let normals = vec![
-            Dir3::X,
-            Dir3::Y,
-            Dir3::Z,
-            Dir3::NEG_X,
-            Dir3::NEG_Y,
-            Dir3::NEG_Z,
-        ];
 
-        let client = Client::new();
-        let semaphore = Arc::new(Semaphore::new(64));
-        let terrain_settings = settings.terrain;
-        for normal in normals {
-            terrain::spawn_chunk(
-                &mut root,
-                normal,
-                &client,
-                Arc::clone(&semaphore),
-                cache.cache.clone(),
-                terrain_settings,
-            );
         }
     });
 
