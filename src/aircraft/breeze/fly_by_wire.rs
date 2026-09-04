@@ -18,22 +18,26 @@ pub fn fly_by_wire(
     let mut cs = state.control_surfaces;
 
     if let Some(fdm_cs) = &mut aircraft.3 {
-        cs.elevator.port = -input.pitch;
-        cs.elevator.starboard = -input.pitch;
+        let roll = input.roll as f64;
+        let pitch = input.pitch as f64;
+        let yaw = input.yaw as f64;
 
-        cs.aileron.port = -input.roll;
-        cs.aileron.starboard = input.roll;
+        cs.elevator.port = -pitch as f32;
+        cs.elevator.starboard = -pitch as f32;
+
+        cs.aileron.port = -roll as f32;
+        cs.aileron.starboard = roll as f32;
 
         // avian_fdm control inputs
-        fdm_cs.aileron = -input.roll as f64;
-        fdm_cs.elevator = input.pitch as f64;
-        fdm_cs.rudder = -input.yaw as f64;
+        fdm_cs.aileron = -roll;
+        fdm_cs.elevator = pitch as f64;
+        fdm_cs.rudder = -yaw as f64;
         fdm_cs.throttle = input.throttle as f64;
 
         cs.ground_brakes = input.ground_brakes;
 
-        cs.aileron.port = cs.aileron.port.clamp(-1.0, 1.0);
-        cs.aileron.starboard = cs.aileron.starboard.clamp(-1.0, 1.0);
+        cs.aileron.port = -roll.clamp(-1.0, 1.0) as f32;
+        cs.aileron.starboard = roll.clamp(-1.0, 1.0) as f32;
 
         cs.elevator.port = cs.elevator.port.clamp(-1.0, 1.0);
         cs.elevator.starboard = cs.elevator.starboard.clamp(-1.0, 1.0);

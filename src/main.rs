@@ -33,7 +33,7 @@ use crate::{
 use avian_fdm::prelude::*;
 use avian3d::prelude::*;
 use bevy::{
-    dev_tools::diagnostics_overlay::DiagnosticsOverlayPlugin,
+    dev_tools::diagnostics_overlay::{DiagnosticsOverlay, DiagnosticsOverlayPlugin},
     diagnostic::FrameTimeDiagnosticsPlugin,
     ecs::system::SystemId,
     feathers::{dark_theme::create_dark_theme, theme::UiTheme},
@@ -237,6 +237,7 @@ fn main() {
     .add_message::<LandingGearCommand>()
     .add_message::<ButtonMessages>()
     // Systems
+    .add_systems(Startup, setup)
     .add_systems(
         Update,
         (
