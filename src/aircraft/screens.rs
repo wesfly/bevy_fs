@@ -3,7 +3,7 @@ use crate::{
     aircraft::{Aircraft, alpha_deg},
     input::ControlInputs,
 };
-use avian3d::{math::PI, prelude::LinearVelocity};
+use avian3d::{math::PI, physics_transform::Position, prelude::LinearVelocity};
 use bevy::{
     asset::RenderAssetUsages,
     camera::RenderTarget,
@@ -287,14 +287,14 @@ pub fn on_add_use_screen_material(
 pub fn update_screens(
     query: Query<(Option<&mut Text>, &ScreenUiElement, &mut UiTransform)>,
     input_axis: Res<ControlInputs>,
-    vel_tf: Single<(&LinearVelocity, &Transform, &avian3d::prelude::Position), With<Aircraft>>,
+    vel_tf: Single<(&LinearVelocity, &Transform, &Position), With<Aircraft>>,
 ) {
     let (velocity, transform, position) = *vel_tf;
     for (text, screen, mut ui_transform) in query {
         if let Some(mut text) = text {
             match screen {
                 ScreenUiElement::Throttle => {
-                    *text = Text::new(format!("{:.2}%", input_axis.throttle * 100.0))
+                    *text = Text::new(format!("Throttle:\n{:.1}%", input_axis.throttle * 100.0))
                 }
                 ScreenUiElement::AirspeedKts => {
                     *text = Text::new(format!(
@@ -305,7 +305,7 @@ pub fn update_screens(
                 ScreenUiElement::Altitude => {
                     *text = Text::new(format!(
                         "{} ft",
-                        (transform.translation.y * METRES_TO_FEET) as i32
+                        ((position.length() - EARTH_RADIUS as f64) * METRES_TO_FEET as f64) as i32
                     ))
                 }
                 ScreenUiElement::Alpha => {
