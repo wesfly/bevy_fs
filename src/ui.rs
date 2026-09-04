@@ -102,132 +102,69 @@ fn aircraft_selector() -> impl Scene {
 
 fn location_menu() -> impl Scene {
     let locations: Vec<(&str, Coord)> = vec![
+        ("Toulon, FR", Coord::from(43.12694, 5.93071)),
+        ("Hobart, AU", Coord::from(-42.88369, 147.3287)),
+        ("San Francisco, US", Coord::from(37.7922, -122.4385)),
+        ("Cape Town, ZA", Coord::from(-33.9114, 18.5033)),
+        ("Vancouver, CA", Coord::from(49.2920, -123.1416)),
+        ("London, UK", Coord::from(51.5074, -0.1278)),
+        ("Tokyo, JP", Coord::from(35.6762, 139.6503)),
+        ("New York, US", Coord::from(40.7128, -74.0060)),
+        ("Sydney, AU", Coord::from(-33.8688, 151.2093)),
+        ("Paris, FR", Coord::from(48.8566, 2.3522)),
+        ("Cairo, EG", Coord::from(30.0444, 31.2357)),
+        ("Rio de Janeiro, BR", Coord::from(-22.9068, -43.1729)),
+        ("Berlin, DE", Coord::from(52.5200, 13.4050)),
+        ("Mumbai, IN", Coord::from(19.0760, 72.8777)),
+        ("Zürich, CH", Coord::from(47.37445, 8.541039)),
+        ("Lucerne, CH", Coord::from(47.052099, 8.30899)),
+        ("Nürnberg, DE", Coord::from(49.45387, 11.0773)),
+        ("Guăngzhōu Shì, CN", Coord::from(23.128864, 113.259009)),
+        ("Amsterdam, NL", Coord::from(52.37403, 4.88969)),
+        ("København, DK", Coord::from(55.676111, 12.568333)),
+        ("Bucharest, RO", Coord::from(44.43225, 26.10626)),
+        ("Madrid, ES", Coord::from(40.4169, -3.7033)),
+        ("Αθήνα, GR", Coord::from(37.984167, 23.728056)),
         (
-            "Toulon, FR",
-            Coord {
-                lat: 43.12694,
-                long: 5.93071,
-            },
+            "Wellington/Te Whanganui-a-Tara, NZ",
+            Coord::from(-41.288889, 174.777222),
         ),
+        ("Ottawa, CA", Coord::from(45.424722, -75.695)),
+        ("Reykjavík, IS", Coord::from(64.145833, -21.9425)),
+        ("Oslo, NO", Coord::from(59.913333, 10.738889)),
+        ("Shanghai, CN", Coord::from(31.2325, 121.469167)),
+        ("Roma, IT", Coord::from(41.893333, 12.482778)),
+        ("Stockholm, SE", Coord::from(59.329444, 18.068611)),
+        ("Melbourne/Narrm, AU", Coord::from(-37.814167, 144.963056)),
         (
-            "Hobart, AU",
-            Coord {
-                lat: -42.88369,
-                long: 147.3287,
-            },
+            "Port Moresby/Pot Mosbi, PG",
+            Coord::from(-9.478889, 147.149444),
         ),
+        ("Honolulu, US", Coord::from(21.3, -157.85)),
         (
-            "San Francisco, USA",
-            Coord {
-                lat: 37.7922,
-                long: -122.4385,
-            },
+            "Mexico City/Ciudad de México, MX",
+            Coord::from(19.433333, -99.133333),
         ),
+        ("Hanoi/Hà Nội, VN", Coord::from(21.0, 105.85)),
+        ("Seoul, KR", Coord::from(37.56, 126.99)),
+        ("Osaka, JP", Coord::from(34.693889, 135.502222)),
+        ("Innsbruck, AT", Coord::from(47.268333, 11.393333)),
+        ("Prague/Praha, CZ", Coord::from(50.0875, 14.421389)),
+        ("Kathmandu , NP", Coord::from(27.71, 85.32)),
         (
-            "Cape Town, ZA",
-            Coord {
-                lat: -33.9114,
-                long: 18.5033,
-            },
+            "Dublin/Baile Átha Cliath, IE",
+            Coord::from(53.35, -6.260278),
         ),
+        ("Belgrade/Београд, RS", Coord::from(44.817778, 20.456944)),
+        ("Calvi, FR", Coord::from(42.5686, 8.7569)),
+        ("Catania, IT", Coord::from(37.5, 15.090278)),
+        ("Nairobi, KE", Coord::from(-1.286389, 36.817222)),
+        ("Jakarta, ID", Coord::from(-6.18, 106.83)),
         (
-            "Vancouver, CA",
-            Coord {
-                lat: 49.2920,
-                long: -123.1416,
-            },
+            "Brussels/Bruxelles/Brussel, BE",
+            Coord::from(50.846667, 4.3525),
         ),
-        (
-            "London, UK",
-            Coord {
-                lat: 51.5074,
-                long: -0.1278,
-            },
-        ),
-        (
-            "Tokyo, JP",
-            Coord {
-                lat: 35.6762,
-                long: 139.6503,
-            },
-        ),
-        (
-            "New York, US",
-            Coord {
-                lat: 40.7128,
-                long: -74.0060,
-            },
-        ),
-        (
-            "Sydney, AU",
-            Coord {
-                lat: -33.8688,
-                long: 151.2093,
-            },
-        ),
-        (
-            "Paris, FR",
-            Coord {
-                lat: 48.8566,
-                long: 2.3522,
-            },
-        ),
-        (
-            "Cairo, EG",
-            Coord {
-                lat: 30.0444,
-                long: 31.2357,
-            },
-        ),
-        (
-            "Rio de Janeiro, BR",
-            Coord {
-                lat: -22.9068,
-                long: -43.1729,
-            },
-        ),
-        (
-            "Berlin, DE",
-            Coord {
-                lat: 52.5200,
-                long: 13.4050,
-            },
-        ),
-        (
-            "Mumbai, IN",
-            Coord {
-                lat: 19.0760,
-                long: 72.8777,
-            },
-        ),
-        (
-            "Zürich, CH",
-            Coord {
-                lat: 47.37445,
-                long: 8.541039,
-            },
-        ),
-        (
-            "Lucerne, CH",
-            Coord {
-                lat: 47.052099,
-                long: 8.30899,
-            },
-        ),
-        (
-            "Nürnberg, DE",
-            Coord {
-                lat: 49.45387,
-                long: 11.0773,
-            },
-        ),
-        (
-            "Guăngzhōu Shì, CN",
-            Coord {
-                lat: 23.128864,
-                long: 113.259009,
-            },
-        ),
+        ("Bogotá, CO", Coord::from(4.711111, -74.072222)),
     ];
 
     let rows: Vec<_> = locations
