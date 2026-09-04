@@ -1,5 +1,4 @@
 // The terrain shader
-
 #import bevy_pbr::{
     pbr_deferred_functions::deferred_output,
     pbr_fragment::pbr_input_from_standard_material,
@@ -8,7 +7,6 @@
 #import bevy_render::globals::Globals
 
 @group(0) @binding(1) var<uniform> globals: Globals;
-
 @group(#{MATERIAL_BIND_GROUP}) @binding(103) var normals_texture: texture_2d<f32>;
 @group(#{MATERIAL_BIND_GROUP}) @binding(104) var normals_sampler: sampler;
 @group(#{MATERIAL_BIND_GROUP}) @binding(105) var<uniform> chunk_normal: vec3<f32>;
@@ -39,8 +37,8 @@ fn sample_noise(uv: vec2<f32>, time: f32) -> vec3<f32> {
 fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> FragmentOutput {
     // Create the PBR input.
     var pbr_input = pbr_input_from_standard_material(in, is_front);
-    // Bump the normal.
-    pbr_input.N += (sample_noise(in.uv, globals.time) - vec3(1.0, 1.0, 1.0)) * 0.2;
+
+    pbr_input.N += (sample_noise(in.uv, globals.time) - vec3(0.0, 1.0, 0.0)) * 0.2;
     pbr_input.N = normalize(pbr_input.N);
 
     let slope = length(cross(pbr_input.N, normalize(chunk_normal)));
@@ -62,7 +60,6 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
         pbr_input.material.base_color.g += 0.3 - slope * 0.1;
         pbr_input.material.base_color.b += 0.15 - slope * 0.4;
     }
-
 
     // Send the rest to the deferred shader.
     return deferred_output(in, pbr_input);
