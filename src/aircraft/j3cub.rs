@@ -112,12 +112,11 @@
 
 use super::airfoils::usa35b;
 use crate::aircraft::Aircraft;
-use crate::data_from_gltf::load;
 use avian_fdm::{
     airfoil::AirfoilData,
     components::{
         AeroCoeff, AeroZone, AeroZoneBundle, AircraftCoreBundle, AircraftGeometry,
-        ControlSurfaceRole, EngineZone, GizmoContours, InducedDrag,
+        ControlSurfaceRole, EngineZone, GizmoContours, GizmoShape, InducedDrag,
     },
     sourced,
 };
@@ -127,6 +126,7 @@ use avian3d::{
 };
 use bevy::prelude::*;
 use big_space::prelude::*;
+use std::f32::consts::FRAC_PI_2;
 
 // ── Aircraft reference constants ─────────────────────────────────────────────
 
@@ -462,13 +462,10 @@ pub fn spawn(
     parent_id: Entity,
     rotation: avian3d::prelude::Rotation,
 ) -> Entity {
-    use avian_fdm::components::GizmoShape;
-
-    const PATH: &str = "aircraft/j3cub/model.glb";
+    const PATH: &str = "aircraft/j3cub/model.gltf";
     commands
         .spawn((
             cell,
-            WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
             Visibility::default(),
             j3cub_core_bundle(transform),
             // Lift-induced drag: J3Cub has a high-wing strut-braced layout.
@@ -486,6 +483,10 @@ pub fn spawn(
             // No LodDamping. Roll/pitch/yaw damping emerges from zone geometry.
         ))
         .with_children(|parent| {
+            parent.spawn((
+                WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(PATH))),
+                Transform::from_rotation(Quat::from_rotation_x(-FRAC_PI_2)),
+            ));
             // ── Left wing ────────────────────────────────────────────────────
             // Thin collider (z=0.02 m). See module docs on hybrid approach.
             parent.spawn((wing_zone(
