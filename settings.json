@@ -3,12 +3,10 @@
     "enabled": true,
     "hotas": true
   },
-  "motion_blur_enabled": true,
   "shadow_distance": 10000.0,
-  "sun_position": [-1.0, 1.2, 2.0],
+  "buildings_enabled": true,
   "terrain": {
-    "coord": { "lat": 43.12103, "long": 6.12908 },
-    "max_render_distance": 20000.0,
+    "coord": { "lat": 43.12694, "long": 5.93071 },
     "level_of_detail": 12
   }
 }
