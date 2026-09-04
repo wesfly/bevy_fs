@@ -284,8 +284,11 @@ fn main() {
 }
 
 fn setup(mut commands: Commands) {
-    commands.spawn(DiagnosticsOverlay::fps());
-    commands.spawn(DiagnosticsOverlay::mesh_and_standard_material());
+    #[cfg(debug_assertions)]
+    {
+        commands.spawn(DiagnosticsOverlay::fps());
+        commands.spawn(DiagnosticsOverlay::mesh_and_standard_material());
+    }
     commands.insert_resource(MaterialStore {
         lights: StandardMaterial {
             perceptual_roughness: 0.1,
