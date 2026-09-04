@@ -43,12 +43,7 @@ pub fn on_add_use_screen_material(
     let screens = *world
         .get::<Screens>(entity)
         .expect("on_add_use_screen_material requires a Screens component");
-    info!(
-        "Screens hook fired: entity={:?} value={:?} has_mesh={}",
-        entity,
-        screens,
-        world.get::<Mesh3d>(entity).is_some()
-    );
+
     let asset_server = world.resource::<AssetServer>().clone();
 
     let size = Extent3d {
