@@ -3,5 +3,5 @@
 shell.nix
 /target
 /.user/*
-!/.user/cache/.gitkeep
+!/.user/cache/elevation/.gitkeep
 !/.user/screenshots/.gitkeep
