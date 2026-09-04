@@ -8,22 +8,21 @@ use bevy::{
     asset::RenderAssetUsages,
     camera::RenderTarget,
     color::palettes::css::{BLACK, BLUE, GREEN},
+    ecs::{lifecycle::HookContext, world::DeferredWorld},
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat, TextureUsages},
 };
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug, Component)]
+#[derive(Deserialize, Debug, Component, Reflect, Clone, Copy)]
+#[reflect(Component)]
+#[type_path = "skein"]
+#[component(on_add = on_add_use_screen_material)]
 pub enum Screens {
     Left,
     Right,
     Centre,
     Hud,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct Screen {
-    pub screen: Screens,
 }
 
 #[allow(dead_code)]
@@ -37,20 +36,26 @@ pub enum ScreenUiElement {
     Horizon,
 }
 
-pub fn get_material_handle(
-    commands: &mut Commands,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-    images: &mut ResMut<Assets<Image>>,
-    screen_data: &Screen,
-    asset_server: &Res<AssetServer>,
-) -> Handle<StandardMaterial> {
+pub fn on_add_use_screen_material(
+    mut world: DeferredWorld,
+    HookContext { entity, .. }: HookContext,
+) {
+    let screens = *world
+        .get::<Screens>(entity)
+        .expect("on_add_use_screen_material requires a Screens component");
+    info!(
+        "Screens hook fired: entity={:?} value={:?} has_mesh={}",
+        entity,
+        screens,
+        world.get::<Mesh3d>(entity).is_some()
+    );
+    let asset_server = world.resource::<AssetServer>().clone();
+
     let size = Extent3d {
         width: 1024,
         height: 1024,
         ..default()
     };
-
-    // This is the texture that will be rendered to.
     let mut image = Image::new_fill(
         size,
         TextureDimension::D2,
@@ -58,11 +63,38 @@ pub fn get_material_handle(
         TextureFormat::Bgra8UnormSrgb,
         RenderAssetUsages::default(),
     );
-    // You need to set these texture usage flags in order to use the image as a render target
     image.texture_descriptor.usage =
         TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_DST | TextureUsages::RENDER_ATTACHMENT;
+    let image_handle = world.resource_mut::<Assets<Image>>().add(image);
 
-    let image_handle = images.add(image);
+    let material_handle = {
+        let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
+        match screens {
+            Screens::Hud => {
+                let brightness = 200.0;
+                materials.add(StandardMaterial {
+                    emissive_texture: Some(image_handle.clone()),
+                    emissive: LinearRgba::new(brightness, brightness, brightness, 1.0),
+                    base_color: Color::linear_rgba(0.3, 0.15, 0.3, 0.4),
+                    perceptual_roughness: 0.2,
+                    alpha_mode: AlphaMode::Premultiplied,
+                    ..default()
+                })
+            }
+            _ => {
+                let brightness = 5.0;
+                materials.add(StandardMaterial {
+                    emissive_texture: Some(image_handle.clone()),
+                    emissive: LinearRgba::new(brightness, brightness, brightness, 1.0),
+                    base_color: Color::BLACK,
+                    perceptual_roughness: 0.2,
+                    ..default()
+                })
+            }
+        }
+    };
+
+    let mut commands = world.commands();
 
     let texture_camera = commands
         .spawn((
@@ -71,14 +103,13 @@ pub fn get_material_handle(
                 order: -1,
                 ..default()
             },
-            RenderTarget::Image(image_handle.clone().into()),
+            RenderTarget::Image(image_handle.into()),
         ))
         .id();
 
-    match screen_data.screen {
+    match screens {
         Screens::Hud => {
             const HUD_COLOUR: Color = Color::Srgba(GREEN);
-
             let text_bundle = (
                 TextFont {
                     font_size: FontSize::Px(32.0),
@@ -87,7 +118,6 @@ pub fn get_material_handle(
                 },
                 TextColor(HUD_COLOUR),
             );
-
             commands
                 .spawn((
                     Node {
@@ -161,7 +191,6 @@ pub fn get_material_handle(
                                         Text::new(&text),
                                         text_bundle.clone(),
                                     ));
-
                                     parent.spawn((
                                         Node {
                                             position_type: PositionType::Absolute,
@@ -172,7 +201,6 @@ pub fn get_material_handle(
                                         text_bundle.clone(),
                                         Text::new(&text),
                                     ));
-
                                     for j in 0..3 {
                                         parent.spawn((
                                             Node {
@@ -201,26 +229,14 @@ pub fn get_material_handle(
                             }
                         });
                 });
-
-            let brightness = 200.0;
-            materials.add(StandardMaterial {
-                emissive_texture: Some(image_handle),
-                emissive: LinearRgba::new(brightness, brightness, brightness, 1.0),
-                base_color: Color::linear_rgba(0.3, 0.15, 0.3, 0.4),
-                perceptual_roughness: 0.2,
-                alpha_mode: AlphaMode::Premultiplied,
-                ..default()
-            })
         }
-
         _ => {
-            let label = match screen_data.screen {
+            let label = match screens {
                 Screens::Left => ScreenUiElement::Throttle,
                 Screens::Right => ScreenUiElement::AirspeedKts,
                 Screens::Centre => ScreenUiElement::Altitude,
-                Screens::Hud => todo!(),
+                Screens::Hud => unreachable!(),
             };
-
             commands
                 .spawn((
                     Node {
@@ -260,18 +276,12 @@ pub fn get_material_handle(
                             ));
                         });
                 });
-
-            let brightness = 10.0;
-            // This material has the texture that has been rendered.
-            materials.add(StandardMaterial {
-                emissive_texture: Some(image_handle),
-                emissive: LinearRgba::new(brightness, brightness, brightness, 1.0),
-                base_color: Color::BLACK,
-                perceptual_roughness: 0.2,
-                ..default()
-            })
         }
     }
+
+    commands
+        .entity(entity)
+        .insert(MeshMaterial3d(material_handle));
 }
 
 pub fn update_screens(

@@ -1,5 +1,8 @@
-use crate::aircraft::AircraftState;
-use bevy::prelude::*;
+use crate::{MaterialStore, aircraft::AircraftState};
+use bevy::{
+    ecs::{lifecycle::HookContext, world::DeferredWorld},
+    prelude::*,
+};
 use serde::Deserialize;
 use std::time::Duration;
 
@@ -8,8 +11,42 @@ pub const STROBE_ON_DURATION: f32 = 0.1;
 pub const ACOL_OFF_DURATION: f32 = 1.2;
 pub const ACOL_ON_DURATION: f32 = 0.1;
 
-#[derive(Deserialize, Debug, Component)]
-pub enum Lights {
+#[derive(Debug, Component, Deserialize, PartialEq, Reflect, Default)]
+#[reflect(Component, Default)]
+#[type_path = "skein"]
+#[component(on_add = on_add_use_light_material)]
+pub struct UseLightMaterial;
+
+fn on_add_use_light_material(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
+    let Some(store) = world.get_resource::<MaterialStore>() else {
+        return;
+    };
+    let template = store.lights.clone();
+
+    let Some(mut materials) = world.get_resource_mut::<Assets<StandardMaterial>>() else {
+        return;
+    };
+    let handle = materials.add(template);
+
+    world
+        .commands()
+        .entity(entity)
+        .insert(MeshMaterial3d(handle));
+}
+
+#[derive(
+    Copy,
+    Clone,
+    Default,
+    PartialEq,
+    Deserialize,
+    Debug,
+    Component,
+    Reflect
+)]
+#[reflect(Component, Default)]
+#[type_path = "skein"]
+pub enum Light {
     CockpitGearInd,
     AntiCol,
     Strobe,
@@ -17,12 +54,8 @@ pub enum Lights {
     PositionStarboard,
     PositionRear,
     Formation,
+    #[default]
     Landing,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Light {
-    pub light: Lights,
 }
 
 #[derive(Resource)]
@@ -65,7 +98,7 @@ impl Light {
     }
 
     pub fn update_mesh_lights(
-        material_handles: Query<(&MeshMaterial3d<StandardMaterial>, &Lights, Entity), With<Lights>>,
+        material_handles: Query<(&MeshMaterial3d<StandardMaterial>, &Light, Entity)>,
         mut materials: ResMut<Assets<StandardMaterial>>,
         state: Res<AircraftState>,
         timer: ResMut<LightsTimers>,
@@ -80,28 +113,28 @@ impl Light {
                 } = material.emissive;
 
                 match material_handle.1 {
-                    Lights::AntiCol => {
+                    Light::AntiCol => {
                         if state.anti_col_lts_on && timer.acol_on_cycle {
                             *red = 100.0
                         } else {
                             *red = 0.0
                         }
                     }
-                    Lights::PositionPort => {
+                    Light::PositionPort => {
                         if state.pos_lts_on {
                             *red = 100.
                         } else {
                             *red = 0.0
                         }
                     }
-                    Lights::PositionStarboard => {
+                    Light::PositionStarboard => {
                         if state.pos_lts_on {
                             *green = 100.
                         } else {
                             *green = 0.0
                         }
                     }
-                    Lights::PositionRear => {
+                    Light::PositionRear => {
                         if state.pos_lts_on {
                             *red = 100.;
                             *green = 100.;
@@ -112,7 +145,7 @@ impl Light {
                             *blue = 0.
                         }
                     }
-                    Lights::Strobe => {
+                    Light::Strobe => {
                         if state.strobe_lts_on && timer.strobe_on_cycle {
                             *red = 100.;
                             *green = 100.;
@@ -123,7 +156,7 @@ impl Light {
                             *blue = 0.
                         }
                     }
-                    Lights::Formation => {
+                    Light::Formation => {
                         if state.form_lts_on {
                             *red = 10.;
                             *green = 20.;
@@ -134,7 +167,7 @@ impl Light {
                             *blue = 0.
                         }
                     }
-                    Lights::Landing => {
+                    Light::Landing => {
                         if state.ldg_lts_on && state.landing_gear_deployed {
                             *red = 500.;
                             *green = 500.;
@@ -145,7 +178,7 @@ impl Light {
                             *blue = 0.
                         }
                     }
-                    Lights::CockpitGearInd => {
+                    Light::CockpitGearInd => {
                         if state.landing_gear_deployed {
                             *green = 50.0
                         } else {
@@ -162,19 +195,19 @@ impl Light {
     pub fn update_lights(
         state: Res<AircraftState>,
         timer: ResMut<LightsTimers>,
-        point_light_query: Query<(&mut PointLight, &Lights)>,
-        spot_light_query: Query<(&mut SpotLight, &Lights)>,
+        point_light_query: Query<(&mut PointLight, &Light)>,
+        spot_light_query: Query<(&mut SpotLight, &Light)>,
     ) {
         for (mut point_light, light) in point_light_query {
             let (colour, on) = match light {
-                Lights::PositionPort => (Color::linear_rgb(10.0, 0.0, 0.0), state.pos_lts_on),
-                Lights::PositionStarboard => (Color::linear_rgb(0.0, 10.0, 0.0), state.pos_lts_on),
-                Lights::PositionRear => (Color::linear_rgb(1.0, 1.0, 1.0), state.pos_lts_on),
-                Lights::AntiCol => (
+                Light::PositionPort => (Color::linear_rgb(10.0, 0.0, 0.0), state.pos_lts_on),
+                Light::PositionStarboard => (Color::linear_rgb(0.0, 10.0, 0.0), state.pos_lts_on),
+                Light::PositionRear => (Color::linear_rgb(1.0, 1.0, 1.0), state.pos_lts_on),
+                Light::AntiCol => (
                     Color::linear_rgb(1.0, 0.0, 0.0),
                     (state.anti_col_lts_on && timer.acol_on_cycle),
                 ),
-                Lights::Strobe => (
+                Light::Strobe => (
                     Color::linear_rgb(1.0, 1.0, 1.0),
                     (state.strobe_lts_on && timer.strobe_on_cycle),
                 ),
@@ -192,7 +225,7 @@ impl Light {
         }
         for (mut spot_light, light) in spot_light_query {
             let (colour, on) = match light {
-                Lights::Landing => (
+                Light::Landing => (
                     Color::linear_rgb(1.0, 1.0, 1.0),
                     state.ldg_lts_on && state.landing_gear_deployed,
                 ),

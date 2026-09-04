@@ -65,6 +65,5 @@ pub fn spawn(
                 .insert(ColliderConstructorHierarchy::new(
                     ColliderConstructor::ConvexHullFromMesh,
                 ));
-        })
-        .observe(load);
+        });
 }

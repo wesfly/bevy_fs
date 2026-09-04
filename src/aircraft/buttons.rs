@@ -1,5 +1,6 @@
 use super::AircraftState;
 use crate::aircraft::breeze::landing_gear::{LandingGearCommand, LandingGearStatus};
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy::{
@@ -8,7 +9,7 @@ use bevy::{
 };
 use serde::Deserialize;
 
-#[derive(Component, Clone, Debug, Deserialize, PartialEq)]
+#[derive(Component, Clone, Debug, Deserialize, PartialEq, Reflect)]
 pub enum InterfaceOperation {
     AntiColLt,
     Engine,
@@ -20,18 +21,30 @@ pub enum InterfaceOperation {
     ParkBrk,
 }
 
-#[derive(Debug, Component, Deserialize, PartialEq)]
+#[derive(Debug, Component, Deserialize, PartialEq, Reflect)]
 pub enum InterfaceType {
     Switch,
     Button,
     Lever,
 }
 
-#[derive(Debug, Component, Deserialize, PartialEq)]
+#[derive(Debug, Component, Deserialize, PartialEq, Reflect)]
+#[reflect(Component, Default)]
+#[type_path = "skein"]
 pub struct Button {
     pub interface_type: InterfaceType,
     pub operation: Option<InterfaceOperation>,
     pub inverse: Option<bool>,
+}
+
+impl Default for Button {
+    fn default() -> Self {
+        Self {
+            interface_type: InterfaceType::Button,
+            operation: None,
+            inverse: Some(false),
+        }
+    }
 }
 
 #[derive(Message)]
@@ -48,13 +61,13 @@ pub fn update_cursor(
         return;
     };
 
-    let hovered_target = hover_map
+    let is_hovering_target = hover_map
         .get(&PointerId::Mouse)
-        .and_then(|hovered_entities| hovered_entities.iter().next())
-        .map(|(entity, _depth)| *entity);
-
-    let is_hovering_target = hovered_target
-        .map(|entity| grabbable_query.contains(entity))
+        .map(|hovered_entities| {
+            hovered_entities
+                .keys()
+                .any(|entity| grabbable_query.contains(*entity))
+        })
         .unwrap_or(false);
 
     if is_hovering_target {
@@ -75,13 +88,17 @@ pub fn update_cursor(
 }
 
 impl Button {
-    pub fn press_observer(
-        press: On<Pointer<Press>>,
-        function_comps: Query<&Button>,
+    pub fn press_system(
+        query: Query<(&Button, &PickingInteraction), Changed<PickingInteraction>>,
         mut messages: MessageWriter<ButtonMessages>,
     ) {
-        let button = function_comps.get(press.entity.entity()).unwrap();
-        messages.write(ButtonMessages(button.operation.clone().unwrap()));
+        for (button, interaction) in &query {
+            if *interaction == PickingInteraction::Pressed {
+                if let Some(op) = &button.operation {
+                    messages.write(ButtonMessages(op.clone()));
+                }
+            }
+        }
     }
 
     pub fn listener(

@@ -781,7 +781,7 @@ pub fn spawn(
                 GizmoShape::Cylinder { radius: 0.20, length: 0.50, axis: Vec3::X },
                 engine_contours(),
             ));
-        }).observe(load)
+        })
         .id()
 }
 

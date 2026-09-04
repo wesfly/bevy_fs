@@ -34,17 +34,18 @@ pub fn alpha_deg(velocity: &DVec3, transform: &Transform) -> f64 {
 }
 
 #[derive(Debug, Deserialize, Component)]
+#[derive(Component, Default, Reflect)]
+#[reflect(Default, Component)]
+#[type_path = "skein"]
 pub enum RotorTypes {
-    Main,
+    Main(Dir3),
+    #[default]
     Rear,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct Rotor {
-    pub rotor: RotorTypes,
-}
-
-#[derive(Debug, Deserialize, Component)]
+#[derive(Debug, Deserialize, Component, Reflect)]
+#[reflect(Component)]
+#[type_path = "skein"]
 pub enum ControlSurfaces {
     CanardPort,
     CanardStarboard,
@@ -55,11 +56,6 @@ pub enum ControlSurfaces {
     FlapStarboard,
     AileronPort,
     AileronStarboard,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ControlSurface {
-    pub control_surface: ControlSurfaces,
 }
 
 #[derive(Resource, Default, Deserialize, PartialEq, Clone, Copy)]

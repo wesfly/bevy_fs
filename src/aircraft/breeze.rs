@@ -127,7 +127,7 @@ pub fn spawn(
             ChildOf(parent_id),
             rotation,
             // No LodDamping. Roll/pitch/yaw damping emerges from zone geometry.
-        )).observe(crate::data_from_gltf::load)
+        ))
             .with_children(|parent| {
             //==== front avionics/cabin fuselage section ====
             parent.spawn((

@@ -44,6 +44,7 @@ use bevy::{
     render::view::screenshot::{Capturing, Screenshot, save_to_disk},
     window::{CursorIcon, SystemCursorIcon},
 };
+use bevy_skein::SkeinPlugin;
 use big_space::prelude::*;
 use core::option::Option::Some;
 use once_cell::sync::Lazy;
@@ -58,6 +59,12 @@ use tokio::{runtime::Runtime, sync::Semaphore};
 pub const METRES_TO_FEET: f32 = 3.28084;
 pub const M_S_TO_KTS: f32 = 1.943844;
 pub const EARTH_RADIUS: f32 = 6_360_000.0;
+
+#[derive(Resource)]
+pub struct MaterialStore {
+    lights: StandardMaterial,
+}
+
 pub static TOKIO_RUNTIME: Lazy<Runtime> =
     Lazy::new(|| Runtime::new().expect("Failed to create tokio runtime"));
 
@@ -168,6 +175,7 @@ fn main() {
         Sse,
         BigSpaceDefaultPlugins,
         bevy::camera_controller::free_camera::FreeCameraPlugin,
+        SkeinPlugin::default(),
     ))
     .add_plugins(MaterialPlugin::<
         ExtendedMaterial<StandardMaterial, TerrainMaterial>,
@@ -233,6 +241,7 @@ fn main() {
     .add_systems(
         Update,
         (
+            Button::press_system,
             track_aircraft_terrain,
             update_rotors,
             input::input_system,
@@ -267,6 +276,17 @@ fn main() {
     );
 
     app.run();
+}
+
+fn setup(mut commands: Commands) {
+    commands.insert_resource(MaterialStore {
+        lights: StandardMaterial {
+            perceptual_roughness: 0.1,
+            specular_transmission: 1.0,
+            base_color: Color::LinearRgba(LinearRgba::rgb(0.5, 0.5, 0.5).with_alpha(0.5)),
+            ..default()
+        },
+    });
 }
 
 fn screenshot(mut commands: Commands, input: Res<ButtonInput<KeyCode>>) {
