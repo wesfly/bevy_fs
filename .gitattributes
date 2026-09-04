@@ -1,14 +1,11 @@
 [attr]rust text eol=lf whitespace=tab-in-indent,trailing-space,tabwidth=4
 [attr]lfs filter=lfs diff=lfs merge=lfs -text
-
 * text=auto eol=lf
-
 *.glb  lfs
 *.png  lfs
 *.jpg  lfs
 *.otf  lfs
 *.ttf  lfs
-
 *.gltf     linguist-language=JSON linguist-generated
 *.json     linguist-detectable
 *.rs       linguist-language=Rust rust diff=rust
@@ -16,3 +13,6 @@
 *.svg      linguist-detectable
 .git*      linguist-language=Shell
 Cargo.lock linguist-language=TOML linguist-generated
+docs/preview-1.png filter=lfs diff=lfs merge=lfs -text
+docs/preview-2.png filter=lfs diff=lfs merge=lfs -text
+docs/preview-3.png filter=lfs diff=lfs merge=lfs -text
