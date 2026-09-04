@@ -1,5 +1,6 @@
 use crate::{
     CELL_SIZE, Settings, TOKIO_RUNTIME,
+    aircraft::{AircraftState, breeze::landing_gear::LandingGearStatus},
     scenery::{
         osm::buildings::SpawnBuilding,
         terrain::{TerrainCacheResource, TerrainChunkRegistry},
@@ -8,7 +9,9 @@ use crate::{
 };
 use bevy::{
     light::{
-        Atmosphere, CascadeShadowConfigBuilder, atmosphere::ScatteringMedium, light_consts::lux,
+        Atmosphere, CascadeShadowConfigBuilder,
+        atmosphere::{Falloff, ScatteringMedium, ScatteringTerm},
+        light_consts::lux,
     },
     prelude::*,
     tasks::AsyncComputeTaskPool,
@@ -25,16 +28,37 @@ pub fn setup_scene(
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     mut terrain_tile_cache: ResMut<TerrainCacheResource>,
     mut terrain_registry: ResMut<TerrainChunkRegistry>,
+    mut ldg_gear_status: ResMut<LandingGearStatus>,
+    mut state: ResMut<AircraftState>,
 ) {
-    commands.spawn_big_space(Grid::new(CELL_SIZE as f32, 10.0), |mut root| {
-        let earth_medium = ScatteringMedium::default();
-        let earth_atmosphere = Atmosphere::earth(scattering_mediums.add(earth_medium));
+    // Reset landing gear because the gear could have been left deployed in the last flight
+    *ldg_gear_status = LandingGearStatus::Retracted;
+    state.landing_gear_deployed = false;
     // Init/Reset tile cache
     *terrain_tile_cache = TerrainCacheResource::default();
     *terrain_registry = TerrainChunkRegistry::default();
 
     let coord = settings.terrain.coord;
+
     let thread_pool = AsyncComputeTaskPool::get();
+
+    commands.spawn_big_space(Grid::new(CELL_SIZE as f32, 10.0), |root| {
+        root.insert(Visibility::default());
+        let mut earth_medium = ScatteringMedium::earth(256, 256);
+        let atmosphere_height = 60_000.0;
+
+        let ground_haze_phase = earth_medium.terms[1].phase.clone(); // reuse Mie's phase function
+        earth_medium.terms.push(ScatteringTerm {
+            scattering: Vec3::splat(3.0e-5),
+            absorption: Vec3::ZERO,
+            falloff: Falloff::Exponential {
+                scale: 400.0 / atmosphere_height,
+            },
+            phase: ground_haze_phase,
+        });
+
+        let earth_medium = scattering_mediums.add(earth_medium);
+        let earth_atmosphere = Atmosphere::earth(earth_medium);
         root.spawn_spatial(earth_atmosphere.clone());
 
         if settings.buildings_enabled {
