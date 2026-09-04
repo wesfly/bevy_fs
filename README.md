@@ -1,19 +1,23 @@
-# kestrel flight simulator
+# Kestrel Flight Simulator
 
-This is a little flight sim made in Bevy.
+This is a little flight sim made in Bevy using Rust.
 
-This project is formerly known as `bevy_fs`, but it was renamed due to likelyhood of confusion with a file system crate.
+This project is formerly known as `bevy_fs`, but it was renamed due to
+likelyhood of confusion with a file system crate.
+
+It is still in early development, but it's getting somewhere...
 
 ## Highlights
 
-- Support for both keyboard and gamepad (gamepad is recommended).
-- Terrain with real-world elevation data and collisions.
-- Loading data from glTF with custom properties.
-- 3D cockpit.
-- Collisions using `avian3d` and the flight dynamics model crate.
-  [`avian_fdm`](https://github.com/viccuad/avian_fdm).
-- Water with screen space reflections.
-- A settings file - `settings.json`.
+- Support for both keyboard and gamepad (gamepad is recommended)
+- Collisions using `avian3d` and the flight dynamics model crate
+  [`avian_fdm`](https://github.com/viccuad/avian_fdm)
+- Terrain with real-world elevation data (down to 1m precision), and a
+  continuously updating quadtree
+- 3D cockpits with clickable buttons and screens displaying flight information
+- A settings file - `settings.json`
+- 3 aircraft to fly all around the world
+- A round earth with variable sun positions
 
 ## Preview
 
@@ -47,33 +51,29 @@ This project is formerly known as `bevy_fs`, but it was renamed due to likelyhoo
    ```
 
    This will build and launch `kestrel`. The first startup fetches terrain data
-   and can take some time.
+   and may take some time (see below).
 
 ## Terrain
 
 Terrain data will be stored in the `.user/cache/` folder after the first fetch
-(the game window will be unresponsive while fetching). To change the coordinates
-or the resolution, change `terrain.coordinates` or `terrain.level_of_detail` in
-the settings. Note that the general maximum level of detail is 15, but in most
-regions 14 or even less. Here is an interactive map for different resolutions:
-<https://mapterhorn.com/coverage>
+(the game window will be unresponsive while fetching). There is a good amount
+of locations you can choose from the menu. If you still want to fly in a custom
+location, you can do so by setting the coordinates in `settings.json` and
+leaving out the location choice in the menu. The simulator will fall back to
+the coordinates stored in the settings.
 
-Note that high resolutions will result in high RAM usage, to tackle this issue,
-turn down the maximum render distance in the settings.
+The terrain zoom goes from 1 to 15, with 15 being zoomed in the furthest. Note
+that not everywhere a zoom of 15 is available, but 12 is a safe zoom to use in
+any location. You can find more about the zoom levels in different regions here:
+<https://mapterhorn.com/coverage>.
+
+## Buildings
+
+Buildings are still an experimental feature, mainly due to the (sometimes
+severe) frame rate losses. Some cities like Jakarta, Indonesia may freeze the
+simulator. Consider this implementation a temporary solution.
 
 ## Controls
-
-### Tips
-
-#### Helicopter
-
-You can start the engines by pressing `M`. If you now bring the throttle to
-100%, you will start flying.
-
-#### Aeroplane
-
-You will start in the air with the engine already on, you just need to throttle
-up.
 
 ### Pause
 
@@ -94,6 +94,7 @@ Press `P` to unpause the sim.
 
 ### Aircraft
 
+- `M` to toggle engine
 - `G` to raise or lower landing gear
 - `Z` to brake
 - `=` to toggle parking brake
@@ -102,7 +103,7 @@ Press `P` to unpause the sim.
 - `3` for formation lights
 - `4` for anti-collision lights
 
-You can change the steering device in the settings.
+You can change the control device in the settings.
 
 ### Some additional bindings for different steering devices
 
@@ -111,7 +112,7 @@ You can change the steering device in the settings.
 - Left stick to throttle and yaw
 - Right stick to pitch and roll
 
-#### HOTAS
+#### HOTAS (Hands On Throttle And Stick)
 
 - Left stick to steer
 - `DPadUp` and `DPadDown` to throttle up and down respectively
@@ -132,7 +133,7 @@ Error downloading object: <some object>: Smudge error: Error downloading <some f
 ```bash
 GIT_LFS_SKIP_SMUDGE=1 git reset --hard HEAD
 git clean -fd
-git lfs pull # You might need to download git-lfs first
+git lfs pull # You may need to download git-lfs first
 ```
 
 ## Contributing
