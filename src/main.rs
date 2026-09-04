@@ -114,7 +114,6 @@ impl Settings {
 
 #[derive(Resource)]
 pub struct GameState {
-    pub in_menu: bool,
     pub running: bool,
 }
 
@@ -165,6 +164,7 @@ fn main() {
         })
         .build()
         .disable::<TransformPlugin>();
+
     app.add_plugins((
         default_plugins,
         PhysicsPlugins::default(),
@@ -200,10 +200,7 @@ fn main() {
         require_markers: true,
     })
     .insert_resource(Gravity::ZERO)
-    .insert_resource(GameState {
-        running: false,
-        in_menu: false,
-    })
+    .insert_resource(GameState { running: false })
     .insert_resource(ControlInputs {
         pitch: 0.0,
         yaw: 0.0,
@@ -241,6 +238,7 @@ fn main() {
     // Messages
     .add_message::<LandingGearCommand>()
     .add_message::<ButtonMessages>()
+    .add_message::<ResetMessage>()
     // Systems
     .add_systems(Startup, setup)
     .add_systems(
@@ -254,6 +252,7 @@ fn main() {
             screenshot,
             AircraftCamera::controller,
             terrain::poll_terrain,
+            track_resets,
         ),
     )
     .add_systems(
@@ -384,6 +383,7 @@ pub fn absolute_position(cell: &CellCoord, local_translation: Vec3) -> DVec3 {
     DVec3::new(cell.x as f64, cell.y as f64, cell.z as f64) * CELL_SIZE as f64
         + local_translation.as_dvec3()
 }
+
 fn track_aircraft_terrain(
     mut commands: Commands,
     grid: Single<&Grid, With<BigSpace>>,
@@ -414,3 +414,16 @@ fn track_aircraft_terrain(
     );
 }
 
+#[derive(Message)]
+pub struct ResetMessage;
+
+fn track_resets(
+    mut message_writer: MessageWriter<ResetMessage>,
+    game_state: Res<GameState>,
+    mut prev_running: Local<bool>,
+) {
+    if *prev_running == false && game_state.running {
+        message_writer.write(ResetMessage);
+    }
+    *prev_running = game_state.running;
+}
