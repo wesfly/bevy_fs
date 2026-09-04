@@ -177,6 +177,8 @@ fn main() {
         BigSpaceDefaultPlugins,
         bevy::camera_controller::free_camera::FreeCameraPlugin,
         SkeinPlugin::default(),
+        bevy::pbr::diagnostic::MaterialAllocatorDiagnosticPlugin::<StandardMaterial>::default(),
+        bevy::render::diagnostic::MeshAllocatorDiagnosticPlugin,
     ))
     .add_plugins(MaterialPlugin::<
         ExtendedMaterial<StandardMaterial, TerrainMaterial>,
