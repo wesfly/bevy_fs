@@ -33,7 +33,7 @@ use crate::{
 use avian_fdm::prelude::*;
 use avian3d::prelude::*;
 use bevy::{
-    dev_tools::diagnostics_overlay::{DiagnosticsOverlay, DiagnosticsOverlayPlugin},
+    dev_tools::diagnostics_overlay::DiagnosticsOverlayPlugin,
     diagnostic::FrameTimeDiagnosticsPlugin,
     ecs::system::SystemId,
     feathers::{dark_theme::create_dark_theme, theme::UiTheme},
@@ -54,6 +54,9 @@ use std::{
     {collections::HashMap, fs},
 };
 use tokio::{runtime::Runtime, sync::Semaphore};
+
+#[cfg(debug_assertions)]
+use bevy::dev_tools::diagnostics_overlay::DiagnosticsOverlay;
 
 pub const METRES_TO_FEET: f32 = 3.28084;
 pub const M_S_TO_KTS: f32 = 1.943844;
