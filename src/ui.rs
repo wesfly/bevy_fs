@@ -109,7 +109,7 @@ fn aircraft_selector() -> impl Scene {
 }
 
 fn location_menu() -> impl Scene {
-    let locations: Vec<(&str, Coord)> = vec![
+    let mut locations: Vec<(&str, Coord)> = vec![
         ("Toulon, FR", Coord::from(43.12694, 5.93071)),
         ("Hobart, AU", Coord::from(-42.88369, 147.3287)),
         ("San Francisco, US", Coord::from(37.7922, -122.4385)),
@@ -174,6 +174,8 @@ fn location_menu() -> impl Scene {
         ),
         ("Bogotá, CO", Coord::from(4.711111, -74.072222)),
     ];
+
+    locations.sort_by_key(|(name, _)| *name);
 
     let rows: Vec<_> = locations
         .into_iter()
