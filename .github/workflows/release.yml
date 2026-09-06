@@ -21,16 +21,16 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            archive: zip
+            ext: ".exe"
           - os: macos-latest
             target: aarch64-apple-darwin
-            archive: tar
+            ext: ""
           - os: macos-15-intel
             target: x86_64-apple-darwin
-            archive: tar
+            ext: ""
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            archive: tar
+            ext: ""
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -57,19 +57,11 @@ jobs:
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Package (zip)
-        if: matrix.archive == 'zip'
-        shell: pwsh
+      - name: Rename binary
+        shell: bash
         run: |
-          $dest = "${{ env.BIN_NAME }}-${{ matrix.target }}.zip"
-          Compress-Archive -Path "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}.exe" -DestinationPath $dest
-          echo "ASSET=$dest" >> $env:GITHUB_ENV
-
-      - name: Package (tar)
-        if: matrix.archive == 'tar'
-        run: |
-          dest="${{ env.BIN_NAME }}-${{ matrix.target }}.tar.gz"
-          tar -czf "$dest" -C "target/${{ matrix.target }}/release" "${{ env.BIN_NAME }}"
+          dest="${{ env.BIN_NAME }}-${{ matrix.target }}${{ matrix.ext }}"
+          cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}${{ matrix.ext }}" "$dest"
           echo "ASSET=$dest" >> "$GITHUB_ENV"
 
       - name: Checksum
@@ -86,6 +78,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          body: |
+            Download the file for your platform from the Assets below.
+            On macOS/Linux, mark it executable before running: `chmod +x kestrel-*`
+
+            **Ignore "Source code (zip)" and "Source code (tar.gz)"** — GitHub
+            adds those automatically to every release; they're not runnable builds.
           files: |
             ${{ env.ASSET }}
             ${{ env.ASSET }}.sha256
