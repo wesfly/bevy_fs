@@ -114,28 +114,28 @@ impl Light {
 
                 match material_handle.1 {
                     Light::AntiCol => {
-                        if state.anti_col_lts_on && timer.acol_on_cycle {
+                        if state.lights.anti_col && timer.acol_on_cycle {
                             *red = 100.0
                         } else {
                             *red = 0.0
                         }
                     }
                     Light::PositionPort => {
-                        if state.pos_lts_on {
+                        if state.lights.pos {
                             *red = 100.
                         } else {
                             *red = 0.0
                         }
                     }
                     Light::PositionStarboard => {
-                        if state.pos_lts_on {
+                        if state.lights.pos {
                             *green = 100.
                         } else {
                             *green = 0.0
                         }
                     }
                     Light::PositionRear => {
-                        if state.pos_lts_on {
+                        if state.lights.pos {
                             *red = 100.;
                             *green = 100.;
                             *blue = 100.
@@ -146,7 +146,7 @@ impl Light {
                         }
                     }
                     Light::Strobe => {
-                        if state.strobe_lts_on && timer.strobe_on_cycle {
+                        if state.lights.strobe && timer.strobe_on_cycle {
                             *red = 100.;
                             *green = 100.;
                             *blue = 100.
@@ -157,7 +157,7 @@ impl Light {
                         }
                     }
                     Light::Formation => {
-                        if state.form_lts_on {
+                        if state.lights.form {
                             *red = 10.;
                             *green = 20.;
                             *blue = 0.
@@ -168,7 +168,7 @@ impl Light {
                         }
                     }
                     Light::Landing => {
-                        if state.ldg_lts_on && state.landing_gear_deployed {
+                        if state.lights.landing && state.landing_gear_deployed {
                             *red = 500.;
                             *green = 500.;
                             *blue = 500.
@@ -200,16 +200,16 @@ impl Light {
     ) {
         for (mut point_light, light) in point_light_query {
             let (colour, on) = match light {
-                Light::PositionPort => (Color::linear_rgb(10.0, 0.0, 0.0), state.pos_lts_on),
-                Light::PositionStarboard => (Color::linear_rgb(0.0, 10.0, 0.0), state.pos_lts_on),
-                Light::PositionRear => (Color::linear_rgb(1.0, 1.0, 1.0), state.pos_lts_on),
+                Light::PositionPort => (Color::linear_rgb(10.0, 0.0, 0.0), state.lights.pos),
+                Light::PositionStarboard => (Color::linear_rgb(0.0, 10.0, 0.0), state.lights.pos),
+                Light::PositionRear => (Color::linear_rgb(1.0, 1.0, 1.0), state.lights.pos),
                 Light::AntiCol => (
                     Color::linear_rgb(1.0, 0.0, 0.0),
-                    (state.anti_col_lts_on && timer.acol_on_cycle),
+                    (state.lights.anti_col && timer.acol_on_cycle),
                 ),
                 Light::Strobe => (
                     Color::linear_rgb(1.0, 1.0, 1.0),
-                    (state.strobe_lts_on && timer.strobe_on_cycle),
+                    (state.lights.strobe && timer.strobe_on_cycle),
                 ),
 
                 _ => (Color::linear_rgb(1.0, 1.0, 1.0), false),
@@ -227,7 +227,7 @@ impl Light {
             let (colour, on) = match light {
                 Light::Landing => (
                     Color::linear_rgb(1.0, 1.0, 1.0),
-                    state.ldg_lts_on && state.landing_gear_deployed,
+                    state.lights.landing && state.landing_gear_deployed,
                 ),
                 _ => (Color::BLACK, false),
             };

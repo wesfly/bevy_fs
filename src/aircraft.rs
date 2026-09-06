@@ -77,7 +77,7 @@ pub struct EngineState {
 }
 
 /// Angles in radians
-#[derive(Resource, Copy, Clone)]
+#[derive(Default, Resource, Copy, Clone)]
 pub struct ControlSurfacesDeflection {
     canards: BothSides<f32>,
     aileron: BothSides<f32>,
@@ -86,16 +86,20 @@ pub struct ControlSurfacesDeflection {
     ground_brakes: f32, // 0 to 1
 }
 
+#[derive(Default, Resource, Copy, Clone)]
+pub struct LightState {
+    pub pos: bool,
+    pub strobe: bool,
+    pub form: bool,
+    pub landing: bool,
+    pub anti_col: bool,
+}
+
 #[derive(Resource, Copy, Clone)]
 pub struct AircraftState {
     pub control_surfaces: ControlSurfacesDeflection,
-
+    pub lights: LightState,
     pub aircraft_type: AircraftTypes,
-    pub anti_col_lts_on: bool,
-    pub pos_lts_on: bool,
-    pub strobe_lts_on: bool,
-    pub form_lts_on: bool,
-    pub ldg_lts_on: bool,
     pub landing_gear_deployed: bool,
     pub parking_brake: bool,
     pub on_ground: bool,
@@ -115,11 +119,7 @@ impl Default for AircraftState {
             },
             engine: EngineState { on: false },
             aircraft_type: AircraftTypes::Helicopter,
-            anti_col_lts_on: false,
-            pos_lts_on: false,
-            strobe_lts_on: false,
-            form_lts_on: false,
-            ldg_lts_on: false,
+            lights: LightState::default(),
             landing_gear_deployed: false,
             parking_brake: false,
             on_ground: false,
@@ -171,9 +171,10 @@ pub fn spawn_breeze(
 ) {
     let (root_grid_id, grid) = *root_grid;
 
+    *state = AircraftState::default(); // Reset aricraft state
     state.aircraft_type = AircraftTypes::Breeze;
     state.engine.on = true;
-    state.ldg_lts_on = true;
+    state.lights.landing = true;
 
     let normalized_pos = coord_to_pos(settings.terrain.coord);
 
@@ -217,6 +218,7 @@ pub fn spawn_j3cub(
     root_grid: Single<(Entity, &Grid), With<BigSpace>>,
     settings: Res<Settings>,
 ) {
+    *state = AircraftState::default(); // Reset aricraft state
     state.aircraft_type = AircraftTypes::J3Cub;
     state.engine.on = true;
 
@@ -261,6 +263,7 @@ pub fn spawn_helicopter(
     root_grid: Single<(Entity, &Grid), With<BigSpace>>,
     settings: Res<Settings>,
 ) {
+    *state = AircraftState::default(); // Reset aricraft state
     state.aircraft_type = AircraftTypes::Helicopter;
     let (root_grid_id, grid) = *root_grid;
 
@@ -294,7 +297,7 @@ pub fn spawn_helicopter(
     );
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct BothSides<T> {
     pub port: T,
     pub starboard: T,

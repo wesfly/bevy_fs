@@ -115,19 +115,19 @@ impl Button {
                     (Some(state.engine.on), state.engine.on = !state.engine.on)
                 }
                 InterfaceOperation::AntiColLt => (
-                    Some(state.anti_col_lts_on),
-                    state.anti_col_lts_on = !state.anti_col_lts_on,
+                    Some(state.lights.anti_col),
+                    state.lights.anti_col = !state.lights.anti_col,
                 ),
                 InterfaceOperation::PositionLt => {
-                    (Some(state.pos_lts_on), state.pos_lts_on = !state.pos_lts_on)
+                    (Some(state.lights.pos), state.lights.pos = !state.lights.pos)
                 }
                 InterfaceOperation::StrobeLt => (
-                    Some(state.strobe_lts_on),
-                    state.strobe_lts_on = !state.strobe_lts_on,
+                    Some(state.lights.strobe),
+                    state.lights.strobe = !state.lights.strobe,
                 ),
                 InterfaceOperation::FormationLt => (
-                    Some(state.form_lts_on),
-                    state.form_lts_on = !state.form_lts_on,
+                    Some(state.lights.form),
+                    state.lights.form = !state.lights.form,
                 ),
                 InterfaceOperation::LdgGear => {
                     let do_not_change_lever_pos;
