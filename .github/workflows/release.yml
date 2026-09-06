@@ -1,18 +1,14 @@
 name: Release
-
 on:
   push:
     tags:
       - "v*"
   workflow_dispatch:
-
 env:
   CARGO_TERM_COLOR: always
   BIN_NAME: kestrel
-
 permissions:
   contents: write
-
 jobs:
   build:
     strategy:
@@ -31,11 +27,9 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             ext: ""
-
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
@@ -44,46 +38,45 @@ jobs:
             pkg-config libwayland-dev libxkbcommon-dev libx11-dev \
             libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev \
             libgl1-mesa-dev libasound2-dev libudev-dev
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
-
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
-
-      - name: Rename binary
+      - name: Package
         shell: bash
         run: |
-          dest="${{ env.BIN_NAME }}-${{ matrix.target }}${{ matrix.ext }}"
-          cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}${{ matrix.ext }}" "$dest"
-          echo "ASSET=$dest" >> "$GITHUB_ENV"
+          stage="${BIN_NAME}-${{ matrix.target }}"
+          rm -rf "$stage" "$stage.zip"
+          mkdir -p "$stage"
 
-      - name: Checksum
-        shell: bash
-        run: |
-          if command -v sha256sum >/dev/null 2>&1; then
-            sha256sum "${{ env.ASSET }}" > "${{ env.ASSET }}.sha256"
+          # Copy the tracked source tree into the staging dir.
+          git checkout-index -a --prefix="$stage/"
+
+          # Put the compiled binary at the ROOT of that tree, right next
+          # to ./assets, so it can run in place with no extra setup.
+          cp "target/${{ matrix.target }}/release/${BIN_NAME}${{ matrix.ext }}" "$stage/${BIN_NAME}${{ matrix.ext }}"
+
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            7z a -tzip "$stage.zip" "$stage" >/dev/null
           else
-            shasum -a 256 "${{ env.ASSET }}" > "${{ env.ASSET }}.sha256"
+            zip -r "$stage.zip" "$stage" >/dev/null
           fi
 
+          echo "ASSET=$stage.zip" >> "$GITHUB_ENV"
       - name: Upload to release
         uses: softprops/action-gh-release@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           body: |
-            Download the file for your platform from the Assets below.
-            On macOS/Linux, mark it executable before running: `chmod +x kestrel-*`
-
-            **Ignore "Source code (zip)" and "Source code (tar.gz)"** — GitHub
-            adds those automatically to every release; they're not runnable builds.
+            Download the zip for your platform, extract it, and run the
+            `kestrel` executable sitting at the top of the extracted
+            folder. On macOS/Linux, mark it executable first:
+            `chmod +x kestrel`
           files: |
             ${{ env.ASSET }}
-            ${{ env.ASSET }}.sha256
